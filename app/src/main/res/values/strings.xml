@@ -1,0 +1,41 @@
+<resources>
+    <string name="app_name">EnglishFlow</string>
+    <string name="app_title">EnglishFlow</string>
+
+    <string name="nav_home">Trang chủ</string>
+    <string name="nav_learn">Học</string>
+    <string name="nav_scan">Scan</string>
+    <string name="nav_chat">Chat</string>
+    <string name="nav_profile">Hồ sơ</string>
+
+    <string name="home_streak_title">Chuỗi học tập</string>
+    <string name="home_word_of_day">Từ của ngày hôm nay</string>
+    <string name="home_continue">Tiếp tục học</string>
+    <string name="home_reminder">Nhắc nhở học mỗi ngày</string>
+    <string name="home_learned_words">Từ đã học</string>
+    <string name="home_best_streak">Chuỗi tốt nhất</string>
+    <string name="home_current_streak">Chuỗi hiện tại</string>
+    <string name="home_scanned">Ảnh đã quét</string>
+    <string name="home_xp_today">XP hôm nay</string>
+
+    <string name="learn_fields">Lĩnh vực học từ vựng</string>
+    <string name="learn_topics">Đề tài</string>
+    <string name="learn_flashcard">Flashcard</string>
+
+    <string name="scan_title">Scan vật thể bằng AI</string>
+    <string name="chat_title">Chat luyện nói AI</string>
+    <string name="profile_title">Hồ sơ học tập</string>
+
+    <string name="btn_pronounce">Phát âm</string>
+    <string name="btn_save_word">Lưu từ</string>
+    <string name="btn_reset">Reset tiến độ</string>
+    <string name="btn_take_photo">Chụp ảnh</string>
+    <string name="btn_pick_gallery">Chọn từ thư viện</string>
+    <string name="btn_analyze">Phân tích AI</string>
+    <string name="btn_send">Gửi</string>
+    <string name="btn_change_name">Đổi tên</string>
+
+    <string name="status_not_started">Chưa học</string>
+    <string name="status_learning">Đang học</string>
+    <string name="status_completed">Hoàn thành</string>
+</resources>
