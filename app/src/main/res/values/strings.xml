@@ -35,6 +35,14 @@
     <string name="btn_send">Gửi</string>
     <string name="btn_change_name">Đổi tên</string>
 
+    <string name="scan_preview_desc">Ảnh xem trước của chức năng quét</string>
+    <string name="scan_need_image">Hãy chụp hoặc chọn ảnh trước khi phân tích</string>
+    <string name="scan_image_selected">Ảnh đã được chọn</string>
+    <string name="scan_camera_failed">Không thể lấy ảnh từ camera</string>
+    <string name="scan_analyze_success">AI đã phân tích xong hình ảnh</string>
+    <string name="scan_analyze_failed">Phân tích thất bại, hiển thị kết quả gợi ý</string>
+    <string name="scan_saved">Đã lưu từ scan vào từ điển</string>
+
     <string name="status_not_started">Chưa học</string>
     <string name="status_learning">Đang học</string>
     <string name="status_completed">Hoàn thành</string>

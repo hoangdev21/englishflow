@@ -1,0 +1,37 @@
+{
+  "packages": [
+    {
+      "name": "seed-home-v1",
+      "version": 1,
+      "domain": "Nha cua",
+      "entries": [
+        {"word": "table", "meaning": "ban", "ipa": "/teɪ.bəl/", "example": "The book is on the table."},
+        {"word": "chair", "meaning": "ghe", "ipa": "/tʃer/", "example": "Sit on the chair."},
+        {"word": "bottle", "meaning": "chai", "ipa": "/ˈbɒt.əl/", "example": "This bottle is full of water."},
+        {"word": "window", "meaning": "cua so", "ipa": "/ˈwɪn.doʊ/", "example": "Open the window, please."}
+      ]
+    },
+    {
+      "name": "seed-tech-v1",
+      "version": 1,
+      "domain": "Cong nghe",
+      "entries": [
+        {"word": "computer", "meaning": "may tinh", "ipa": "/kəmˈpjuː.tər/", "example": "My computer is very fast."},
+        {"word": "keyboard", "meaning": "ban phim", "ipa": "/ˈkiː.bɔːrd/", "example": "The keyboard has mechanical switches."},
+        {"word": "mouse", "meaning": "chuot may tinh", "ipa": "/maʊs/", "example": "Click the icon with the mouse."},
+        {"word": "phone", "meaning": "dien thoai", "ipa": "/foʊn/", "example": "I left my phone on the desk."}
+      ]
+    },
+    {
+      "name": "seed-food-v1",
+      "version": 1,
+      "domain": "Am thuc",
+      "entries": [
+        {"word": "apple", "meaning": "tao", "ipa": "/ˈæp.əl/", "example": "She eats an apple every day."},
+        {"word": "banana", "meaning": "chuoi", "ipa": "/bəˈnæn.ə/", "example": "The banana is ripe."},
+        {"word": "bread", "meaning": "banh mi", "ipa": "/bred/", "example": "I bought fresh bread this morning."},
+        {"word": "coffee", "meaning": "ca phe", "ipa": "/ˈkɒf.i/", "example": "He drinks coffee after lunch."}
+      ]
+    }
+  ]
+}
