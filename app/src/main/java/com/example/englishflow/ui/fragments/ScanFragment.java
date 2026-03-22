@@ -16,7 +16,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.GridLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,7 +25,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.camera.core.CameraSelector;
-import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
@@ -40,54 +38,31 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
+import com.example.englishflow.data.GeminiVisionService;
 import com.example.englishflow.data.ScanAnalyzer;
-import com.example.englishflow.data.ScanLabelFusion;
-import com.example.englishflow.data.ScanLabelFusion.Candidate;
 import com.example.englishflow.data.ScanResult;
 import com.example.englishflow.data.WordEntry;
 import com.example.englishflow.database.entity.CustomVocabularyEntity;
 import com.example.englishflow.ui.viewmodel.ScanViewModel;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.mlkit.vision.common.InputImage;
-import com.google.mlkit.vision.label.ImageLabel;
-import com.google.mlkit.vision.label.ImageLabeler;
-import com.google.mlkit.vision.label.ImageLabeling;
-import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
-import com.google.mlkit.vision.objects.DetectedObject;
-import com.google.mlkit.vision.objects.ObjectDetection;
-import com.google.mlkit.vision.objects.ObjectDetector;
-import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ScanFragment extends Fragment {
     private static final int REQUEST_CAMERA_PERMISSION = 100;
-    private static final long ANALYSIS_INTERVAL_MS = 500;
     private static final int MAX_GALLERY_IMAGE_DIMENSION = 1280;
 
     private AppRepository repository;
+    private GeminiVisionService geminiService;
     private TextToSpeech textToSpeech;
     private ExecutorService imageExecutor;
     private ExecutorService cameraExecutor;
-
-    private ObjectDetector streamObjectDetector;
-    private ObjectDetector singleImageObjectDetector;
-    private ImageLabeler streamImageLabeler;
-    private ImageLabeler singleImageLabeler;
 
     private ImageCapture imageCapture;
     private ActivityResultLauncher<String> pickImageLauncher;
@@ -95,7 +70,6 @@ public class ScanFragment extends Fragment {
     private PreviewView cameraPreview;
     private TextView wordText;
     private TextView rawLabelText;
-    private TextView mappedWordText;
     private TextView ipaMeaningText;
     private TextView exampleText;
     private TextView categoryText;
@@ -104,8 +78,7 @@ public class ScanFragment extends Fragment {
     private CircularProgressIndicator scanLoading;
 
     private ScanViewModel scanViewModel;
-    private long lastAnalysisTime = 0;
-    private boolean isSelectionDialogShowing = false;
+    private boolean isProcessing = false;
 
     @Nullable
     @Override
@@ -123,6 +96,16 @@ public class ScanFragment extends Fragment {
         cameraExecutor = Executors.newSingleThreadExecutor();
         scanViewModel = new ViewModelProvider(this).get(ScanViewModel.class);
 
+        android.util.Log.d("ScanFragment", "Initializing Groq Vision service...");
+        try {
+            geminiService = new GeminiVisionService();
+            android.util.Log.d("ScanFragment", "Groq Vision service initialized successfully");
+        } catch (IllegalStateException e) {
+            android.util.Log.e("ScanFragment", "Groq Vision init failed: " + e.getMessage(), e);
+            Toast.makeText(requireContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            return;
+        }
+
         pickImageLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {
@@ -134,7 +117,6 @@ public class ScanFragment extends Fragment {
 
         bindViews(view);
         observeUiState();
-        initVisionClients();
         initTextToSpeech();
         setupButtons(view);
 
@@ -150,7 +132,6 @@ public class ScanFragment extends Fragment {
         cameraPreview = view.findViewById(R.id.cameraPreview);
         wordText = view.findViewById(R.id.scanWord);
         rawLabelText = view.findViewById(R.id.scanRawLabel);
-        mappedWordText = view.findViewById(R.id.scanMappedWord);
         ipaMeaningText = view.findViewById(R.id.scanIpaMeaning);
         exampleText = view.findViewById(R.id.scanExample);
         categoryText = view.findViewById(R.id.scanCategory);
@@ -163,36 +144,12 @@ public class ScanFragment extends Fragment {
         scanViewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
             setLoading(state.isLoading());
             bindResult(state.getScanResult());
-            bindDecisionInfo(state.getRawAiLabel(), state.getMappedWord());
+            bindDecisionInfo(state.getRawAiLabel());
             if (!TextUtils.isEmpty(state.getMessage()) && isAdded()) {
                 Toast.makeText(requireContext(), state.getMessage(), Toast.LENGTH_SHORT).show();
                 scanViewModel.clearMessage();
             }
         });
-    }
-
-    private void initVisionClients() {
-        ObjectDetectorOptions streamOptions = new ObjectDetectorOptions.Builder()
-                .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
-                .enableMultipleObjects()
-                .enableClassification()
-                .build();
-
-        ObjectDetectorOptions singleOptions = new ObjectDetectorOptions.Builder()
-                .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
-                .enableMultipleObjects()
-                .enableClassification()
-                .build();
-
-        ImageLabelerOptions streamLabelOptions =
-                new ImageLabelerOptions.Builder().setConfidenceThreshold(0.6f).build();
-        ImageLabelerOptions singleLabelOptions =
-                new ImageLabelerOptions.Builder().setConfidenceThreshold(0.5f).build();
-
-        streamObjectDetector = ObjectDetection.getClient(streamOptions);
-        singleImageObjectDetector = ObjectDetection.getClient(singleOptions);
-        streamImageLabeler = ImageLabeling.getClient(streamLabelOptions);
-        singleImageLabeler = ImageLabeling.getClient(singleLabelOptions);
     }
 
     private void initTextToSpeech() {
@@ -206,14 +163,12 @@ public class ScanFragment extends Fragment {
     private void setupButtons(@NonNull View view) {
         MaterialButton takePhotoButton = view.findViewById(R.id.btnTakePhoto);
         MaterialButton pickGalleryButton = view.findViewById(R.id.btnPickGallery);
-        MaterialButton analyzeButton = view.findViewById(R.id.btnAnalyzeAi);
         MaterialButton pronounceButton = view.findViewById(R.id.btnPronounceScan);
         MaterialButton saveButton = view.findViewById(R.id.btnSaveScan);
         MaterialButton manageCustomWordsButton = view.findViewById(R.id.btnManageCustomWords);
 
         takePhotoButton.setVisibility(View.VISIBLE);
         pickGalleryButton.setVisibility(View.VISIBLE);
-        analyzeButton.setVisibility(View.GONE);
 
         takePhotoButton.setOnClickListener(v -> capturePhoto());
         pickGalleryButton.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
@@ -232,7 +187,7 @@ public class ScanFragment extends Fragment {
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             startCamera();
         } else if (isAdded()) {
-            Toast.makeText(requireContext(), "Can cap quyen camera de su dung", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), "Camera permission needed", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -251,73 +206,58 @@ public class ScanFragment extends Fragment {
                         .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                         .build();
 
-                ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
-                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                        .build();
-                imageAnalysis.setAnalyzer(cameraExecutor, this::analyzeFrame);
-
                 CameraSelector cameraSelector = new CameraSelector.Builder()
                         .requireLensFacing(CameraSelector.LENS_FACING_BACK)
                         .build();
 
                 cameraProvider.unbindAll();
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalysis);
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture);
             } catch (Exception e) {
                 if (isAdded()) {
-                    Toast.makeText(requireContext(), "Khong the khoi dong camera", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "Camera failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
         }, ContextCompat.getMainExecutor(requireContext()));
     }
 
     private void analyzeGalleryImage(@NonNull Uri imageUri) {
-        if (isSelectionDialogShowing) {
+        if (isProcessing) {
             if (isAdded()) {
-                Toast.makeText(requireContext(), "Hay hoan tat lua chon vat the hien tai", Toast.LENGTH_SHORT).show();
-            }
-            return;
-        }
-        if (!scanViewModel.startAnalysis(true)) {
-            if (isAdded()) {
-                Toast.makeText(requireContext(), "Dang phan tich, vui long thu lai", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Analyzing... please wait", Toast.LENGTH_SHORT).show();
             }
             return;
         }
 
+        scanViewModel.startAnalysis(true);
+        isProcessing = true;
+
         imageExecutor.execute(() -> {
             try {
-                InputImage inputImage = buildInputImageFromGallery(imageUri);
-                resolveBestLabel(inputImage, ScanLabelFusion.Mode.GALLERY)
-                        .addOnSuccessListener(decision -> {
-                            handleManualSelection(decision, "Da chon vat the tu thu vien");
-                        })
-                        .addOnFailureListener(e -> scanViewModel.failAnalysis("Loi phan tich anh thu vien"));
+                Bitmap bitmap = loadBitmapFromUri(imageUri);
+                analyzeImageWithGemini(bitmap);
             } catch (Exception e) {
-                scanViewModel.failAnalysis("Khong doc duoc anh tu thu vien");
+                scanViewModel.failAnalysis("Error: " + e.getMessage());
+                isProcessing = false;
             }
         });
     }
 
     private void capturePhoto() {
-        if (isSelectionDialogShowing) {
+        if (isProcessing) {
             if (isAdded()) {
-                Toast.makeText(requireContext(), "Hay hoan tat lua chon vat the hien tai", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Analyzing... please wait", Toast.LENGTH_SHORT).show();
             }
             return;
         }
         if (imageCapture == null) {
             if (isAdded()) {
-                Toast.makeText(requireContext(), "Camera chua san sang", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Camera not ready", Toast.LENGTH_SHORT).show();
             }
             return;
         }
 
-        if (!scanViewModel.startAnalysis(true)) {
-            if (isAdded()) {
-                Toast.makeText(requireContext(), "Dang phan tich, vui long thu lai", Toast.LENGTH_SHORT).show();
-            }
-            return;
-        }
+        scanViewModel.startAnalysis(true);
+        isProcessing = true;
 
         imageCapture.takePicture(cameraExecutor, new ImageCapture.OnImageCapturedCallback() {
             @Override
@@ -326,117 +266,101 @@ public class ScanFragment extends Fragment {
                     Image mediaImage = image.getImage();
                     if (mediaImage == null) {
                         image.close();
-                        scanViewModel.failAnalysis("Khong doc duoc anh chup");
+                        scanViewModel.failAnalysis("Cannot read image");
+                        isProcessing = false;
                         return;
                     }
 
-                    InputImage inputImage = InputImage.fromMediaImage(
-                            mediaImage,
-                            image.getImageInfo().getRotationDegrees()
-                    );
+                    Bitmap bitmap = imageToBitmap(image);
+                    image.close();
 
-                    resolveBestLabel(inputImage, ScanLabelFusion.Mode.CAPTURE)
-                            .addOnSuccessListener(decision -> {
-                                handleManualSelection(decision, "Da chon vat the tu anh chup");
-                            })
-                            .addOnFailureListener(e -> scanViewModel.failAnalysis("Loi phan tich anh chup"))
-                            .addOnCompleteListener(task -> image.close());
+                    if (bitmap == null) {
+                        scanViewModel.failAnalysis("Cannot convert image");
+                        isProcessing = false;
+                        return;
+                    }
+
+                    analyzeImageWithGemini(bitmap);
                 } catch (Exception e) {
                     image.close();
-                    scanViewModel.failAnalysis("Loi khi chup anh");
+                    scanViewModel.failAnalysis("Error: " + e.getMessage());
+                    isProcessing = false;
                 }
             }
 
             @Override
             public void onError(@NonNull ImageCaptureException exception) {
-                scanViewModel.failAnalysis("Loi chup anh: " + exception.getMessage());
+                scanViewModel.failAnalysis("Capture error");
+                isProcessing = false;
             }
         });
     }
 
-    private void analyzeFrame(@NonNull ImageProxy image) {
-        // Realtime preview is kept for framing only; vocabulary updates happen after user capture/select.
-        image.close();
+    private void analyzeImageWithGemini(@NonNull Bitmap bitmap) {
+        try {
+            android.util.Log.d("ScanFragment", "Starting Groq image analysis...");
+            String detectedLabel = geminiService.analyzeImage(bitmap);
+            android.util.Log.d("ScanFragment", "Groq returned label: '" + detectedLabel + "'");
+            processDetectedLabel(detectedLabel);
+        } catch (Exception e) {
+            android.util.Log.e("ScanFragment", "Groq error: " + e.getMessage(), e);
+            String message = e.getMessage() == null ? "Unknown error" : e.getMessage();
+            if (message.contains("HTTP 429")) {
+                scanViewModel.failAnalysis("Groq dang qua tai hoac het quota (HTTP 429). Vui long doi 1-2 phut hoac doi API key khac.");
+            } else if (message.contains("HTTP 404")) {
+                scanViewModel.failAnalysis("Model Groq/Llama hien khong kha dung voi API key nay (HTTP 404). Hay doi GROQ_MODEL trong local.properties.");
+            } else {
+                scanViewModel.failAnalysis("Groq error: " + message);
+            }
+            isProcessing = false;
+        }
     }
 
-    private Task<LabelDecision> resolveBestLabel(@NonNull InputImage inputImage, @NonNull ScanLabelFusion.Mode mode) {
-        boolean singleImageMode = mode != ScanLabelFusion.Mode.REALTIME;
-        ObjectDetector objectDetector = singleImageMode ? singleImageObjectDetector : streamObjectDetector;
-        ImageLabeler imageLabeler = singleImageMode ? singleImageLabeler : streamImageLabeler;
+    private void processDetectedLabel(@NonNull String rawLabel) {
+        try {
+            android.util.Log.d("ScanFragment", "Processing raw label: '" + rawLabel + "'");
+            String canonical = ScanAnalyzer.canonicalizeLabel(rawLabel);
+            android.util.Log.d("ScanFragment", "Canonical label: '" + canonical + "'");
 
-        Task<List<DetectedObject>> objectTask = objectDetector.process(inputImage);
-        Task<List<ImageLabel>> labelTask = imageLabeler.process(inputImage);
+            // Check if we have custom vocabulary for this
+            CustomVocabularyEntity custom = repository.findCustomVocabulary(canonical);
+            if (custom != null && !TextUtils.isEmpty(custom.meaning)) {
+                android.util.Log.d("ScanFragment", "Found custom vocabulary: " + custom.meaning);
+                ScanResult result = buildCustomScanResult(canonical, custom.meaning);
+                scanViewModel.completeAnalysis(result, rawLabel, result.getWord(), "Word found");
+                isProcessing = false;
+                return;
+            }
 
-        return Tasks.whenAllSuccess(objectTask, labelTask)
-                .continueWith(task -> {
-                    if (!task.isSuccessful() || task.getResult() == null || task.getResult().size() < 2) {
-                        return new LabelDecision("object", "object", new ArrayList<>());
-                    }
+            // Try static mapping
+            android.util.Log.d("ScanFragment", "Looking up static mapping for: " + canonical);
+            ScanResult staticResult = ScanAnalyzer.fromDetectedLabel(canonical);
+            android.util.Log.d("ScanFragment", "Static result category: " + (staticResult != null ? staticResult.getCategory() : "null"));
 
-                    @SuppressWarnings("unchecked")
-                    List<DetectedObject> objects = (List<DetectedObject>) task.getResult().get(0);
-                    @SuppressWarnings("unchecked")
-                    List<ImageLabel> labels = (List<ImageLabel>) task.getResult().get(1);
+            // If AI cannot recognize object, show a clear user-facing message.
+            boolean unrecognized = "object".equalsIgnoreCase(canonical)
+                    || "unknown".equalsIgnoreCase(canonical)
+                    || "Can bo sung".equalsIgnoreCase(staticResult != null ? staticResult.getCategory() : "");
+            if (unrecognized) {
+                ScanResult fallback = ScanAnalyzer.fallbackResult("object");
+                scanViewModel.completeAnalysis(
+                        fallback,
+                        rawLabel,
+                        fallback.getWord(),
+                        "Khong nhan dang duoc vat the. Vui long chup ro hon hoac doi goc khac."
+                );
+                isProcessing = false;
+                return;
+            }
 
-                    Candidate objectCandidate = extractObjectCandidate(objects);
-                    Candidate imageCandidate = extractImageCandidate(labels);
-                    String finalLabel = ScanLabelFusion.chooseBestLabel(
-                            objectCandidate,
-                            imageCandidate,
-                            mode,
-                            ScanAnalyzer.hasSpecificMapping(objectCandidate.getLabel()),
-                            ScanAnalyzer.hasSpecificMapping(imageCandidate.getLabel())
-                    );
-                    String rawLabel = !"object".equals(imageCandidate.getLabel())
-                            ? imageCandidate.getLabel()
-                            : objectCandidate.getLabel();
-                    List<LabelOption> selectableLabels = buildSelectableLabels(objectCandidate, imageCandidate, labels, finalLabel);
-                    return new LabelDecision(rawLabel, finalLabel, selectableLabels);
-                });
-    }
-
-    private void handleManualSelection(@NonNull LabelDecision decision, @NonNull String successMessage) {
-        ScanResult current = scanViewModel.getCurrentResult();
-        scanViewModel.completeAnalysis(current, decision.rawLabel, current.getWord(), null);
-
-        if (decision.selectableLabels.isEmpty()) {
-            ScanResult mapped = ScanAnalyzer.fromDetectedLabel(decision.finalLabel);
-            scanViewModel.completeAnalysis(mapped, decision.rawLabel, mapped.getWord(), successMessage);
-            return;
+            android.util.Log.d("ScanFragment", "Word detected: " + (staticResult != null ? staticResult.getWord() : "null"));
+            scanViewModel.completeAnalysis(staticResult, rawLabel, staticResult != null ? staticResult.getWord() : "object", "Word detected");
+            isProcessing = false;
+        } catch (Exception e) {
+            android.util.Log.e("ScanFragment", "Error processing detected label: " + e.getMessage(), e);
+            scanViewModel.failAnalysis("Processing error: " + e.getMessage());
+            isProcessing = false;
         }
-
-        showObjectSelectionGrid(decision.selectableLabels, selectedLabel -> {
-            resolveSelectedLabel(selectedLabel, successMessage);
-        });
-    }
-
-    private void resolveSelectedLabel(@NonNull String selectedLabel, @NonNull String successMessage) {
-        String canonical = ScanAnalyzer.canonicalizeLabel(selectedLabel);
-        CustomVocabularyEntity custom = repository.findCustomVocabulary(canonical);
-        if (custom != null && !TextUtils.isEmpty(custom.meaning)) {
-            ScanResult mapped = buildCustomScanResult(canonical, custom.meaning);
-            scanViewModel.completeAnalysis(mapped, selectedLabel, mapped.getWord(), successMessage);
-            return;
-        }
-
-        ScanResult staticResult = ScanAnalyzer.fromDetectedLabel(canonical);
-        if ("Can bo sung".equalsIgnoreCase(staticResult.getCategory())) {
-            repository.logFailedLabel(canonical);
-            repository.fetchVietnameseSuggestion(canonical, suggestion -> showAddVocabularyDialog(
-                    canonical,
-                    suggestion,
-                    meaning -> {
-                        repository.saveCustomVocabulary(canonical, meaning);
-                        repository.markFailedLabelResolved(canonical);
-                        ScanResult mapped = buildCustomScanResult(canonical, meaning);
-                        scanViewModel.completeAnalysis(mapped, selectedLabel, mapped.getWord(), "Da luu tu moi");
-                    },
-                    () -> scanViewModel.completeAnalysis(staticResult, selectedLabel, staticResult.getWord(), successMessage)
-            ));
-            return;
-        }
-
-        scanViewModel.completeAnalysis(staticResult, selectedLabel, staticResult.getWord(), successMessage);
     }
 
     private void showAddVocabularyDialog(@NonNull String canonicalLabel,
@@ -450,7 +374,7 @@ public class ScanFragment extends Fragment {
 
         EditText input = new EditText(requireContext());
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
-        input.setHint("Nhap nghia tieng Viet cho: " + canonicalLabel);
+        input.setHint("Enter Vietnamese meaning for: " + canonicalLabel);
         if (!TextUtils.isEmpty(suggestedMeaning)) {
             input.setText(suggestedMeaning);
             input.setSelection(suggestedMeaning.length());
@@ -463,16 +387,14 @@ public class ScanFragment extends Fragment {
         input.setPadding(padding, padding, padding, padding);
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("Bo sung tu moi")
-            .setMessage(TextUtils.isEmpty(suggestedMeaning)
-                ? "Tu '" + canonicalLabel + "' chua co trong tu dien. Hay nhap nghia de luu lai."
-                : "Tu '" + canonicalLabel + "' chua co trong tu dien. Da lay goi y online, ban co the sua truoc khi luu.")
+                .setTitle("Add New Word")
+                .setMessage("This word is not in dictionary. Add Vietnamese meaning:")
                 .setView(input)
-                .setNegativeButton("Bo qua", (dialog, which) -> cancelCallback.run())
-                .setPositiveButton("Luu", (dialog, which) -> {
+                .setNegativeButton("Skip", (dialog, which) -> cancelCallback.run())
+                .setPositiveButton("Save", (dialog, which) -> {
                     String meaning = input.getText() == null ? "" : input.getText().toString().trim();
                     if (meaning.isEmpty()) {
-                        Toast.makeText(requireContext(), "Nghia khong duoc de trong", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), "Meaning cannot be empty", Toast.LENGTH_SHORT).show();
                         cancelCallback.run();
                         return;
                     }
@@ -482,146 +404,78 @@ public class ScanFragment extends Fragment {
     }
 
     private ScanResult buildCustomScanResult(@NonNull String englishWord, @NonNull String meaning) {
-        return new ScanResult(
-                englishWord,
-                "-",
-                meaning,
-                "This meaning was added by user.",
-                "Tu bo sung",
-                "Ban co the chinh sua nghia nay bat cu luc nao.",
-                java.util.Arrays.asList("custom", "user", "vocabulary")
-        );
-    }
-
-    private List<LabelOption> buildSelectableLabels(@NonNull Candidate objectCandidate,
-                                                    @NonNull Candidate imageCandidate,
-                                                    @NonNull List<ImageLabel> labels,
-                                                    @NonNull String finalLabel) {
-        Map<String, Float> scoreMap = new HashMap<>();
-        putMaxScore(scoreMap, finalLabel, Math.max(objectCandidate.getConfidence(), imageCandidate.getConfidence()));
-        putMaxScore(scoreMap, imageCandidate.getLabel(), imageCandidate.getConfidence());
-        putMaxScore(scoreMap, objectCandidate.getLabel(), objectCandidate.getConfidence());
-
-        float imageThreshold = ScanLabelFusion.getImageThreshold(ScanLabelFusion.Mode.CAPTURE);
-        for (ImageLabel label : labels) {
-            if (label.getConfidence() >= imageThreshold) {
-                String normalized = ScanLabelFusion.normalize(label.getText());
-                putMaxScore(scoreMap, normalized, label.getConfidence());
-            }
-            if (scoreMap.size() >= 8) {
-                break;
-            }
-        }
-
-        scoreMap.remove("object");
-        List<LabelOption> items = new ArrayList<>();
-        for (Map.Entry<String, Float> entry : scoreMap.entrySet()) {
-            items.add(new LabelOption(entry.getKey(), entry.getValue()));
-        }
-        items.sort((a, b) -> Float.compare(b.confidence, a.confidence));
-        if (items.isEmpty()) {
-            items.add(new LabelOption("object", 0f));
-        }
-        return items;
-    }
-
-    private void putMaxScore(@NonNull Map<String, Float> scoreMap, @NonNull String label, float score) {
-        String normalized = ScanLabelFusion.normalize(label);
-        if (normalized.isEmpty()) {
-            return;
-        }
-        Float current = scoreMap.get(normalized);
-        if (current == null || score > current) {
-            scoreMap.put(normalized, score);
-        }
-    }
-
-    private void showObjectSelectionGrid(@NonNull List<LabelOption> labels,
-                                         @NonNull LabelSelectionCallback callback) {
-        if (!isAdded()) {
-            return;
-        }
-
-        requireActivity().runOnUiThread(() -> {
-            isSelectionDialogShowing = true;
-
-            int margin = (int) TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP,
-                    8,
-                    requireContext().getResources().getDisplayMetrics()
+        try {
+            android.util.Log.d("ScanFragment", "Building custom scan result for: " + englishWord + " -> " + meaning);
+            ScanResult result = new ScanResult(
+                    englishWord,
+                    "-",
+                    meaning,
+                    "User-added meaning",
+                    "Custom",
+                    "This word was learned from real world scanning.",
+                    java.util.Arrays.asList("learn", "vocabulary", "custom")
             );
-
-            GridLayout grid = new GridLayout(requireContext());
-            grid.setColumnCount(2);
-            grid.setUseDefaultMargins(true);
-
-            AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                    .setTitle("Chon vat the muon dich")
-                    .setNegativeButton("Huy", (d, which) -> {
-                        isSelectionDialogShowing = false;
-                        scanViewModel.failAnalysis("Da huy chon vat the");
-                    })
-                    .create();
-
-            for (LabelOption option : labels) {
-                MaterialButton button = new MaterialButton(requireContext(), null,
-                        com.google.android.material.R.attr.materialButtonOutlinedStyle);
-                button.setText(buildVietnameseGridLabel(option.label) + "\n" + Math.round(option.confidence * 100) + "%");
-                GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-                lp.width = 0;
-                lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                lp.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-                lp.setMargins(margin, margin, margin, margin);
-                button.setLayoutParams(lp);
-                button.setOnClickListener(v -> {
-                    isSelectionDialogShowing = false;
-                    dialog.dismiss();
-                    callback.onSelected(option.label);
-                });
-                grid.addView(button);
-            }
-
-            ScrollView scrollView = new ScrollView(requireContext());
-            int padding = margin * 2;
-            scrollView.setPadding(padding, padding, padding, padding);
-            scrollView.addView(grid);
-            dialog.setView(scrollView);
-            dialog.setOnDismissListener(d -> isSelectionDialogShowing = false);
-            dialog.show();
-        });
+            android.util.Log.d("ScanFragment", "Custom scan result built successfully");
+            return result;
+        } catch (Exception e) {
+            android.util.Log.e("ScanFragment", "Error building custom scan result: " + e.getMessage(), e);
+            throw new RuntimeException("Error building custom result: " + e.getMessage(), e);
+        }
     }
 
-    private String buildVietnameseGridLabel(@NonNull String rawLabel) {
-        String canonical = ScanAnalyzer.canonicalizeLabel(rawLabel);
-        String vi = ScanAnalyzer.toVietnameseLabel(canonical);
-        return vi + " (" + canonical + ")";
-    }
-
-    private Candidate extractObjectCandidate(@NonNull List<DetectedObject> objects) {
-        if (objects.isEmpty() || objects.get(0).getLabels().isEmpty()) {
-            return new Candidate("object", 0f);
+    private void bindResult(@Nullable ScanResult result) {
+        if (result == null) {
+            return;
         }
 
-        DetectedObject.Label label = objects.get(0).getLabels().get(0);
-        return new Candidate(label.getText(), label.getConfidence());
+        wordText.setText(result.getWord());
+        ipaMeaningText.setText(result.getIpa() + " - " + result.getMeaning());
+        exampleText.setText(result.getExample());
+        categoryText.setText("Category: " + result.getCategory());
+        funFactText.setText("Note: " + result.getFunFact());
+        relatedText.setText("Related: " + formatRelatedWords(result.getRelatedWords()));
     }
 
-    private Candidate extractImageCandidate(@NonNull List<ImageLabel> labels) {
-        if (labels.isEmpty()) {
-            return new Candidate("object", 0f);
-        }
-
-        ImageLabel best = labels.get(0);
-        for (ImageLabel label : labels) {
-            if (label.getConfidence() > best.getConfidence()) {
-                best = label;
-            }
-        }
-
-        return new Candidate(best.getText(), best.getConfidence());
+    private void bindDecisionInfo(@Nullable String rawAiLabel) {
+        rawLabelText.setText("Detected: " + (TextUtils.isEmpty(rawAiLabel) ? "object" : rawAiLabel));
     }
 
-    private InputImage buildInputImageFromGallery(@NonNull Uri imageUri) throws IOException {
+    private void pronounceWord() {
+        ScanResult currentResult = scanViewModel.getCurrentResult();
+        if (currentResult != null && textToSpeech != null) {
+            textToSpeech.speak(currentResult.getWord(), TextToSpeech.QUEUE_FLUSH, null, "scan-word");
+        }
+    }
+
+    private void saveCurrentWord() {
+        ScanResult currentResult = scanViewModel.getCurrentResult();
+        if (currentResult == null) {
+            return;
+        }
+
+        repository.saveWord(new WordEntry(
+                currentResult.getWord(),
+                currentResult.getIpa(),
+                currentResult.getMeaning(),
+                currentResult.getExample(),
+                currentResult.getCategory()
+        ));
+        repository.increaseScanCount();
+        Toast.makeText(requireContext(), "Word saved", Toast.LENGTH_SHORT).show();
+    }
+
+    private void setLoading(boolean isLoading) {
+        scanLoading.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+    }
+
+    private String formatRelatedWords(java.util.List<String> relatedWords) {
+        if (relatedWords == null || relatedWords.isEmpty()) {
+            return "none";
+        }
+        return TextUtils.join(", ", relatedWords);
+    }
+
+    private Bitmap loadBitmapFromUri(@NonNull Uri imageUri) throws IOException {
         BitmapFactory.Options boundsOptions = new BitmapFactory.Options();
         boundsOptions.inJustDecodeBounds = true;
 
@@ -651,7 +505,44 @@ public class ScanFragment extends Fragment {
         if (bitmap == null) {
             throw new IOException("Cannot decode selected image");
         }
-        return InputImage.fromBitmap(bitmap, 0);
+        return bitmap;
+    }
+
+    private Bitmap imageToBitmap(ImageProxy image) {
+        ImageProxy.PlaneProxy[] planes = image.getPlanes();
+        if (planes == null || planes.length == 0) {
+            return null;
+        }
+
+        // With ImageCapture callbacks, device output is commonly JPEG (single plane).
+        if (planes.length == 1) {
+            java.nio.ByteBuffer buffer = planes[0].getBuffer();
+            byte[] bytes = new byte[buffer.remaining()];
+            buffer.get(bytes);
+            return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        }
+
+        // Fallback for multi-plane formats.
+        int width = image.getWidth();
+        int height = image.getHeight();
+        int pixelStride = planes[0].getPixelStride();
+        int outputStride = Math.max(1, pixelStride);
+        byte[] buffer = new byte[outputStride * height * width];
+        long pixelCount = (long) width * height;
+
+        java.nio.ByteBuffer yBuffer = planes[0].getBuffer();
+        yBuffer.rewind();
+        int copyLength = Math.min(buffer.length, yBuffer.remaining());
+        yBuffer.get(buffer, 0, copyLength);
+
+        int[] rgb = new int[(int) pixelCount];
+        for (int i = 0; i < (int) pixelCount; i++) {
+            int idx = i * outputStride;
+            int y = idx < buffer.length ? (buffer[idx] & 0xFF) : 0;
+            rgb[i] = 0xFF000000 | (y << 16) | (y << 8) | y;
+        }
+
+        return Bitmap.createBitmap(rgb, width, height, Bitmap.Config.ARGB_8888);
     }
 
     private int calculateInSampleSize(int width, int height, int reqWidth, int reqHeight) {
@@ -667,108 +558,12 @@ public class ScanFragment extends Fragment {
         return Math.max(1, inSampleSize);
     }
 
-    private void bindResult(@Nullable ScanResult result) {
-        if (result == null) {
-            return;
-        }
-
-        wordText.setText(result.getWord());
-        ipaMeaningText.setText(result.getIpa() + " - " + result.getMeaning());
-        exampleText.setText(result.getExample());
-        categoryText.setText("Danh muc: " + result.getCategory());
-        funFactText.setText("Fun fact: " + result.getFunFact());
-        relatedText.setText("Tu lien quan: " + formatRelatedWords(result.getRelatedWords()));
-    }
-
-    private void bindDecisionInfo(@Nullable String rawAiLabel, @Nullable String mappedWord) {
-        rawLabelText.setText("Nhan tho AI: " + (TextUtils.isEmpty(rawAiLabel) ? "object" : rawAiLabel));
-        mappedWordText.setText("Tu da map: " + (TextUtils.isEmpty(mappedWord) ? "object" : mappedWord));
-    }
-
-    private void pronounceWord() {
-        ScanResult currentResult = scanViewModel.getCurrentResult();
-        if (currentResult != null && textToSpeech != null) {
-            textToSpeech.speak(currentResult.getWord(), TextToSpeech.QUEUE_FLUSH, null, "scan-word");
-        }
-    }
-
-    private void saveCurrentWord() {
-        ScanResult currentResult = scanViewModel.getCurrentResult();
-        if (currentResult == null) {
-            return;
-        }
-
-        repository.saveWord(new WordEntry(
-                currentResult.getWord(),
-                currentResult.getIpa(),
-                currentResult.getMeaning(),
-                currentResult.getExample(),
-                currentResult.getCategory()
-        ));
-        repository.increaseScanCount();
-        Toast.makeText(requireContext(), getString(R.string.scan_saved), Toast.LENGTH_SHORT).show();
-    }
-
-    private void setLoading(boolean isLoading) {
-        scanLoading.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-    }
-
-    private String formatRelatedWords(List<String> relatedWords) {
-        if (relatedWords == null || relatedWords.isEmpty()) {
-            return "Chua co tu lien quan";
-        }
-        return TextUtils.join(", ", relatedWords);
-    }
-
-    private static final class LabelDecision {
-        private final String rawLabel;
-        private final String finalLabel;
-        private final List<LabelOption> selectableLabels;
-
-        private LabelDecision(String rawLabel, String finalLabel, List<LabelOption> selectableLabels) {
-            this.rawLabel = rawLabel;
-            this.finalLabel = finalLabel;
-            this.selectableLabels = selectableLabels;
-        }
-    }
-
-    private static final class LabelOption {
-        private final String label;
-        private final float confidence;
-
-        private LabelOption(String label, float confidence) {
-            this.label = label;
-            this.confidence = confidence;
-        }
-    }
-
-    private interface LabelSelectionCallback {
-        void onSelected(String label);
-    }
-
     private interface MeaningSaveCallback {
         void onSave(String meaning);
     }
 
     @Override
     public void onDestroyView() {
-        if (streamObjectDetector != null) {
-            streamObjectDetector.close();
-            streamObjectDetector = null;
-        }
-        if (singleImageObjectDetector != null) {
-            singleImageObjectDetector.close();
-            singleImageObjectDetector = null;
-        }
-        if (streamImageLabeler != null) {
-            streamImageLabeler.close();
-            streamImageLabeler = null;
-        }
-        if (singleImageLabeler != null) {
-            singleImageLabeler.close();
-            singleImageLabeler = null;
-        }
-
         if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();
