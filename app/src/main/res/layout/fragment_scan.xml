@@ -21,7 +21,7 @@
             android:text="@string/scan_title"
             android:textAppearance="@style/TextAppearance.EnglishFlow.Title" />
 
-        <!-- Scan Preview Card -->
+        <!-- Scan Preview Card with CameraX PreviewView -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -33,14 +33,23 @@
 
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="220dp">
+                android:layout_height="280dp">
 
+                <androidx.camera.view.PreviewView
+                    android:id="@+id/cameraPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/scan_preview_desc" />
+
+                <!-- Fallback preview (when camera unavailable) -->
                 <ImageView
                     android:id="@+id/scanPreview"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:contentDescription="@string/scan_preview_desc"
                     android:scaleType="centerCrop"
-                    android:src="@android:drawable/ic_menu_camera" />
+                    android:src="@android:drawable/ic_menu_camera"
+                    android:visibility="gone" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -52,14 +61,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📷"
                         android:textSize="48sp"
                         android:layout_marginBottom="8dp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Dùng camera để chụp từ vựng"
                         android:textColor="@android:color/white"
                         android:textSize="14sp"
                         android:alpha="0.9" />
@@ -103,6 +110,16 @@
             android:layout_marginTop="10dp"
             android:text="@string/btn_analyze"
             android:textSize="14sp" />
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/scanLoading"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="10dp"
+            android:visibility="gone"
+            app:indicatorSize="32dp"
+            app:indicatorInset="0dp" />
 
         <!-- Scan Result Card - Redesigned -->
         <com.google.android.material.card.MaterialCardView
@@ -214,6 +231,33 @@
                                 android:lineSpacingExtra="2dp" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/scanRawLabel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Nhan tho AI: object"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="12sp"
+                            android:lineSpacingExtra="1dp" />
+
+                        <TextView
+                            android:id="@+id/scanMappedWord"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Tu da map: object"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:lineSpacingExtra="1dp" />
+                    </LinearLayout>
 
                     <!-- Category Badge -->
                     <LinearLayout
@@ -348,7 +392,17 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="end">
+                        android:gravity="end"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnManageCustomWords"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="48dp"
+                            android:layout_marginEnd="8dp"
+                            android:text="Quan ly tu"
+                            android:textSize="13sp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnSaveScan"
