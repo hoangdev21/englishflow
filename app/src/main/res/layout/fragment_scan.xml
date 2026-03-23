@@ -59,14 +59,26 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/scanPreviewHintTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:text="Goi y realtime"
+                        android:textColor="@android:color/white"
                         android:textSize="48sp"
-                        android:layout_marginBottom="8dp" />
+                        android:layout_marginBottom="8dp"
+                        android:alpha="0"
+                        android:visibility="gone" />
 
                     <TextView
+                        android:id="@+id/scanPreviewHint"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:paddingStart="14dp"
+                        android:paddingTop="8dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="8dp"
+                        android:background="@drawable/bg_chip_soft"
+                        android:text="Goi y realtime: huong camera vao vat the"
                         android:textColor="@android:color/white"
                         android:textSize="14sp"
                         android:alpha="0.9" />
@@ -253,6 +265,17 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:text="Tu da map: object"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:lineSpacingExtra="1dp" />
+
+                        <TextView
+                            android:id="@+id/scanConfidence"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Do tin cay: 0%"
                             android:textColor="@color/ef_text_secondary"
                             android:textSize="12sp"
                             android:textStyle="bold"

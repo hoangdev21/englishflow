@@ -11,12 +11,14 @@ import com.example.englishflow.data.ScanResult;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ScanViewModel extends ViewModel {
+    private static final String DEFAULT_PREVIEW_SUGGESTION = "Goi y realtime: huong camera vao vat the ban muon hoc";
+
     private final MutableLiveData<ScanUiState> uiState = new MutableLiveData<>();
     private final AtomicBoolean analyzeLock = new AtomicBoolean(false);
 
     public ScanViewModel() {
         ScanResult initial = ScanAnalyzer.fallbackResult("object");
-        uiState.setValue(new ScanUiState(initial, "object", initial.getWord(), false, false, null));
+        uiState.setValue(new ScanUiState(initial, "object", initial.getWord(), 0f, DEFAULT_PREVIEW_SUGGESTION, false, false, null));
     }
 
     public LiveData<ScanUiState> getUiState() {
@@ -32,6 +34,8 @@ public class ScanViewModel extends ViewModel {
                 current.getScanResult(),
                 current.getRawAiLabel(),
                 current.getMappedWord(),
+            current.getConfidence(),
+            current.getPreviewSuggestion(),
                 showLoading,
                 true,
                 null
@@ -39,17 +43,48 @@ public class ScanViewModel extends ViewModel {
         return true;
     }
 
+        public void completeAnalysis(@Nullable ScanResult result,
+                     @Nullable String rawAiLabel,
+                     @Nullable String mappedWord,
+                     @Nullable String message) {
+        completeAnalysis(result, rawAiLabel, mappedWord, getCurrentState().getConfidence(), message);
+        }
+
     public void completeAnalysis(@Nullable ScanResult result,
                                  @Nullable String rawAiLabel,
                                  @Nullable String mappedWord,
+                     float confidence,
                                  @Nullable String message) {
         analyzeLock.set(false);
         ScanUiState current = getCurrentState();
         ScanResult finalResult = result != null ? result : current.getScanResult();
         String finalRawLabel = rawAiLabel != null ? rawAiLabel : current.getRawAiLabel();
         String finalMappedWord = mappedWord != null ? mappedWord : finalResult.getWord();
-        uiState.postValue(new ScanUiState(finalResult, finalRawLabel, finalMappedWord, false, false, message));
+        uiState.postValue(new ScanUiState(
+            finalResult,
+            finalRawLabel,
+            finalMappedWord,
+            confidence,
+            current.getPreviewSuggestion(),
+            false,
+            false,
+            message
+        ));
     }
+
+        public void updatePreviewSuggestion(@Nullable String suggestion) {
+        ScanUiState current = getCurrentState();
+        uiState.postValue(new ScanUiState(
+            current.getScanResult(),
+            current.getRawAiLabel(),
+            current.getMappedWord(),
+            current.getConfidence(),
+            (suggestion == null || suggestion.trim().isEmpty()) ? current.getPreviewSuggestion() : suggestion,
+            current.isLoading(),
+            current.isAnalyzing(),
+            current.getMessage()
+        ));
+        }
 
     public void failAnalysis(@Nullable String message) {
         analyzeLock.set(false);
@@ -58,6 +93,8 @@ public class ScanViewModel extends ViewModel {
                 current.getScanResult(),
                 current.getRawAiLabel(),
                 current.getMappedWord(),
+            current.getConfidence(),
+            current.getPreviewSuggestion(),
                 false,
                 false,
                 message
@@ -70,6 +107,8 @@ public class ScanViewModel extends ViewModel {
                 current.getScanResult(),
                 current.getRawAiLabel(),
                 current.getMappedWord(),
+            current.getConfidence(),
+            current.getPreviewSuggestion(),
                 current.isLoading(),
                 current.isAnalyzing(),
                 null
@@ -84,7 +123,7 @@ public class ScanViewModel extends ViewModel {
         ScanUiState state = uiState.getValue();
         if (state == null) {
             ScanResult fallback = ScanAnalyzer.fallbackResult("object");
-            return new ScanUiState(fallback, "object", fallback.getWord(), false, false, null);
+            return new ScanUiState(fallback, "object", fallback.getWord(), 0f, DEFAULT_PREVIEW_SUGGESTION, false, false, null);
         }
         return state;
     }

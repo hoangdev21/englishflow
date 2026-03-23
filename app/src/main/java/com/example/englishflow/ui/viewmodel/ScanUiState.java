@@ -8,6 +8,8 @@ public class ScanUiState {
     private final ScanResult scanResult;
     private final String rawAiLabel;
     private final String mappedWord;
+    private final float confidence;
+    private final String previewSuggestion;
     private final boolean loading;
     private final boolean analyzing;
     @Nullable
@@ -16,12 +18,16 @@ public class ScanUiState {
     public ScanUiState(ScanResult scanResult,
                        String rawAiLabel,
                        String mappedWord,
+                       float confidence,
+                       String previewSuggestion,
                        boolean loading,
                        boolean analyzing,
                        @Nullable String message) {
         this.scanResult = scanResult;
         this.rawAiLabel = rawAiLabel;
         this.mappedWord = mappedWord;
+        this.confidence = confidence;
+        this.previewSuggestion = previewSuggestion;
         this.loading = loading;
         this.analyzing = analyzing;
         this.message = message;
@@ -37,6 +43,14 @@ public class ScanUiState {
 
     public String getMappedWord() {
         return mappedWord;
+    }
+
+    public float getConfidence() {
+        return confidence;
+    }
+
+    public String getPreviewSuggestion() {
+        return previewSuggestion;
     }
 
     public boolean isLoading() {

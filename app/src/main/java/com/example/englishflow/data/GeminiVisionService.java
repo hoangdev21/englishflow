@@ -15,7 +15,10 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import java.io.ByteArrayOutputStream;
+import java.security.MessageDigest;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,11 +26,61 @@ public class GeminiVisionService {
     private static final String DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
     private static final String API_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
     private static final Pattern ENGLISH_WORD_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z\\-]{1,}");
+    private static final int MAX_CACHE_SIZE = 128;
+    private static final long CACHE_TTL_MS = 15L * 60L * 1000L;
     private static final OkHttpClient httpClient = new OkHttpClient();
     private static final Gson gson = new Gson();
+    private static final Map<String, CachedVisionResult> RESPONSE_CACHE = java.util.Collections.synchronizedMap(
+            new LinkedHashMap<String, CachedVisionResult>(MAX_CACHE_SIZE, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, CachedVisionResult> eldest) {
+                    return size() > MAX_CACHE_SIZE;
+                }
+            }
+    );
 
     private final String apiKey;
     private final String modelName;
+
+    public static class VisionResult {
+        private final String primaryLabel;
+        private final float confidence;
+        private final boolean fromCache;
+        private final String rawResponse;
+
+        public VisionResult(String primaryLabel, float confidence, boolean fromCache, String rawResponse) {
+            this.primaryLabel = primaryLabel;
+            this.confidence = confidence;
+            this.fromCache = fromCache;
+            this.rawResponse = rawResponse;
+        }
+
+        public String getPrimaryLabel() {
+            return primaryLabel;
+        }
+
+        public float getConfidence() {
+            return confidence;
+        }
+
+        public boolean isFromCache() {
+            return fromCache;
+        }
+
+        public String getRawResponse() {
+            return rawResponse;
+        }
+    }
+
+    private static class CachedVisionResult {
+        private final VisionResult result;
+        private final long createdAtMs;
+
+        private CachedVisionResult(VisionResult result, long createdAtMs) {
+            this.result = result;
+            this.createdAtMs = createdAtMs;
+        }
+    }
 
     public GeminiVisionService() {
         this.apiKey = BuildConfig.GROQ_API_KEY;
@@ -50,24 +103,85 @@ public class GeminiVisionService {
      * Returns a label string that can be processed by ScanAnalyzer.
      */
     public String analyzeImage(Bitmap bitmap) throws Exception {
+        return analyzeImageWithConfidence(bitmap).getPrimaryLabel();
+    }
+
+    public VisionResult analyzeImageWithConfidence(Bitmap bitmap) throws Exception {
         if (bitmap == null) {
             throw new IllegalArgumentException("Bitmap cannot be null");
         }
 
-        String base64Image = bitmapToBase64(bitmap);
         String prompt = "Identify the main object or subject in this image. "
                 + "Respond with ONLY the object name in English, nothing else. "
                 + "For example: 'bottle', 'book', 'phone', 'cup', 'chair', 'table', etc. "
                 + "If uncertain, respond 'object'.";
 
+        return analyzeVision(bitmap, prompt, true, "scan");
+    }
+
+    public VisionResult analyzePreviewVietnamese(Bitmap bitmap) throws Exception {
+        if (bitmap == null) {
+            throw new IllegalArgumentException("Bitmap cannot be null");
+        }
+
+        String prompt = "Nhan dien vat the chinh trong anh va tra loi bang TIENG VIET. "
+                + "Chi tra ve duy nhat 1-3 tu, khong giai thich, khong dau cau. "
+                + "Neu khong chac, tra ve 'vat the'.";
+
+        return analyzeVision(bitmap, prompt, false, "preview");
+    }
+
+    private VisionResult analyzeVision(Bitmap bitmap,
+                                       String prompt,
+                                       boolean expectEnglishLabel,
+                                       String modeKey) throws Exception {
+        String cacheKey = modeKey + ":" + buildBitmapFingerprint(bitmap);
+        VisionResult cached = getCached(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        String base64Image = bitmapToBase64(bitmap);
+
         try {
             JsonObject requestBody = buildVisionRequest(prompt, base64Image);
             String responseText = callGroqApi(requestBody);
 
-            return extractBestEnglishLabel(responseText);
+            String normalizedLabel = expectEnglishLabel
+                    ? extractBestEnglishLabel(responseText)
+                    : extractBestVietnameseHint(responseText);
+            float confidence = estimateConfidence(responseText, normalizedLabel, bitmap, expectEnglishLabel);
+
+            VisionResult result = new VisionResult(normalizedLabel, confidence, false, responseText);
+            cacheResult(cacheKey, result);
+            return result;
         } catch (Exception e) {
             throw new RuntimeException("Error analyzing image with Groq: " + e.getMessage(), e);
         }
+    }
+
+    private VisionResult getCached(String cacheKey) {
+        CachedVisionResult cached = RESPONSE_CACHE.get(cacheKey);
+        if (cached == null) {
+            return null;
+        }
+
+        long age = System.currentTimeMillis() - cached.createdAtMs;
+        if (age > CACHE_TTL_MS) {
+            RESPONSE_CACHE.remove(cacheKey);
+            return null;
+        }
+
+        return new VisionResult(
+                cached.result.getPrimaryLabel(),
+                Math.min(0.99f, cached.result.getConfidence() + 0.03f),
+                true,
+                cached.result.getRawResponse()
+        );
+    }
+
+    private void cacheResult(String cacheKey, VisionResult result) {
+        RESPONSE_CACHE.put(cacheKey, new CachedVisionResult(result, System.currentTimeMillis()));
     }
 
     private String extractBestEnglishLabel(String responseText) {
@@ -100,6 +214,71 @@ public class GeminiVisionService {
         }
 
         return token;
+    }
+
+    private String extractBestVietnameseHint(String responseText) {
+        if (responseText == null || responseText.trim().isEmpty()) {
+            return "vat the";
+        }
+
+        String normalized = responseText
+                .replace("\r", "\n")
+                .replaceAll("[\"'`*#]", " ")
+                .trim();
+        if (normalized.isEmpty()) {
+            return "vat the";
+        }
+
+        String[] lines = normalized.split("\\n");
+        String candidate = lines.length > 0 ? lines[0] : normalized;
+        candidate = candidate.split("[,.;:]")[0].trim().toLowerCase(Locale.US);
+        if (candidate.isEmpty()) {
+            return "vat the";
+        }
+
+        String[] words = candidate.split("\\s+");
+        if (words.length > 3) {
+            candidate = words[0] + " " + words[1] + " " + words[2];
+        }
+
+        if ("object".equals(candidate) || "unknown".equals(candidate)) {
+            return "vat the";
+        }
+
+        return candidate;
+    }
+
+    private float estimateConfidence(String responseText,
+                                     String normalizedLabel,
+                                     Bitmap bitmap,
+                                     boolean expectEnglishLabel) {
+        float score = 0.45f;
+        String response = responseText == null ? "" : responseText.trim();
+
+        if (!response.isEmpty()) {
+            score += 0.15f;
+        }
+
+        if (!"object".equalsIgnoreCase(normalizedLabel)
+                && !"unknown".equalsIgnoreCase(normalizedLabel)
+                && !"vat the".equalsIgnoreCase(normalizedLabel)) {
+            score += 0.18f;
+        }
+
+        if (response.length() > 0 && response.length() <= 24) {
+            score += 0.08f;
+        }
+
+        if (expectEnglishLabel && ENGLISH_WORD_PATTERN.matcher(normalizedLabel).matches()) {
+            score += 0.08f;
+        }
+
+        int longest = Math.max(bitmap.getWidth(), bitmap.getHeight());
+        if (longest >= 720) {
+            score += 0.06f;
+        }
+
+        return Math.max(0.2f, Math.min(0.98f, score));
     }
 
     /**
@@ -291,6 +470,25 @@ public class GeminiVisionService {
         int newW = Math.max(1, Math.round(w * scale));
         int newH = Math.max(1, Math.round(h * scale));
         return Bitmap.createScaledBitmap(src, newW, newH, true);
+    }
+
+    private String buildBitmapFingerprint(Bitmap bitmap) {
+        Bitmap sample = downscaleIfNeeded(bitmap, 48);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        sample.compress(Bitmap.CompressFormat.JPEG, 40, out);
+        byte[] data = out.toByteArray();
+
+        try {
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            byte[] hash = digest.digest(data);
+            StringBuilder sb = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                sb.append(String.format(Locale.US, "%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return bitmap.getWidth() + "x" + bitmap.getHeight() + ":" + (data.length > 0 ? data[0] : 0);
+        }
     }
 
     /**

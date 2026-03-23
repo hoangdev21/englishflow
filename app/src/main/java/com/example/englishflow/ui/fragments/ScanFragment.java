@@ -8,6 +8,8 @@ import android.graphics.BitmapFactory;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.speech.tts.TextToSpeech;
 import android.text.TextUtils;
 import android.text.InputType;
@@ -57,6 +59,7 @@ import java.util.concurrent.Executors;
 public class ScanFragment extends Fragment {
     private static final int REQUEST_CAMERA_PERMISSION = 100;
     private static final int MAX_GALLERY_IMAGE_DIMENSION = 1280;
+    private static final long PREVIEW_HINT_INTERVAL_MS = 4500L;
 
     private AppRepository repository;
     private GeminiVisionService geminiService;
@@ -70,6 +73,9 @@ public class ScanFragment extends Fragment {
     private PreviewView cameraPreview;
     private TextView wordText;
     private TextView rawLabelText;
+    private TextView mappedWordText;
+    private TextView confidenceText;
+    private TextView previewHintText;
     private TextView ipaMeaningText;
     private TextView exampleText;
     private TextView categoryText;
@@ -79,6 +85,9 @@ public class ScanFragment extends Fragment {
 
     private ScanViewModel scanViewModel;
     private boolean isProcessing = false;
+    private boolean isPreviewAnalyzing = false;
+    private Handler previewHintHandler;
+    private Runnable previewHintRunnable;
 
     @Nullable
     @Override
@@ -119,6 +128,7 @@ public class ScanFragment extends Fragment {
         observeUiState();
         initTextToSpeech();
         setupButtons(view);
+        startPreviewHintLoop();
 
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -132,6 +142,9 @@ public class ScanFragment extends Fragment {
         cameraPreview = view.findViewById(R.id.cameraPreview);
         wordText = view.findViewById(R.id.scanWord);
         rawLabelText = view.findViewById(R.id.scanRawLabel);
+        mappedWordText = view.findViewById(R.id.scanMappedWord);
+        confidenceText = view.findViewById(R.id.scanConfidence);
+        previewHintText = view.findViewById(R.id.scanPreviewHint);
         ipaMeaningText = view.findViewById(R.id.scanIpaMeaning);
         exampleText = view.findViewById(R.id.scanExample);
         categoryText = view.findViewById(R.id.scanCategory);
@@ -144,7 +157,8 @@ public class ScanFragment extends Fragment {
         scanViewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
             setLoading(state.isLoading());
             bindResult(state.getScanResult());
-            bindDecisionInfo(state.getRawAiLabel());
+            bindDecisionInfo(state.getRawAiLabel(), state.getMappedWord(), state.getConfidence());
+            bindPreviewHint(state.getPreviewSuggestion());
             if (!TextUtils.isEmpty(state.getMessage()) && isAdded()) {
                 Toast.makeText(requireContext(), state.getMessage(), Toast.LENGTH_SHORT).show();
                 scanViewModel.clearMessage();
@@ -163,6 +177,7 @@ public class ScanFragment extends Fragment {
     private void setupButtons(@NonNull View view) {
         MaterialButton takePhotoButton = view.findViewById(R.id.btnTakePhoto);
         MaterialButton pickGalleryButton = view.findViewById(R.id.btnPickGallery);
+        MaterialButton analyzeButton = view.findViewById(R.id.btnAnalyzeAi);
         MaterialButton pronounceButton = view.findViewById(R.id.btnPronounceScan);
         MaterialButton saveButton = view.findViewById(R.id.btnSaveScan);
         MaterialButton manageCustomWordsButton = view.findViewById(R.id.btnManageCustomWords);
@@ -172,6 +187,7 @@ public class ScanFragment extends Fragment {
 
         takePhotoButton.setOnClickListener(v -> capturePhoto());
         pickGalleryButton.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
+    analyzeButton.setOnClickListener(v -> capturePhoto());
         pronounceButton.setOnClickListener(v -> pronounceWord());
         saveButton.setOnClickListener(v -> saveCurrentWord());
         manageCustomWordsButton.setOnClickListener(v -> {
@@ -234,6 +250,12 @@ public class ScanFragment extends Fragment {
         imageExecutor.execute(() -> {
             try {
                 Bitmap bitmap = loadBitmapFromUri(imageUri);
+                ImageQualityCheck qualityCheck = evaluateImageQuality(bitmap);
+                if (!qualityCheck.isAcceptable()) {
+                    scanViewModel.failAnalysis(qualityCheck.getMessage());
+                    isProcessing = false;
+                    return;
+                }
                 analyzeImageWithGemini(bitmap);
             } catch (Exception e) {
                 scanViewModel.failAnalysis("Error: " + e.getMessage());
@@ -280,6 +302,13 @@ public class ScanFragment extends Fragment {
                         return;
                     }
 
+                    ImageQualityCheck qualityCheck = evaluateImageQuality(bitmap);
+                    if (!qualityCheck.isAcceptable()) {
+                        scanViewModel.failAnalysis(qualityCheck.getMessage());
+                        isProcessing = false;
+                        return;
+                    }
+
                     analyzeImageWithGemini(bitmap);
                 } catch (Exception e) {
                     image.close();
@@ -299,9 +328,11 @@ public class ScanFragment extends Fragment {
     private void analyzeImageWithGemini(@NonNull Bitmap bitmap) {
         try {
             android.util.Log.d("ScanFragment", "Starting Groq image analysis...");
-            String detectedLabel = geminiService.analyzeImage(bitmap);
-            android.util.Log.d("ScanFragment", "Groq returned label: '" + detectedLabel + "'");
-            processDetectedLabel(detectedLabel);
+            GeminiVisionService.VisionResult detection = geminiService.analyzeImageWithConfidence(bitmap);
+            String detectedLabel = detection.getPrimaryLabel();
+            float confidence = detection.getConfidence();
+            android.util.Log.d("ScanFragment", "Groq returned label: '" + detectedLabel + "' with confidence=" + confidence);
+            processDetectedLabel(detectedLabel, confidence);
         } catch (Exception e) {
             android.util.Log.e("ScanFragment", "Groq error: " + e.getMessage(), e);
             String message = e.getMessage() == null ? "Unknown error" : e.getMessage();
@@ -316,7 +347,7 @@ public class ScanFragment extends Fragment {
         }
     }
 
-    private void processDetectedLabel(@NonNull String rawLabel) {
+    private void processDetectedLabel(@NonNull String rawLabel, float confidence) {
         try {
             android.util.Log.d("ScanFragment", "Processing raw label: '" + rawLabel + "'");
             String canonical = ScanAnalyzer.canonicalizeLabel(rawLabel);
@@ -327,7 +358,7 @@ public class ScanFragment extends Fragment {
             if (custom != null && !TextUtils.isEmpty(custom.meaning)) {
                 android.util.Log.d("ScanFragment", "Found custom vocabulary: " + custom.meaning);
                 ScanResult result = buildCustomScanResult(canonical, custom.meaning);
-                scanViewModel.completeAnalysis(result, rawLabel, result.getWord(), "Word found");
+                scanViewModel.completeAnalysis(result, rawLabel, result.getWord(), confidence, "Word found");
                 isProcessing = false;
                 return;
             }
@@ -347,6 +378,7 @@ public class ScanFragment extends Fragment {
                         fallback,
                         rawLabel,
                         fallback.getWord(),
+                    confidence,
                         "Khong nhan dang duoc vat the. Vui long chup ro hon hoac doi goc khac."
                 );
                 isProcessing = false;
@@ -354,7 +386,13 @@ public class ScanFragment extends Fragment {
             }
 
             android.util.Log.d("ScanFragment", "Word detected: " + (staticResult != null ? staticResult.getWord() : "null"));
-            scanViewModel.completeAnalysis(staticResult, rawLabel, staticResult != null ? staticResult.getWord() : "object", "Word detected");
+            scanViewModel.completeAnalysis(
+                    staticResult,
+                    rawLabel,
+                    staticResult != null ? staticResult.getWord() : "object",
+                    confidence,
+                    "Word detected"
+            );
             isProcessing = false;
         } catch (Exception e) {
             android.util.Log.e("ScanFragment", "Error processing detected label: " + e.getMessage(), e);
@@ -436,8 +474,19 @@ public class ScanFragment extends Fragment {
         relatedText.setText("Related: " + formatRelatedWords(result.getRelatedWords()));
     }
 
-    private void bindDecisionInfo(@Nullable String rawAiLabel) {
+    private void bindDecisionInfo(@Nullable String rawAiLabel, @Nullable String mappedWord, float confidence) {
         rawLabelText.setText("Detected: " + (TextUtils.isEmpty(rawAiLabel) ? "object" : rawAiLabel));
+        mappedWordText.setText("Tu da map: " + (TextUtils.isEmpty(mappedWord) ? "object" : mappedWord));
+        confidenceText.setText("Do tin cay: " + formatConfidence(confidence));
+    }
+
+    private void bindPreviewHint(@Nullable String previewSuggestion) {
+        if (previewHintText == null) {
+            return;
+        }
+        previewHintText.setText(TextUtils.isEmpty(previewSuggestion)
+                ? "Goi y realtime: huong camera vao vat the"
+                : previewSuggestion);
     }
 
     private void pronounceWord() {
@@ -558,12 +607,136 @@ public class ScanFragment extends Fragment {
         return Math.max(1, inSampleSize);
     }
 
+    private void startPreviewHintLoop() {
+        if (previewHintHandler != null) {
+            return;
+        }
+
+        previewHintHandler = new Handler(Looper.getMainLooper());
+        previewHintRunnable = new Runnable() {
+            @Override
+            public void run() {
+                tryRunRealtimePreviewSuggestion();
+                if (previewHintHandler != null) {
+                    previewHintHandler.postDelayed(this, PREVIEW_HINT_INTERVAL_MS);
+                }
+            }
+        };
+        previewHintHandler.postDelayed(previewHintRunnable, 1800L);
+    }
+
+    private void stopPreviewHintLoop() {
+        if (previewHintHandler != null && previewHintRunnable != null) {
+            previewHintHandler.removeCallbacks(previewHintRunnable);
+        }
+        previewHintRunnable = null;
+        previewHintHandler = null;
+    }
+
+    private void tryRunRealtimePreviewSuggestion() {
+        if (!isAdded() || isProcessing || isPreviewAnalyzing || geminiService == null || cameraPreview == null) {
+            return;
+        }
+
+        Bitmap previewBitmap = cameraPreview.getBitmap();
+        if (previewBitmap == null) {
+            return;
+        }
+
+        ImageQualityCheck qualityCheck = evaluateImageQuality(previewBitmap);
+        if (!qualityCheck.isAcceptable()) {
+            scanViewModel.updatePreviewSuggestion("Goi y realtime: anh dang mo/toi, hay dua camera gan vat the");
+            return;
+        }
+
+        isPreviewAnalyzing = true;
+        imageExecutor.execute(() -> {
+            try {
+                GeminiVisionService.VisionResult preview = geminiService.analyzePreviewVietnamese(previewBitmap);
+                int percent = Math.round(preview.getConfidence() * 100f);
+                String source = preview.isFromCache() ? " - cache" : "";
+                String suggestion = "Goi y realtime: " + preview.getPrimaryLabel() + " (" + percent + "%)" + source;
+                scanViewModel.updatePreviewSuggestion(suggestion);
+            } catch (Exception e) {
+                android.util.Log.w("ScanFragment", "Realtime preview suggestion failed: " + e.getMessage());
+            } finally {
+                isPreviewAnalyzing = false;
+            }
+        });
+    }
+
+    private String formatConfidence(float confidence) {
+        int percent = Math.round(Math.max(0f, Math.min(1f, confidence)) * 100f);
+        if (percent >= 80) {
+            return percent + "% (Cao)";
+        }
+        if (percent >= 60) {
+            return percent + "% (Trung binh)";
+        }
+        return percent + "% (Thap)";
+    }
+
+    private ImageQualityCheck evaluateImageQuality(@NonNull Bitmap source) {
+        Bitmap sample = Bitmap.createScaledBitmap(source, 64, 64, true);
+        int width = sample.getWidth();
+        int height = sample.getHeight();
+        int total = width * height;
+
+        float sum = 0f;
+        float sumSq = 0f;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int color = sample.getPixel(x, y);
+                int r = (color >> 16) & 0xFF;
+                int g = (color >> 8) & 0xFF;
+                int b = color & 0xFF;
+                float luma = (0.299f * r) + (0.587f * g) + (0.114f * b);
+                sum += luma;
+                sumSq += luma * luma;
+            }
+        }
+
+        float mean = sum / total;
+        float variance = (sumSq / total) - (mean * mean);
+
+        if (mean < 45f) {
+            return new ImageQualityCheck(false, "Anh qua toi. Vui long tang anh sang hoac doi goc chup.");
+        }
+        if (mean > 225f) {
+            return new ImageQualityCheck(false, "Anh qua sang. Vui long giam anh sang va chup lai.");
+        }
+        if (variance < 180f) {
+            return new ImageQualityCheck(false, "Anh bi mo, vui long giu may on dinh va chup ro hon.");
+        }
+
+        return new ImageQualityCheck(true, "OK");
+    }
+
+    private static class ImageQualityCheck {
+        private final boolean acceptable;
+        private final String message;
+
+        private ImageQualityCheck(boolean acceptable, String message) {
+            this.acceptable = acceptable;
+            this.message = message;
+        }
+
+        private boolean isAcceptable() {
+            return acceptable;
+        }
+
+        private String getMessage() {
+            return message;
+        }
+    }
+
     private interface MeaningSaveCallback {
         void onSave(String meaning);
     }
 
     @Override
     public void onDestroyView() {
+        stopPreviewHintLoop();
         if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();
