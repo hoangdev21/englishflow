@@ -1,6 +1,8 @@
 package com.example.englishflow.data;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -66,9 +68,87 @@ public class DictionaryRepository {
 
             @Override
             public void onError(Exception exception) {
-                callback.onError("Loi tra tu dien: " + safeMessage(exception));
+                String message = safeMessage(exception);
+                if (exception instanceof UnknownHostException || message.contains("Unable to connect dictionary service")) {
+                    // Fallback: return a minimal translation-based result so UI still works without DNS.
+                    myMemoryService.translateEnToVi(lookupQuery, new MyMemoryService.RawTranslationCallback() {
+                        @Override
+                        public void onSuccess(String translatedText) {
+                            DictionaryResult result = new DictionaryResult();
+                            result.setWord(lookupQuery);
+                            result.setIpa("");
+                            result.setAudioUrl("");
+                            ArrayList<DictionaryResult.Definition> definitions = new ArrayList<>();
+                            definitions.add(new DictionaryResult.Definition("translation", translatedText, ""));
+                            result.setDefinitions(definitions);
+                            result.setSynonyms(new ArrayList<>());
+                            callback.onSuccess(result);
+                        }
+
+                        @Override
+                        public void onError(Exception fallbackError) {
+                            DictionaryResult offlineResult = buildOfflineFallback(lookupQuery);
+                            if (offlineResult != null) {
+                                callback.onSuccess(offlineResult);
+                                return;
+                            }
+                            callback.onError("Lỗi tra từ điển: " + safeMessage(fallbackError));
+                        }
+                    });
+                    return;
+                }
+                DictionaryResult offlineResult = buildOfflineFallback(lookupQuery);
+                if (offlineResult != null) {
+                    callback.onSuccess(offlineResult);
+                    return;
+                }
+                callback.onError("Lỗi tra từ điển: " + message);
             }
         });
+    }
+
+    private DictionaryResult buildOfflineFallback(String query) {
+        String word = query == null ? "" : query.trim().toLowerCase(Locale.US);
+        if (word.isEmpty()) {
+            return null;
+        }
+
+        DictionaryResult result = new DictionaryResult();
+        result.setWord(word);
+        result.setIpa("");
+        result.setAudioUrl("");
+
+        ArrayList<DictionaryResult.Definition> definitions = new ArrayList<>();
+        ArrayList<String> synonyms = new ArrayList<>();
+
+        switch (word) {
+            case "happy":
+                definitions.add(new DictionaryResult.Definition("adjective", "vui vẻ, hạnh phúc", "She feels happy today."));
+                synonyms.addAll(Arrays.asList("glad", "joyful", "cheerful"));
+                break;
+            case "sad":
+                definitions.add(new DictionaryResult.Definition("adjective", "buồn", "He looks sad after the movie."));
+                synonyms.addAll(Arrays.asList("unhappy", "down", "sorrowful"));
+                break;
+            case "book":
+                definitions.add(new DictionaryResult.Definition("noun", "quyển sách", "I read a book every night."));
+                synonyms.addAll(Arrays.asList("volume", "publication"));
+                break;
+            case "good":
+                definitions.add(new DictionaryResult.Definition("adjective", "tốt", "This is a good idea."));
+                synonyms.addAll(Arrays.asList("great", "nice", "fine"));
+                break;
+            case "bad":
+                definitions.add(new DictionaryResult.Definition("adjective", "xấu, tệ", "The weather is bad today."));
+                synonyms.addAll(Arrays.asList("poor", "awful", "terrible"));
+                break;
+            default:
+                return null;
+        }
+
+        result.setDefinitions(definitions);
+        result.setSynonyms(synonyms);
+        return result;
     }
 
     private boolean containsVietnameseChars(String text) {
