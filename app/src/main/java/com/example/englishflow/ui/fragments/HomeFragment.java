@@ -2,22 +2,27 @@ package com.example.englishflow.ui.fragments;
 
 import android.app.TimePickerDialog;
 import android.os.Bundle;
-import android.speech.tts.TextToSpeech;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
-import com.example.englishflow.data.WordEntry;
+import com.example.englishflow.data.DictionaryRepository;
+import com.example.englishflow.data.DictionaryResult;
+import com.example.englishflow.data.FreeDictionaryService;
+import com.example.englishflow.data.MyMemoryService;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
@@ -26,10 +31,14 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
+import okhttp3.OkHttpClient;
+
 public class HomeFragment extends Fragment {
 
+    private static final OkHttpClient SHARED_HTTP_CLIENT = new OkHttpClient();
+
     private AppRepository repository;
-    private TextToSpeech textToSpeech;
+    private DictionaryRepository dictionaryRepository;
     private TextView reminderText;
 
     @Nullable
@@ -46,6 +55,10 @@ public class HomeFragment extends Fragment {
         // Initialize repository safely
         try {
             repository = AppRepository.getInstance(requireContext());
+            dictionaryRepository = new DictionaryRepository(
+                    new FreeDictionaryService(SHARED_HTTP_CLIENT),
+                    new MyMemoryService(SHARED_HTTP_CLIENT)
+            );
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(requireContext(), "Lỗi khởi tạo ứng dụng", Toast.LENGTH_SHORT).show();
@@ -103,27 +116,23 @@ public class HomeFragment extends Fragment {
             MaterialButton continueBtn = view.findViewById(R.id.btnContinue);
             if (continueBtn != null) continueBtn.setOnClickListener(v -> navigateToTab(1));
             
-            // Word of the Day buttons
-            MaterialButton pronounceBtn = view.findViewById(R.id.btnPronounceWord);
-            MaterialButton saveWordBtn = view.findViewById(R.id.btnSaveWord);
-            
-            textToSpeech = new TextToSpeech(requireContext(), status -> {
-                if (status == TextToSpeech.SUCCESS) {
-                    textToSpeech.setLanguage(Locale.US);
-                }
-            });
-            
-            if (pronounceBtn != null) {
-                pronounceBtn.setOnClickListener(v -> {
-                    if (textToSpeech != null) {
-                        textToSpeech.speak("hello", TextToSpeech.QUEUE_FLUSH, null, "home-word");
+            MaterialButton openDictionaryIconBtn = view.findViewById(R.id.btnOpenDictionarySheet);
+            MaterialButton openDictionaryTextBtn = view.findViewById(R.id.btnOpenDictionaryText);
+            MaterialButton homeDictSearchBtn = view.findViewById(R.id.btnHomeDictSearch);
+            EditText homeDictInput = view.findViewById(R.id.homeDictInput);
+            View.OnClickListener searchDictionaryAction = v -> performHomeDictionarySearch(view);
+
+            if (openDictionaryIconBtn != null) openDictionaryIconBtn.setOnClickListener(searchDictionaryAction);
+            if (openDictionaryTextBtn != null) openDictionaryTextBtn.setOnClickListener(searchDictionaryAction);
+            if (homeDictSearchBtn != null) homeDictSearchBtn.setOnClickListener(searchDictionaryAction);
+
+            if (homeDictInput != null) {
+                homeDictInput.setOnEditorActionListener((textView, actionId, keyEvent) -> {
+                    if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                        performHomeDictionarySearch(view);
+                        return true;
                     }
-                });
-            }
-            
-            if (saveWordBtn != null) {
-                saveWordBtn.setOnClickListener(v -> {
-                    Toast.makeText(requireContext(), "Đã lưu từ vào từ điển cá nhân", Toast.LENGTH_SHORT).show();
+                    return false;
                 });
             }
             
@@ -144,6 +153,117 @@ public class HomeFragment extends Fragment {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void performHomeDictionarySearch(View rootView) {
+        if (dictionaryRepository == null || !isAdded()) {
+            return;
+        }
+
+        EditText homeDictInput = rootView.findViewById(R.id.homeDictInput);
+        ProgressBar homeDictLoading = rootView.findViewById(R.id.homeDictLoading);
+        TextView homeDictError = rootView.findViewById(R.id.homeDictError);
+
+        String query = homeDictInput != null ? String.valueOf(homeDictInput.getText()).trim() : "";
+        if (TextUtils.isEmpty(query)) {
+            if (homeDictError != null) {
+                homeDictError.setText("Vui lòng nhập từ cần tra");
+                homeDictError.setVisibility(View.VISIBLE);
+            }
+            return;
+        }
+
+        if (homeDictError != null) homeDictError.setVisibility(View.GONE);
+        if (homeDictLoading != null) homeDictLoading.setVisibility(View.VISIBLE);
+
+        dictionaryRepository.search(query, new DictionaryRepository.SearchCallback() {
+            @Override
+            public void onSuccess(DictionaryResult result) {
+                if (!isAdded()) return;
+                requireActivity().runOnUiThread(() -> {
+                    bindHomeDictionaryResult(rootView, result);
+                    if (homeDictLoading != null) homeDictLoading.setVisibility(View.GONE);
+                    if (homeDictError != null) homeDictError.setVisibility(View.GONE);
+                });
+            }
+
+            @Override
+            public void onNotFound(String missingQuery) {
+                if (!isAdded()) return;
+                requireActivity().runOnUiThread(() -> {
+                    if (homeDictLoading != null) homeDictLoading.setVisibility(View.GONE);
+                    if (homeDictError != null) {
+                        homeDictError.setText("Không tìm thấy từ: " + missingQuery);
+                        homeDictError.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                if (!isAdded()) return;
+                requireActivity().runOnUiThread(() -> {
+                    if (homeDictLoading != null) homeDictLoading.setVisibility(View.GONE);
+                    if (homeDictError != null) {
+                        homeDictError.setText(message);
+                        homeDictError.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+        });
+    }
+
+    private void bindHomeDictionaryResult(View rootView, DictionaryResult result) {
+        TextView dictTitle = rootView.findViewById(R.id.txtDictionaryTitle);
+        TextView dictHint = rootView.findViewById(R.id.txtDictionaryHint);
+        TextView dictExample = rootView.findViewById(R.id.txtDictionaryExample);
+
+        if (dictTitle != null) {
+            dictTitle.setText(safeText(result.getWord(), "Không rõ từ"));
+        }
+
+        DictionaryResult.Definition firstDefinition = null;
+        if (result.getDefinitions() != null && !result.getDefinitions().isEmpty()) {
+            firstDefinition = result.getDefinitions().get(0);
+        }
+
+        String ipa = safeText(result.getIpa(), "");
+        String meaning = firstDefinition != null ? safeText(firstDefinition.getMeaning(), "") : "";
+        String partOfSpeech = firstDefinition != null ? safeText(firstDefinition.getPartOfSpeech(), "") : "";
+        String example = firstDefinition != null ? safeText(firstDefinition.getExample(), "") : "";
+
+        if (dictHint != null) {
+            StringBuilder hint = new StringBuilder();
+            if (!ipa.isEmpty()) {
+                hint.append(ipa).append("  ");
+            }
+            if (!partOfSpeech.isEmpty()) {
+                hint.append("[").append(partOfSpeech).append("] ");
+            }
+            if (!meaning.isEmpty()) {
+                hint.append(meaning);
+            }
+            if (hint.length() == 0) {
+                hint.append("Đã tra xong, nhưng chưa có định nghĩa phù hợp.");
+            }
+            dictHint.setText(hint.toString());
+        }
+
+        if (dictExample != null) {
+            if (!example.isEmpty()) {
+                dictExample.setText(example);
+            } else if (!meaning.isEmpty()) {
+                dictExample.setText(meaning);
+            } else {
+                dictExample.setText("Chưa có ví dụ cho từ này.");
+            }
+        }
+    }
+
+    private String safeText(String value, String fallback) {
+        if (value == null) return fallback;
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? fallback : trimmed;
     }
 
     private void setDefaultStats(View view) {
@@ -255,15 +375,6 @@ public class HomeFragment extends Fragment {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public void onDestroyView() {
-        if (textToSpeech != null) {
-            textToSpeech.stop();
-            textToSpeech.shutdown();
-        }
-        super.onDestroyView();
     }
 
     private String buildGreeting(String name) {

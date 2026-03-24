@@ -510,7 +510,7 @@
                 android:paddingEnd="4dp" />
         </LinearLayout>
 
-        <!-- Word of the Day Card - Redesigned -->
+        <!-- Dictionary Quick Access Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -525,13 +525,12 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- Header Section with Icon -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/ef_primary_container"
-                    android:orientation="horizontal"
                     android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     android:padding="16dp">
 
                     <TextView
@@ -550,7 +549,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/home_word_of_day"
+                            android:text="Tra từ điển"
                             android:textColor="@color/ef_on_primary_container"
                             android:textSize="12sp"
                             android:alpha="0.85" />
@@ -559,35 +558,89 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Từ vựng nâng cao"
+                            android:text="Anh - Việt nhanh"
                             android:textColor="@color/ef_on_primary_container"
                             android:textSize="13sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnPronounceWord"
+                        android:id="@+id/btnOpenDictionarySheet"
                         style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
                         android:minWidth="44dp"
                         android:minHeight="44dp"
                         android:padding="0dp"
-                        android:text="🔊"
+                        android:text="🔎"
                         android:textSize="20sp" />
                 </LinearLayout>
 
-                <!-- Content Section -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <!-- Word Container with Background -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <EditText
+                            android:id="@+id/homeDictInput"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_search_input"
+                            android:hint="Nhập từ Anh hoặc Việt"
+                            android:imeOptions="actionSearch"
+                            android:inputType="text"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:singleLine="true"
+                            android:textColor="@color/ef_text_primary"
+                            android:textColorHint="@color/ef_text_secondary"
+                            android:textSize="14sp" />
+
+                        <Space
+                            android:layout_width="8dp"
+                            android:layout_height="1dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnHomeDictSearch"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:minWidth="44dp"
+                            android:minHeight="44dp"
+                            android:padding="0dp"
+                            android:text="🔍"
+                            android:textSize="18sp" />
+                    </LinearLayout>
+
+                    <ProgressBar
+                        android:id="@+id/homeDictLoading"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="10dp"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/homeDictError"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textColor="?attr/colorError"
+                        android:textSize="13sp"
+                        android:visibility="gone" />
+
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
                         android:layout_marginBottom="14dp"
                         app:cardBackgroundColor="@color/ef_primary_container"
                         app:cardCornerRadius="16dp"
@@ -601,26 +654,27 @@
                             android:padding="14dp">
 
                             <TextView
-                                android:id="@+id/txtWord"
+                                android:id="@+id/txtDictionaryTitle"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textColor="@color/ef_on_primary_container"
-                                android:textSize="32sp"
+                                android:text="Mở tra từ điển"
+                                android:textColor="@color/ef_text_primary"
+                                android:textSize="22sp"
                                 android:textStyle="bold" />
 
                             <TextView
-                                android:id="@+id/txtWordIpaMeaning"
+                                android:id="@+id/txtDictionaryHint"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
-                                android:textColor="@color/ef_on_primary_container"
+                                android:text="Nhập từ tiếng Anh hoặc tiếng Việt để tra IPA, nghĩa, ví dụ và từ đồng nghĩa."
+                                android:textColor="@color/ef_text_primary"
                                 android:textSize="13sp"
                                 android:alpha="0.85"
                                 android:lineSpacingExtra="2dp" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Example Section -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -630,7 +684,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Ví dụ:"
+                            android:text="Mẹo:"
                             android:textColor="@color/ef_text_secondary"
                             android:textSize="11sp"
                             android:textStyle="bold"
@@ -646,9 +700,10 @@
                             app:strokeWidth="0dp">
 
                             <TextView
-                                android:id="@+id/txtWordExample"
+                                android:id="@+id/txtDictionaryExample"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:text="Bạn có thể bấm vào từ đồng nghĩa trong kết quả để tra tiếp ngay lập tức."
                                 android:textColor="@color/ef_text_primary"
                                 android:textSize="13sp"
                                 android:padding="12dp"
@@ -656,7 +711,6 @@
                         </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
 
-                    <!-- Action Buttons Section -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -665,14 +719,14 @@
                         android:spacing="8dp">
 
                         <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnSaveWord"
+                            android:id="@+id/btnOpenDictionaryText"
                             style="@style/Widget.Material3.Button"
                             android:layout_width="wrap_content"
                             android:layout_height="48dp"
                             android:minHeight="48dp"
                             android:paddingStart="24dp"
                             android:paddingEnd="24dp"
-                            android:text="@string/btn_save_word"
+                            android:text="Tra từ"
                             android:textSize="13sp" />
                     </LinearLayout>
                 </LinearLayout>

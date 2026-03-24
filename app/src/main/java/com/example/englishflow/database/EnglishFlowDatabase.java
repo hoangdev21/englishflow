@@ -12,6 +12,7 @@ import com.example.englishflow.database.dao.ChatMessageDao;
 import com.example.englishflow.database.dao.CustomVocabularyDao;
 import com.example.englishflow.database.dao.FailedLabelLogDao;
 import com.example.englishflow.database.dao.LearnedWordDao;
+import com.example.englishflow.database.dao.LocalUserDao;
 import com.example.englishflow.database.dao.SeedPackageStateDao;
 import com.example.englishflow.database.dao.StudySessionDao;
 import com.example.englishflow.database.dao.UserStatsDao;
@@ -19,6 +20,7 @@ import com.example.englishflow.database.entity.ChatMessageEntity;
 import com.example.englishflow.database.entity.CustomVocabularyEntity;
 import com.example.englishflow.database.entity.FailedLabelLogEntity;
 import com.example.englishflow.database.entity.LearnedWordEntity;
+import com.example.englishflow.database.entity.LocalUserEntity;
 import com.example.englishflow.database.entity.SeedPackageStateEntity;
 import com.example.englishflow.database.entity.StudySessionEntity;
 import com.example.englishflow.database.entity.UserStatsEntity;
@@ -31,9 +33,10 @@ import com.example.englishflow.database.entity.UserStatsEntity;
         ChatMessageEntity.class,
         CustomVocabularyEntity.class,
         FailedLabelLogEntity.class,
-        SeedPackageStateEntity.class
+        SeedPackageStateEntity.class,
+        LocalUserEntity.class
     },
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 public abstract class EnglishFlowDatabase extends RoomDatabase {
@@ -45,6 +48,7 @@ public abstract class EnglishFlowDatabase extends RoomDatabase {
     public abstract CustomVocabularyDao customVocabularyDao();
     public abstract FailedLabelLogDao failedLabelLogDao();
     public abstract SeedPackageStateDao seedPackageStateDao();
+    public abstract LocalUserDao localUserDao();
     
     private static volatile EnglishFlowDatabase INSTANCE;
 
@@ -73,6 +77,13 @@ public abstract class EnglishFlowDatabase extends RoomDatabase {
             database.execSQL("CREATE TABLE IF NOT EXISTS seed_package_state (packageName TEXT NOT NULL, version INTEGER NOT NULL, updatedAt INTEGER NOT NULL, PRIMARY KEY(packageName))");
         }
     };
+
+    static final Migration MIGRATION_4_5 = new Migration(4, 5) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE IF NOT EXISTS local_users (email TEXT NOT NULL, displayName TEXT NOT NULL, passwordHash TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, PRIMARY KEY(email))");
+        }
+    };
     
     public static EnglishFlowDatabase getInstance(Context context) {
         if (INSTANCE == null) {
@@ -84,7 +95,7 @@ public abstract class EnglishFlowDatabase extends RoomDatabase {
                         "englishflow_db"
                     )
                     .allowMainThreadQueries()
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .build();
                 }
             }
