@@ -24,18 +24,46 @@ public class MyMemoryService {
         void onError(Exception exception);
     }
 
+    public interface RawTranslationCallback {
+        void onSuccess(String translatedText);
+        void onError(Exception exception);
+    }
+
     public MyMemoryService(OkHttpClient okHttpClient) {
         this.okHttpClient = okHttpClient;
     }
 
     public void translateViToEn(String text, TranslationCallback callback) {
+        translate(text, "vi|en", new RawTranslationCallback() {
+            @Override
+            public void onSuccess(String translatedText) {
+                String normalizedWord = extractFirstWord(translatedText);
+                if (normalizedWord.isEmpty()) {
+                    callback.onError(new IllegalStateException("Unable to translate query"));
+                    return;
+                }
+                callback.onSuccess(normalizedWord);
+            }
+
+            @Override
+            public void onError(Exception exception) {
+                callback.onError(exception);
+            }
+        });
+    }
+
+    public void translateEnToVi(String text, RawTranslationCallback callback) {
+        translate(text, "en|vi", callback);
+    }
+
+    private void translate(String text, String langPair, RawTranslationCallback callback) {
         if (text == null || text.trim().isEmpty()) {
             callback.onError(new IllegalArgumentException("Text is empty"));
             return;
         }
 
         String encodedText = URLEncoder.encode(text.trim(), StandardCharsets.UTF_8);
-        String url = BASE_URL + "?q=" + encodedText + "&langpair=vi|en";
+        String url = BASE_URL + "?q=" + encodedText + "&langpair=" + langPair;
 
         Request request = new Request.Builder()
                 .url(url)
@@ -58,12 +86,11 @@ public class MyMemoryService {
 
                     String body = closeableResponse.body() != null ? closeableResponse.body().string() : "";
                     String translated = parseTranslatedText(body);
-                    String normalizedWord = extractFirstWord(translated);
-                    if (normalizedWord.isEmpty()) {
+                    if (translated == null || translated.trim().isEmpty()) {
                         callback.onError(new IllegalStateException("Unable to translate query"));
                         return;
                     }
-                    callback.onSuccess(normalizedWord);
+                    callback.onSuccess(translated.trim());
                 } catch (Exception exception) {
                     callback.onError(exception);
                 }

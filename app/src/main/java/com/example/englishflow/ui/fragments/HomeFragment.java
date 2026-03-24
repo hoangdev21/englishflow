@@ -36,6 +36,9 @@ import okhttp3.OkHttpClient;
 public class HomeFragment extends Fragment {
 
     private static final OkHttpClient SHARED_HTTP_CLIENT = new OkHttpClient();
+    private static final String DEFAULT_DICT_TITLE = "Mở tra từ điển";
+    private static final String DEFAULT_DICT_HINT = "Nhập từ tiếng Anh hoặc tiếng Việt để tra IPA, nghĩa, ví dụ và từ đồng nghĩa.";
+    private static final String DEFAULT_DICT_EXAMPLE = "Bạn có thể bấm vào từ đồng nghĩa trong kết quả để tra tiếp ngay lập tức.";
 
     private AppRepository repository;
     private DictionaryRepository dictionaryRepository;
@@ -92,6 +95,7 @@ public class HomeFragment extends Fragment {
             
             // Default stats
             setDefaultStats(view);
+            resetDictionaryCard(view);
             
             // Set up quick action buttons
             setupQuickActionButtons(view);
@@ -166,6 +170,7 @@ public class HomeFragment extends Fragment {
 
         String query = homeDictInput != null ? String.valueOf(homeDictInput.getText()).trim() : "";
         if (TextUtils.isEmpty(query)) {
+            resetDictionaryCard(rootView);
             if (homeDictError != null) {
                 homeDictError.setText("Vui lòng nhập từ cần tra");
                 homeDictError.setVisibility(View.VISIBLE);
@@ -173,6 +178,17 @@ public class HomeFragment extends Fragment {
             return;
         }
 
+        String validationError = getLookupValidationError(query);
+        if (validationError != null) {
+            resetDictionaryCard(rootView);
+            if (homeDictError != null) {
+                homeDictError.setText(validationError);
+                homeDictError.setVisibility(View.VISIBLE);
+            }
+            return;
+        }
+
+        resetDictionaryCard(rootView);
         if (homeDictError != null) homeDictError.setVisibility(View.GONE);
         if (homeDictLoading != null) homeDictLoading.setVisibility(View.VISIBLE);
 
@@ -192,6 +208,7 @@ public class HomeFragment extends Fragment {
                 if (!isAdded()) return;
                 requireActivity().runOnUiThread(() -> {
                     if (homeDictLoading != null) homeDictLoading.setVisibility(View.GONE);
+                    resetDictionaryCard(rootView);
                     if (homeDictError != null) {
                         homeDictError.setText("Không tìm thấy từ: " + missingQuery);
                         homeDictError.setVisibility(View.VISIBLE);
@@ -204,6 +221,7 @@ public class HomeFragment extends Fragment {
                 if (!isAdded()) return;
                 requireActivity().runOnUiThread(() -> {
                     if (homeDictLoading != null) homeDictLoading.setVisibility(View.GONE);
+                    resetDictionaryCard(rootView);
                     if (homeDictError != null) {
                         homeDictError.setText(message);
                         homeDictError.setVisibility(View.VISIBLE);
@@ -264,6 +282,47 @@ public class HomeFragment extends Fragment {
         if (value == null) return fallback;
         String trimmed = value.trim();
         return trimmed.isEmpty() ? fallback : trimmed;
+    }
+
+    private String getLookupValidationError(String query) {
+        if (query == null) {
+            return "Từ không hợp lệ.";
+        }
+
+        String normalized = query.trim();
+        if (normalized.length() < 2 || normalized.length() > 40) {
+            return "Từ cần có độ dài từ 2 đến 40 ký tự.";
+        }
+
+        // Allow letters from any language (including Vietnamese), spaces, apostrophes and hyphens.
+        if (!normalized.matches("^[\\p{L}\\s'-]+$")) {
+            return "Từ không hợp lệ. Chỉ nhập chữ cái, khoảng trắng, dấu - hoặc '.";
+        }
+
+        // Ensure there is at least one letter.
+        if (!normalized.matches(".*\\p{L}.*")) {
+            return "Từ không hợp lệ.";
+        }
+
+        // Extra heuristic for English-only token to reduce obvious random consonant strings.
+        String compact = normalized.replaceAll("[\\s'-]", "");
+        if (compact.matches("[A-Za-z]{4,}")) {
+            if (!compact.toLowerCase(Locale.US).matches(".*[aeiouy].*")) {
+                return "Từ tiếng Anh có vẻ chưa hợp lệ (không có nguyên âm).";
+            }
+        }
+
+        return null;
+    }
+
+    private void resetDictionaryCard(View rootView) {
+        TextView dictTitle = rootView.findViewById(R.id.txtDictionaryTitle);
+        TextView dictHint = rootView.findViewById(R.id.txtDictionaryHint);
+        TextView dictExample = rootView.findViewById(R.id.txtDictionaryExample);
+
+        if (dictTitle != null) dictTitle.setText(DEFAULT_DICT_TITLE);
+        if (dictHint != null) dictHint.setText(DEFAULT_DICT_HINT);
+        if (dictExample != null) dictExample.setText(DEFAULT_DICT_EXAMPLE);
     }
 
     private void setDefaultStats(View view) {
