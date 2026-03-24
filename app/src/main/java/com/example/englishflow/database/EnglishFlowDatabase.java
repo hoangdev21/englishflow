@@ -5,13 +5,21 @@ import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.migration.Migration;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.englishflow.database.dao.ChatMessageDao;
+import com.example.englishflow.database.dao.CustomVocabularyDao;
+import com.example.englishflow.database.dao.FailedLabelLogDao;
 import com.example.englishflow.database.dao.LearnedWordDao;
+import com.example.englishflow.database.dao.SeedPackageStateDao;
 import com.example.englishflow.database.dao.StudySessionDao;
 import com.example.englishflow.database.dao.UserStatsDao;
 import com.example.englishflow.database.entity.ChatMessageEntity;
+import com.example.englishflow.database.entity.CustomVocabularyEntity;
+import com.example.englishflow.database.entity.FailedLabelLogEntity;
 import com.example.englishflow.database.entity.LearnedWordEntity;
+import com.example.englishflow.database.entity.SeedPackageStateEntity;
 import com.example.englishflow.database.entity.StudySessionEntity;
 import com.example.englishflow.database.entity.UserStatsEntity;
 
@@ -20,9 +28,12 @@ import com.example.englishflow.database.entity.UserStatsEntity;
         LearnedWordEntity.class,
         StudySessionEntity.class,
         UserStatsEntity.class,
-        ChatMessageEntity.class
+        ChatMessageEntity.class,
+        CustomVocabularyEntity.class,
+        FailedLabelLogEntity.class,
+        SeedPackageStateEntity.class
     },
-    version = 1,
+    version = 4,
     exportSchema = false
 )
 public abstract class EnglishFlowDatabase extends RoomDatabase {
@@ -31,8 +42,37 @@ public abstract class EnglishFlowDatabase extends RoomDatabase {
     public abstract StudySessionDao studySessionDao();
     public abstract UserStatsDao userStatsDao();
     public abstract ChatMessageDao chatMessageDao();
+    public abstract CustomVocabularyDao customVocabularyDao();
+    public abstract FailedLabelLogDao failedLabelLogDao();
+    public abstract SeedPackageStateDao seedPackageStateDao();
     
     private static volatile EnglishFlowDatabase INSTANCE;
+
+    static final Migration MIGRATION_1_2 = new Migration(1, 2) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE IF NOT EXISTS custom_vocabulary (word TEXT NOT NULL, meaning TEXT, ipa TEXT, example TEXT, updatedAt INTEGER NOT NULL, PRIMARY KEY(word))");
+        }
+    };
+
+    static final Migration MIGRATION_2_3 = new Migration(2, 3) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE custom_vocabulary ADD COLUMN isLocked INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE custom_vocabulary ADD COLUMN source TEXT");
+            database.execSQL("ALTER TABLE custom_vocabulary ADD COLUMN domain TEXT");
+            database.execSQL("UPDATE custom_vocabulary SET source = 'user' WHERE source IS NULL");
+            database.execSQL("UPDATE custom_vocabulary SET domain = 'general' WHERE domain IS NULL");
+        }
+    };
+
+    static final Migration MIGRATION_3_4 = new Migration(3, 4) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE IF NOT EXISTS failed_label_logs (label TEXT NOT NULL, failCount INTEGER NOT NULL, suggestedAlias TEXT, resolved INTEGER NOT NULL, lastSeenAt INTEGER NOT NULL, PRIMARY KEY(label))");
+            database.execSQL("CREATE TABLE IF NOT EXISTS seed_package_state (packageName TEXT NOT NULL, version INTEGER NOT NULL, updatedAt INTEGER NOT NULL, PRIMARY KEY(packageName))");
+        }
+    };
     
     public static EnglishFlowDatabase getInstance(Context context) {
         if (INSTANCE == null) {
@@ -44,7 +84,7 @@ public abstract class EnglishFlowDatabase extends RoomDatabase {
                         "englishflow_db"
                     )
                     .allowMainThreadQueries()
-                    .fallbackToDestructiveMigration()
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build();
                 }
             }
