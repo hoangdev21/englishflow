@@ -1,0 +1,107 @@
+package com.example.englishflow;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.englishflow.data.AppRepository;
+import com.example.englishflow.data.FirebaseUserStore;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+public class RegisterActivity extends AppCompatActivity {
+
+    private FirebaseAuth firebaseAuth;
+    private FirebaseUserStore firebaseUserStore;
+    private AppRepository repository;
+
+    private TextInputEditText nameInput;
+    private TextInputEditText emailInput;
+    private TextInputEditText passwordInput;
+    private TextInputEditText confirmPasswordInput;
+    private MaterialButton registerButton;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_register);
+
+        firebaseAuth = FirebaseAuth.getInstance();
+        firebaseUserStore = new FirebaseUserStore();
+        repository = AppRepository.getInstance(getApplicationContext());
+
+        nameInput = findViewById(R.id.registerNameInput);
+        emailInput = findViewById(R.id.registerEmailInput);
+        passwordInput = findViewById(R.id.registerPasswordInput);
+        confirmPasswordInput = findViewById(R.id.registerConfirmPasswordInput);
+        registerButton = findViewById(R.id.btnRegister);
+
+        TextView loginLink = findViewById(R.id.btnGoToLogin);
+
+        registerButton.setOnClickListener(v -> registerAccount());
+        loginLink.setOnClickListener(v -> {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        });
+    }
+
+    private void registerAccount() {
+        String displayName = valueOf(nameInput);
+        String email = valueOf(emailInput);
+        String password = valueOf(passwordInput);
+        String confirmPassword = valueOf(confirmPasswordInput);
+
+        if (TextUtils.isEmpty(displayName) || TextUtils.isEmpty(email) || TextUtils.isEmpty(password) || TextUtils.isEmpty(confirmPassword)) {
+            Toast.makeText(this, R.string.auth_fill_all_fields, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (password.length() < 6) {
+            Toast.makeText(this, R.string.auth_password_short, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!password.equals(confirmPassword)) {
+            Toast.makeText(this, R.string.auth_password_not_match, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        setLoading(true);
+        firebaseAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    setLoading(false);
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = firebaseAuth.getCurrentUser();
+                        if (user != null) {
+                            repository.setUserName(displayName);
+                            firebaseUserStore.createUserProfile(user.getUid(), email, displayName);
+                        }
+                        Toast.makeText(this, R.string.auth_register_success, Toast.LENGTH_SHORT).show();
+                        startMainActivity();
+                    } else {
+                        Toast.makeText(this, R.string.auth_register_failed, Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void setLoading(boolean loading) {
+        registerButton.setEnabled(!loading);
+        registerButton.setText(loading ? R.string.auth_registering : R.string.auth_register);
+    }
+
+    private String valueOf(TextInputEditText input) {
+        return input.getText() == null ? "" : input.getText().toString().trim();
+    }
+
+    private void startMainActivity() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        finish();
+    }
+}

@@ -19,10 +19,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
+import com.example.englishflow.data.FirebaseUserStore;
 import com.example.englishflow.data.WordEntry;
 import com.example.englishflow.ui.adapters.AchievementAdapter;
 import com.example.englishflow.ui.adapters.DictionaryAdapter;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.List;
 import java.util.Locale;
@@ -30,6 +33,7 @@ import java.util.Locale;
 public class ProfileFragment extends Fragment {
 
     private AppRepository repository;
+    private FirebaseUserStore firebaseUserStore;
     private TextToSpeech textToSpeech;
 
     private TextView nameText;
@@ -50,6 +54,7 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         repository = AppRepository.getInstance(requireContext());
+        firebaseUserStore = new FirebaseUserStore();
 
         nameText = view.findViewById(R.id.profileName);
         levelText = view.findViewById(R.id.profileLevel);
@@ -59,6 +64,7 @@ public class ProfileFragment extends Fragment {
 
         MaterialButton btnChangeName = view.findViewById(R.id.btnChangeName);
         MaterialButton btnReset = view.findViewById(R.id.btnResetProgress);
+        MaterialButton btnLogout = view.findViewById(R.id.btnLogout);
 
         textToSpeech = new TextToSpeech(requireContext(), status -> {
             if (status == TextToSpeech.SUCCESS) {
@@ -80,6 +86,14 @@ public class ProfileFragment extends Fragment {
             bindDictionary();
             renderProfile();
             Toast.makeText(requireContext(), "Đã reset toàn bộ tiến độ", Toast.LENGTH_SHORT).show();
+        });
+
+        btnLogout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            if (getActivity() != null) {
+                startActivity(new android.content.Intent(requireContext(), com.example.englishflow.LoginActivity.class));
+                getActivity().finish();
+            }
         });
     }
 
@@ -174,6 +188,10 @@ public class ProfileFragment extends Fragment {
                     String newName = input.getText() != null ? input.getText().toString().trim() : "";
                     if (!newName.isEmpty()) {
                         repository.setUserName(newName);
+                        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                        if (currentUser != null) {
+                            firebaseUserStore.updateDisplayName(currentUser.getUid(), newName);
+                        }
                         renderProfile();
                     }
                 })

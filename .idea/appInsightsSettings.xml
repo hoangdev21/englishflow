@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.englishflow" />
+                  <option name="mobileSdkAppId" value="1:678930114995:android:6fb7d82c2442fa916743c6" />
+                  <option name="projectId" value="english-flow-4772b" />
+                  <option name="projectNumber" value="678930114995" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
