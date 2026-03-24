@@ -5,16 +5,16 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="28dp">
+    android:padding="32dp">
 
     <!-- Emoji Icon -->
     <TextView
         android:id="@+id/onboardingEmoji"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
+        android:layout_width="88dp"
+        android:layout_height="88dp"
         android:gravity="center"
-        android:textSize="56sp"
-        android:layout_marginBottom="32dp"
+        android:textSize="48sp"
+        android:layout_marginBottom="36dp"
         android:background="@drawable/bg_onboarding_emoji"
         android:contentDescription="Onboarding icon" />
 
@@ -27,6 +27,7 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="@color/ef_text_primary"
+        android:letterSpacing="-0.02"
         android:layout_marginBottom="16dp" />
 
     <!-- Description -->
@@ -35,7 +36,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:textSize="16sp"
+        android:textSize="15sp"
         android:textColor="@color/ef_text_secondary"
-        android:lineSpacingExtra="4dp" />
+        android:lineSpacingExtra="5dp" />
 </LinearLayout>

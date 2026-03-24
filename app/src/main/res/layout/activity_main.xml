@@ -14,7 +14,7 @@
         android:background="@android:color/transparent"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
-        android:paddingTop="10dp"
+        android:paddingTop="12dp"
         android:paddingBottom="8dp"
         android:title="@string/app_title"
         android:titleTextAppearance="@style/TextAppearance.EnglishFlow.Title"
@@ -26,16 +26,17 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="68dp"
-        android:layout_marginBottom="80dp" />
+        android:layout_marginBottom="72dp" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:paddingTop="6dp"
+        android:paddingTop="4dp"
         android:paddingBottom="8dp"
         android:background="@drawable/bg_bottom_nav"
+        android:elevation="8dp"
         app:itemActiveIndicatorStyle="@style/Widget.EnglishFlow.BottomIndicator"
         app:itemIconTint="@color/nav_item_tint"
         app:itemTextColor="@color/nav_item_tint"

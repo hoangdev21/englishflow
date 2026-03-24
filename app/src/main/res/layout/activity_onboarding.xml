@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:background="@color/ef_background">
 
-    <!-- ViewPager for Pages -->
+    <!-- ViewPager -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/onboardingViewPager"
         android:layout_width="match_parent"
@@ -18,7 +18,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="24dp"
         android:gravity="center_horizontal">
 
         <!-- Tab Indicators -->
@@ -26,7 +29,7 @@
             android:id="@+id/onboardingTabs"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="28dp"
             app:tabBackground="@drawable/tab_selector"
             app:tabGravity="center"
             app:tabIndicatorHeight="0dp"
@@ -60,18 +63,20 @@
                 android:id="@+id/btnSkip"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="52dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="10dp"
-                android:text="Bỏ qua" />
+                android:text="Bỏ qua"
+                android:textSize="14sp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnNext"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="52dp"
                 android:layout_weight="1"
-                android:text="Tiếp tục" />
+                android:text="Tiếp tục"
+                android:textSize="14sp" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

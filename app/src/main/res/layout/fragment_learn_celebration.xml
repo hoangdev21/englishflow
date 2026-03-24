@@ -5,42 +5,61 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="18dp">
+    android:padding="32dp">
 
-    <TextView
-        android:id="@+id/confettiText"
-        android:layout_width="match_parent"
-        android:layout_height="220dp"
-        android:gravity="center"
-        android:text="✨ 🎉 ✨ 🎊 ✨"
-        android:textColor="@color/ef_primary"
-        android:textSize="44sp" />
+    <!-- Success Visual -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        app:cardBackgroundColor="@color/ef_primary_container"
+        app:cardCornerRadius="120dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/confettiText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✓"
+                android:textColor="@color/ef_primary"
+                android:textSize="48sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="🎉 Hoàn thành bộ flashcard"
+        android:layout_marginTop="28dp"
+        android:text="Hoàn thành bộ flashcard"
         android:textColor="@color/ef_text_primary"
         android:textSize="24sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:letterSpacing="-0.02"
+        android:gravity="center" />
 
     <TextView
         android:id="@+id/xpText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="10dp"
         android:textColor="@color/ef_primary"
         android:textSize="18sp"
         android:textStyle="bold" />
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="14dp"
         android:gravity="center"
-        android:text="Bạn đã mở khoá tiến bộ mới. Tiếp tục duy trì streak mỗi ngày nhé!"
+        android:text="Bạn đã mở khoá tiến bộ mới.\nTiếp tục duy trì streak mỗi ngày nhé!"
         android:textColor="@color/ef_text_secondary"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        android:lineSpacingExtra="4dp" />
 
 </LinearLayout>

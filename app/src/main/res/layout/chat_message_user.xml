@@ -5,10 +5,10 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="end"
-    android:paddingStart="32dp"
+    android:paddingStart="48dp"
     android:paddingEnd="12dp"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
 
     <!-- User Message Bubble -->
     <com.google.android.material.card.MaterialCardView
@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:maxWidth="280dp"
         app:cardBackgroundColor="@color/ef_primary"
-        app:cardCornerRadius="16dp"
+        app:cardCornerRadius="18dp"
         app:cardElevation="0dp"
         app:strokeWidth="0dp">
 
@@ -24,7 +24,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp">
 
             <TextView
                 android:id="@+id/txtUserMessage"
@@ -38,10 +41,11 @@
                 android:id="@+id/txtUserTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="4dp"
+                android:layout_gravity="end"
                 android:textColor="@color/ef_on_primary"
-                android:textSize="11sp"
-                android:alpha="0.7" />
+                android:textSize="10sp"
+                android:alpha="0.6" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

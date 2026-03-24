@@ -3,20 +3,22 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="4dp"
-    android:paddingBottom="4dp">
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="42dp"
+        android:layout_marginEnd="64dp"
         android:background="@drawable/bg_bubble_ai"
-        android:paddingStart="12dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="10dp"
+        android:paddingStart="16dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="12dp"
         android:text="AI đang trả lời..."
         android:textColor="@color/ef_text_secondary"
-        android:textSize="13sp" />
+        android:textSize="13sp"
+        android:letterSpacing="0.02"
+        android:alpha="0.8" />
 
 </LinearLayout>

@@ -5,31 +5,32 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="6dp"
     app:cardBackgroundColor="@color/ef_surface_variant"
-    app:cardCornerRadius="10dp"
-    app:strokeColor="@color/ef_outline"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/ef_outline_light"
     app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="10dp">
+        android:padding="12dp">
 
         <TextView
             android:id="@+id/textFailedLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/ef_text_primary"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textFailedMeta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="3dp"
             android:textColor="@color/ef_text_secondary"
-            android:textSize="12sp" />
+            android:textSize="11sp" />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

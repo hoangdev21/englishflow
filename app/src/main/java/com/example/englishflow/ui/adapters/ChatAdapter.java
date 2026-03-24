@@ -76,7 +76,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     static class AiViewHolder extends RecyclerView.ViewHolder {
         final TextView message;
-        final LinearLayout correctionBlock;
+        final View correctionBlock;
         final TextView correctionText;
         final TextView correctionExplain;
 

@@ -3,30 +3,66 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="ef_primary">#1A7A5E</color>
+    <!-- Premium Emerald Palette -->
+    <color name="ef_primary">#0D9373</color>
+    <color name="ef_primary_dark">#077A5F</color>
+    <color name="ef_primary_light">#14B08A</color>
     <color name="ef_on_primary">#FFFFFF</color>
-    <color name="ef_primary_container">#D8EFE6</color>
-    <color name="ef_on_primary_container">#0E3C2E</color>
+    <color name="ef_primary_container">#E3F5EF</color>
+    <color name="ef_on_primary_container">#073D30</color>
 
-    <color name="ef_secondary">#4D6F63</color>
-    <color name="ef_secondary_container">#CFE8DF</color>
-    <color name="ef_on_secondary_container">#0C2B24</color>
-    <color name="ef_tertiary">#6D6F57</color>
-    <color name="ef_tertiary_container">#F2F5E1</color>
-    <color name="ef_on_tertiary_container">#22231B</color>
+    <!-- Secondary (Warm Slate) -->
+    <color name="ef_secondary">#4A6572</color>
+    <color name="ef_secondary_container">#E8EFF3</color>
+    <color name="ef_on_secondary_container">#1A2F38</color>
 
-    <color name="ef_background">#F4F7F5</color>
+    <!-- Tertiary (Warm Amber Accent) -->
+    <color name="ef_tertiary">#9B7B3A</color>
+    <color name="ef_tertiary_container">#FFF2D9</color>
+    <color name="ef_on_tertiary_container">#3D3019</color>
+
+    <!-- Surfaces -->
+    <color name="ef_background">#F7F9F8</color>
     <color name="ef_surface">#FFFFFF</color>
-    <color name="ef_surface_variant">#EAF1ED</color>
-    <color name="ef_outline">#D0DDD7</color>
-    <color name="ef_warning_bg">#FFF3CD</color>
-    <color name="ef_warning_text">#7A5A00</color>
+    <color name="ef_surface_variant">#EFF3F1</color>
+    <color name="ef_surface_elevated">#FFFFFF</color>
+    <color name="ef_outline">#DAE2DE</color>
+    <color name="ef_outline_light">#ECF1EE</color>
 
-    <color name="nav_item_checked">#1A7A5E</color>
-    <color name="nav_item_unchecked">#6D837A</color>
+    <!-- Semantic -->
+    <color name="ef_success">#1DA370</color>
+    <color name="ef_info">#3B82F6</color>
+    <color name="ef_warning_bg">#FFF8E7</color>
+    <color name="ef_warning_text">#8B6914</color>
+    <color name="ef_error">#DC3545</color>
 
-    <color name="ef_success">#2E8F6C</color>
-    <color name="ef_info">#4A8DFF</color>
-    <color name="ef_text_primary">#173228</color>
-    <color name="ef_text_secondary">#5D746B</color>
+    <!-- Text -->
+    <color name="ef_text_primary">#1A2E26</color>
+    <color name="ef_text_secondary">#5E7A6E</color>
+    <color name="ef_text_tertiary">#8CA39A</color>
+    <color name="ef_text_on_dark">#FFFFFF</color>
+    <color name="ef_text_on_dark_secondary">#C8DED4</color>
+
+    <!-- Navigation -->
+    <color name="nav_item_checked">#0D9373</color>
+    <color name="nav_item_unchecked">#8CA39A</color>
+
+    <!-- Auth Screen Glassmorphism -->
+    <color name="ef_glass_bg">#1AFFFFFF</color>
+    <color name="ef_glass_stroke">#40FFFFFF</color>
+
+    <!-- Gradient Colors -->
+    <color name="ef_gradient_start">#0D9373</color>
+    <color name="ef_gradient_mid">#11AB85</color>
+    <color name="ef_gradient_end">#18C498</color>
+
+    <!-- Card Accent Colors -->
+    <color name="ef_card_blue">#EEF4FF</color>
+    <color name="ef_card_blue_text">#2563EB</color>
+    <color name="ef_card_purple">#F3EEFF</color>
+    <color name="ef_card_purple_text">#7C3AED</color>
+    <color name="ef_card_amber">#FFF8E7</color>
+    <color name="ef_card_amber_text">#B8860B</color>
+    <color name="ef_card_rose">#FFF1F2</color>
+    <color name="ef_card_rose_text">#E11D48</color>
 </resources>

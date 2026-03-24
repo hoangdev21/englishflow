@@ -4,151 +4,187 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingBottom="20dp">
+    android:paddingBottom="24dp"
+    android:background="@drawable/bg_bottom_nav">
 
+    <!-- BottomSheet Handle -->
     <View
-        android:layout_width="40dp"
+        android:layout_width="32dp"
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="12dp"
-        android:background="#CCCCCC" />
+        android:background="@color/ef_outline"
+        android:alpha="0.4"
+        android:backgroundTint="@color/ef_text_tertiary" />
 
     <TextView
+        android:id="@+id/dictTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="16dp"
-        android:text="Tra tu dien"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="20dp"
+        android:text="Tra từ điển"
+        android:textColor="@color/ef_text_primary"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:letterSpacing="-0.01" />
 
-    <LinearLayout
+    <!-- Search Input Area -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="20dp"
-        android:background="@drawable/bg_search_input"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingTop="6dp"
-        android:paddingEnd="6dp"
-        android:paddingBottom="6dp">
+        app:cardBackgroundColor="@color/ef_surface_variant"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
 
-        <EditText
-            android:id="@+id/dictSearchInput"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:hint="Nhap tu tieng Anh hoac tieng Viet..."
-            android:imeOptions="actionSearch"
-            android:inputType="text"
-            android:maxLines="1"
-            android:singleLine="true"
-            android:textSize="15sp" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="6dp"
+            android:paddingBottom="4dp">
 
-        <ImageButton
-            android:id="@+id/dictSearchBtn"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="Search"
-            android:padding="6dp"
-            android:src="@drawable/ic_search"
-            app:tint="?attr/colorOnSurface" />
-    </LinearLayout>
+            <EditText
+                android:id="@+id/dictSearchInput"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:hint="Từ vựng..."
+                android:textColor="@color/ef_text_primary"
+                android:textColorHint="@color/ef_text_tertiary"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:textSize="15sp" />
 
-    <ProgressBar
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dictSearchBtn"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:minWidth="40dp"
+                android:minHeight="40dp"
+                android:padding="0dp"
+                app:icon="@drawable/ic_search"
+                app:iconGravity="textStart"
+                app:iconSize="20dp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/dictLoading"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="18dp"
-        android:visibility="gone" />
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:visibility="gone"
+        app:indeterminateAnimationType="disjoint"
+        app:indicatorColor="@color/ef_primary" />
 
     <TextView
         android:id="@+id/dictError"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
+        android:layout_marginStart="24dp"
         android:layout_marginTop="12dp"
-        android:layout_marginEnd="20dp"
-        android:textColor="?attr/colorError"
-        android:textSize="14sp"
+        android:layout_marginEnd="24dp"
+        android:textColor="@color/ef_error"
+        android:textSize="13sp"
         android:visibility="gone" />
 
+    <!-- Result Area -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/dictResultCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="14dp"
-        android:layout_marginEnd="20dp"
+        android:layout_marginTop="8dp"
         android:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?attr/colorSurface"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="16dp">
 
-            <LinearLayout
+            <!-- Word Header Card -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/ef_surface"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/ef_outline_light"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
 
-                    <TextView
-                        android:id="@+id/dictWord"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:textSize="26sp"
-                        android:textStyle="bold" />
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/dictIpa"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:fontFamily="serif"
-                        android:textColor="?attr/colorPrimary"
-                        android:textSize="15sp" />
+                        <TextView
+                            android:id="@+id/dictWord"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/ef_text_primary"
+                            android:textSize="28sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="-0.02" />
+
+                        <TextView
+                            android:id="@+id/dictIpa"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textColor="@color/ef_primary"
+                            android:textSize="15sp"
+                            android:alpha="0.8" />
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/dictBtnPronounce"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:minWidth="48dp"
+                        android:minHeight="48dp"
+                        android:padding="0dp"
+                        app:icon="@drawable/ic_volume_up"
+                        app:iconGravity="textStart"
+                        app:iconSize="24dp"
+                        app:iconTint="@color/ef_primary" />
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/dictBtnPronounce"
-                    style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:contentDescription="Pronounce"
-                    app:icon="@drawable/ic_volume_up"
-                    app:iconGravity="textStart"
-                    app:iconTint="?attr/colorOnSurface" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="12dp"
-                android:background="?attr/colorOutline" />
-
+            <!-- Definition Header -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="20dp"
                 android:letterSpacing="0.08"
-                android:text="DINH NGHIA"
-                android:textAllCaps="true"
-                android:textSize="12sp"
+                android:text="ĐỊNH NGHĨA"
+                android:textColor="@color/ef_text_tertiary"
+                android:textSize="10sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -156,14 +192,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:lineSpacingMultiplier="1.6"
+                android:lineSpacingExtra="5dp"
+                android:textColor="@color/ef_text_primary"
                 android:textSize="14sp" />
 
+            <!-- Synonyms -->
             <LinearLayout
                 android:id="@+id/dictSynonymsRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="20dp"
                 android:orientation="vertical"
                 android:visibility="gone">
 
@@ -171,9 +209,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.08"
-                    android:text="TU DONG NGHIA"
-                    android:textAllCaps="true"
-                    android:textSize="12sp"
+                    android:text="TỪ ĐỒNG NGHĨA"
+                    android:textColor="@color/ef_text_tertiary"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
 
                 <com.google.android.material.chip.ChipGroup
@@ -182,25 +220,21 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     app:chipSpacingHorizontal="8dp"
-                    app:chipSpacingVertical="8dp" />
+                    app:chipSpacingVertical="4dp" />
             </LinearLayout>
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="14dp"
-                android:background="?attr/colorOutline" />
-
+            <!-- Save Action -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/dictBtnSave"
-                style="@style/Widget.Material3.Button.TonalButton"
+                style="@style/Widget.Material3.Button"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:layout_gravity="end"
-                android:layout_marginTop="12dp"
-                android:text="Luu tu"
-                app:icon="@drawable/ic_bookmark"
-                app:iconGravity="textStart" />
+                android:layout_marginTop="24dp"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"
+                android:text="Lưu từ vựng"
+                android:textSize="13sp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
