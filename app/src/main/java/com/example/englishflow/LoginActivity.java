@@ -3,21 +3,20 @@ package com.example.englishflow;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Patterns;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.englishflow.data.AppRepository;
-import com.example.englishflow.data.FirebaseUserStore;
+import com.example.englishflow.data.LocalAuthStore;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.FirebaseAuth;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private FirebaseAuth firebaseAuth;
-    private FirebaseUserStore firebaseUserStore;
+    private LocalAuthStore localAuthStore;
     private AppRepository repository;
 
     private TextInputEditText emailInput;
@@ -29,11 +28,14 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        firebaseAuth = FirebaseAuth.getInstance();
-        firebaseUserStore = new FirebaseUserStore();
+        localAuthStore = new LocalAuthStore(getApplicationContext());
         repository = AppRepository.getInstance(getApplicationContext());
 
-        if (firebaseAuth.getCurrentUser() != null) {
+        if (localAuthStore.hasActiveSession()) {
+            String displayName = localAuthStore.getCurrentDisplayName();
+            if (displayName != null && !displayName.isEmpty()) {
+                repository.setUserName(displayName);
+            }
             startMainActivity();
             return;
         }
@@ -64,21 +66,23 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, R.string.auth_invalid_email, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         setLoading(true);
-        firebaseAuth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> {
-                    setLoading(false);
-                    if (task.isSuccessful() && firebaseAuth.getCurrentUser() != null) {
-                        firebaseUserStore.fetchDisplayName(firebaseAuth.getCurrentUser().getUid(), displayName -> {
-                            if (displayName != null && !displayName.isEmpty()) {
-                                repository.setUserName(displayName);
-                            }
-                            startMainActivity();
-                        });
-                    } else {
-                        Toast.makeText(this, R.string.auth_login_failed, Toast.LENGTH_SHORT).show();
-                    }
-                });
+        boolean success = localAuthStore.login(email, password);
+        setLoading(false);
+        if (success) {
+            String displayName = localAuthStore.getCurrentDisplayName();
+            if (displayName != null && !displayName.isEmpty()) {
+                repository.setUserName(displayName);
+            }
+            startMainActivity();
+        } else {
+            Toast.makeText(this, R.string.auth_invalid_credentials, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void sendPasswordResetEmail() {
@@ -88,9 +92,7 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        firebaseAuth.sendPasswordResetEmail(email)
-                .addOnSuccessListener(unused -> Toast.makeText(this, R.string.auth_reset_sent, Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> Toast.makeText(this, R.string.auth_reset_failed, Toast.LENGTH_SHORT).show());
+        Toast.makeText(this, R.string.auth_reset_not_supported_local, Toast.LENGTH_SHORT).show();
     }
 
     private void setLoading(boolean loading) {

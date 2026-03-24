@@ -44,11 +44,19 @@
     <string name="auth_password_short">Mật khẩu cần ít nhất 6 ký tự</string>
     <string name="auth_password_not_match">Mật khẩu xác nhận không khớp</string>
     <string name="auth_login_failed">Đăng nhập thất bại. Vui lòng thử lại</string>
+    <string name="auth_invalid_credentials">Email hoặc mật khẩu không đúng</string>
     <string name="auth_register_success">Tạo tài khoản thành công</string>
     <string name="auth_register_failed">Không thể tạo tài khoản</string>
+    <string name="auth_invalid_email">Email không đúng định dạng</string>
+    <string name="auth_email_already_in_use">Email này đã được sử dụng</string>
+    <string name="auth_network_error">Lỗi kết nối mạng. Vui lòng thử lại</string>
+    <string name="auth_too_many_requests">Thử quá nhiều lần. Vui lòng chờ một lúc</string>
+    <string name="auth_register_method_not_enabled">Đăng ký bằng email/mật khẩu chưa được bật trên Firebase</string>
+    <string name="auth_register_failed_with_reason">Không thể tạo tài khoản: %1$s</string>
     <string name="auth_enter_email_first">Hãy nhập email để đặt lại mật khẩu</string>
     <string name="auth_reset_sent">Đã gửi email đặt lại mật khẩu</string>
     <string name="auth_reset_failed">Không gửi được email đặt lại mật khẩu</string>
+    <string name="auth_reset_not_supported_local">Bản local SQLite chưa hỗ trợ quên mật khẩu qua email</string>
 
     <string name="status_not_started">Chưa học</string>
     <string name="status_learning">Đang học</string>

@@ -12,7 +12,7 @@ android {
     defaultConfig {
         applicationId = "com.example.englishflow"
         minSdk = 29
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -44,6 +44,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            isDebuggable = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -57,9 +60,22 @@ android {
         buildConfig = true
     }
     
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
+    
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "androidx.datastore") {
+            useVersion("1.2.1")
+            because("Use newer DataStore native libs compatible with 16 KB page-size devices")
+        }
     }
 }
 
@@ -85,10 +101,11 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation(libs.coroutines.core)
     // Camera
-    implementation("androidx.camera:camera-core:1.3.0")
-    implementation("androidx.camera:camera-camera2:1.3.0")
-    implementation("androidx.camera:camera-lifecycle:1.3.0")
-    implementation("androidx.camera:camera-view:1.3.0")
+    implementation("androidx.camera:camera-core:1.5.3")
+    implementation("androidx.camera:camera-camera2:1.5.3")
+    implementation("androidx.camera:camera-lifecycle:1.5.3")
+    implementation("androidx.camera:camera-view:1.5.3")
+    implementation("androidx.datastore:datastore-preferences:1.2.1")
     implementation("com.google.guava:guava:31.1-android")
     // Lifecycle
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.7")
