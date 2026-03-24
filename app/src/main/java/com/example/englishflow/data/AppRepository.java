@@ -2,34 +2,55 @@ package com.example.englishflow.data;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.example.englishflow.database.EnglishFlowDatabase;
 import com.example.englishflow.database.entity.ChatMessageEntity;
+import com.example.englishflow.database.entity.CustomVocabularyEntity;
+import com.example.englishflow.database.entity.FailedLabelLogEntity;
 import com.example.englishflow.database.entity.LearnedWordEntity;
+import com.example.englishflow.database.entity.SeedPackageStateEntity;
 import com.example.englishflow.database.entity.StudySessionEntity;
 import com.example.englishflow.database.entity.UserStatsEntity;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import org.json.JSONObject;
+import org.json.JSONArray;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class AppRepository {
     private static final String PREFS = "englishflow_prefs";
     private static final String KEY_NAME = "user_name";
     private static final String KEY_REMINDER_HOUR = "reminder_hour";
     private static final String KEY_REMINDER_MINUTE = "reminder_minute";
+    private static final String KEY_SEED_IMPORTED = "seed_vocabulary_imported";
+    private static final String SEED_FILE_NAME = "vocab_seed_packages.json";
 
     private static AppRepository instance;
 
     private final SharedPreferences preferences;
     private final EnglishFlowDatabase database;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Context appContext;
 
     private AppRepository(Context context) {
-        preferences = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        database = EnglishFlowDatabase.getInstance(context.getApplicationContext());
+        appContext = context.getApplicationContext();
+        preferences = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        database = EnglishFlowDatabase.getInstance(appContext);
+        importSeedVocabularyIfNeeded();
     }
 
     public static synchronized AppRepository getInstance(Context context) {
@@ -317,6 +338,261 @@ public class AppRepository {
                 e.printStackTrace();
             }
         });
+    }
+
+    public CustomVocabularyEntity findCustomVocabulary(String label) {
+        if (label == null || label.trim().isEmpty()) {
+            return null;
+        }
+        String normalized = ScanAnalyzer.canonicalizeLabel(label);
+        return database.customVocabularyDao().findByWord(normalized);
+    }
+
+    public void saveCustomVocabulary(String label, String meaning) {
+        if (label == null || label.trim().isEmpty() || meaning == null || meaning.trim().isEmpty()) {
+            return;
+        }
+
+        String normalized = ScanAnalyzer.canonicalizeLabel(label);
+        executorService.execute(() -> {
+            CustomVocabularyEntity existing = database.customVocabularyDao().findByWord(normalized);
+            if (existing != null && existing.isLocked) {
+                return;
+            }
+            CustomVocabularyEntity entity = new CustomVocabularyEntity(
+                    normalized,
+                    meaning.trim(),
+                    "-",
+                    "User-defined meaning"
+            );
+            entity.source = "user";
+            entity.domain = "general";
+            database.customVocabularyDao().upsert(entity);
+        });
+    }
+
+    public List<CustomVocabularyEntity> getAllCustomVocabulary() {
+        return database.customVocabularyDao().getAll();
+    }
+
+    public boolean updateCustomMeaning(String word, String meaning, boolean forceIfLocked) {
+        if (word == null || word.trim().isEmpty() || meaning == null || meaning.trim().isEmpty()) {
+            return false;
+        }
+        String normalized = ScanAnalyzer.canonicalizeLabel(word);
+        long now = System.currentTimeMillis();
+        int updated = forceIfLocked
+                ? database.customVocabularyDao().forceUpdateMeaning(normalized, meaning.trim(), now)
+                : database.customVocabularyDao().updateMeaningIfUnlocked(normalized, meaning.trim(), now);
+        return updated > 0;
+    }
+
+    public boolean deleteCustomVocabulary(String word) {
+        if (word == null || word.trim().isEmpty()) {
+            return false;
+        }
+        String normalized = ScanAnalyzer.canonicalizeLabel(word);
+        return database.customVocabularyDao().deleteByWord(normalized) > 0;
+    }
+
+    public boolean setCustomVocabularyLocked(String word, boolean isLocked) {
+        if (word == null || word.trim().isEmpty()) {
+            return false;
+        }
+        String normalized = ScanAnalyzer.canonicalizeLabel(word);
+        return database.customVocabularyDao().setLocked(normalized, isLocked, System.currentTimeMillis()) > 0;
+    }
+
+    public void logFailedLabel(String label) {
+        if (label == null || label.trim().isEmpty()) {
+            return;
+        }
+        String normalized = ScanAnalyzer.canonicalizeLabel(label);
+        String suggestedAlias = buildSuggestedAlias(label);
+        executorService.execute(() -> {
+            FailedLabelLogEntity existing = database.failedLabelLogDao().findByLabel(normalized);
+            long now = System.currentTimeMillis();
+            if (existing == null) {
+                database.failedLabelLogDao().insert(new FailedLabelLogEntity(normalized, suggestedAlias));
+            } else {
+                database.failedLabelLogDao().increment(normalized, suggestedAlias, now);
+            }
+        });
+    }
+
+    public void markFailedLabelResolved(String label) {
+        if (label == null || label.trim().isEmpty()) {
+            return;
+        }
+        String normalized = ScanAnalyzer.canonicalizeLabel(label);
+        executorService.execute(() -> database.failedLabelLogDao().setResolved(normalized, true));
+    }
+
+    public List<FailedLabelLogEntity> getTopFailedLabels(int limit) {
+        return database.failedLabelLogDao().getTopFailed(limit);
+    }
+
+    public void fetchVietnameseSuggestion(String englishWord, MeaningSuggestionCallback callback) {
+        if (englishWord == null || englishWord.trim().isEmpty()) {
+            mainHandler.post(() -> callback.onResult(null));
+            return;
+        }
+
+        executorService.execute(() -> {
+            String suggestion = null;
+            HttpURLConnection connection = null;
+            try {
+                String query = URLEncoder.encode(englishWord.trim(), StandardCharsets.UTF_8.name());
+                String urlString = "https://api.mymemory.translated.net/get?q=" + query + "&langpair=en|vi";
+                URL url = new URL(urlString);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
+
+                int status = connection.getResponseCode();
+                if (status >= 200 && status < 300) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    JSONObject json = new JSONObject(response.toString());
+                    JSONObject responseData = json.optJSONObject("responseData");
+                    if (responseData != null) {
+                        String translated = responseData.optString("translatedText", "").trim();
+                        if (!translated.isEmpty()) {
+                            suggestion = translated;
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+                suggestion = null;
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
+            }
+
+            String finalSuggestion = suggestion;
+            mainHandler.post(() -> callback.onResult(finalSuggestion));
+        });
+    }
+
+    private void importSeedVocabularyIfNeeded() {
+        executorService.execute(() -> {
+            try {
+                String json = readSeedJson();
+                importSeedPackages(json);
+                preferences.edit().putBoolean(KEY_SEED_IMPORTED, true).apply();
+            } catch (Exception e) {
+                // Retry on next app launch if import fails.
+            }
+        });
+    }
+
+    private String readSeedJson() throws Exception {
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(appContext.getAssets().open(SEED_FILE_NAME), StandardCharsets.UTF_8)
+        );
+        StringBuilder builder = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            builder.append(line);
+        }
+        reader.close();
+        return builder.toString();
+    }
+
+    private void importSeedPackages(String json) throws Exception {
+        JSONObject root = new JSONObject(json);
+        JSONArray packages = root.optJSONArray("packages");
+        if (packages == null) {
+            return;
+        }
+
+        for (int i = 0; i < packages.length(); i++) {
+            JSONObject pkg = packages.optJSONObject(i);
+            if (pkg == null) {
+                continue;
+            }
+
+            String packageName = pkg.optString("name", "").trim();
+            int packageVersion = pkg.optInt("version", 1);
+            String domain = pkg.optString("domain", "general").trim();
+            if (packageName.isEmpty()) {
+                continue;
+            }
+
+            SeedPackageStateEntity state = database.seedPackageStateDao().findByPackageName(packageName);
+            int importedVersion = state != null ? state.version : 0;
+            if (importedVersion >= packageVersion) {
+                continue;
+            }
+
+            JSONArray entries = pkg.optJSONArray("entries");
+            if (entries == null) {
+                continue;
+            }
+
+            List<CustomVocabularyEntity> seeds = new ArrayList<>();
+            for (int j = 0; j < entries.length(); j++) {
+                JSONObject entry = entries.optJSONObject(j);
+                if (entry == null) {
+                    continue;
+                }
+                String word = entry.optString("word", "").trim();
+                String meaning = entry.optString("meaning", "").trim();
+                if (word.isEmpty() || meaning.isEmpty()) {
+                    continue;
+                }
+
+                CustomVocabularyEntity entity = new CustomVocabularyEntity(
+                        ScanAnalyzer.canonicalizeLabel(word),
+                        meaning,
+                        entry.optString("ipa", "-"),
+                        entry.optString("example", "Seed vocabulary")
+                );
+                entity.source = "seed";
+                entity.domain = domain.isEmpty() ? "general" : domain;
+                seeds.add(entity);
+            }
+
+            if (!seeds.isEmpty()) {
+                database.customVocabularyDao().insertSeed(seeds);
+            }
+
+            SeedPackageStateEntity nextState = new SeedPackageStateEntity(packageName, packageVersion);
+            database.seedPackageStateDao().upsert(nextState);
+        }
+    }
+
+    private String buildSuggestedAlias(String label) {
+        String normalized = label == null ? "" : label.trim().toLowerCase();
+        String canonical = ScanAnalyzer.canonicalizeLabel(normalized);
+        if (!canonical.equals(normalized)) {
+            return canonical;
+        }
+        if (normalized.contains("phone")) {
+            return "phone";
+        }
+        if (normalized.contains("table") || normalized.contains("desk")) {
+            return "table";
+        }
+        if (normalized.contains("screen") || normalized.contains("monitor")) {
+            return "television";
+        }
+        if (normalized.contains("dog") || normalized.contains("puppy")) {
+            return "dog";
+        }
+        return "";
+    }
+
+    public interface MeaningSuggestionCallback {
+        void onResult(String suggestion);
     }
 
     public void removeWord(WordEntry wordEntry) {

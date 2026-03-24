@@ -23,6 +23,7 @@
     <string name="learn_flashcard">Flashcard</string>
 
     <string name="scan_title">Scan vật thể bằng AI</string>
+    <string name="scan_preview_desc">Hình ảnh xem trước để quét</string>
     <string name="chat_title">Chat luyện nói AI</string>
     <string name="profile_title">Hồ sơ học tập</string>
 
