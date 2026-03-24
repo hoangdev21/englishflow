@@ -11,16 +11,20 @@ import android.view.animation.DecelerateInterpolator;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+
 public class SplashActivity extends AppCompatActivity {
 
     private static final String PREFS = "englishflow_prefs";
     private static final String KEY_FIRST_LAUNCH = "first_launch";
     private static final long SPLASH_DURATION = 2500; // 2.5 seconds
+    private FirebaseAuth firebaseAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+        firebaseAuth = FirebaseAuth.getInstance();
 
         try {
             // Get logo view
@@ -88,9 +92,10 @@ public class SplashActivity extends AppCompatActivity {
             // First time: show onboarding
             intent = new Intent(this, OnboardingActivity.class);
             prefs.edit().putBoolean(KEY_FIRST_LAUNCH, false).apply();
-        } else {
-            // Regular launch: go to main
+        } else if (firebaseAuth.getCurrentUser() != null) {
             intent = new Intent(this, MainActivity.class);
+        } else {
+            intent = new Intent(this, LoginActivity.class);
         }
 
         startActivity(intent);

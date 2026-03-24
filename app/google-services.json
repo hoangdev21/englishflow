@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "678930114995",
+    "project_id": "english-flow-4772b",
+    "storage_bucket": "english-flow-4772b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:678930114995:android:6fb7d82c2442fa916743c6",
+        "android_client_info": {
+          "package_name": "com.example.englishflow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6134_cdTecG5E9xAPI63RGz4ERlf2HUM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
