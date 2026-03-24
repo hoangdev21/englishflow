@@ -2,40 +2,43 @@
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="146dp"
+    android:layout_height="140dp"
     android:layout_margin="6dp"
-    app:cardCornerRadius="22dp"
-    app:cardElevation="0dp">
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
 
     <LinearLayout
         android:id="@+id/domainBg"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="14dp">
+        android:padding="16dp"
+        android:gravity="bottom">
 
         <TextView
             android:id="@+id/domainEmoji"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="24sp" />
+            android:textSize="22sp" />
 
         <TextView
             android:id="@+id/domainName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="8dp"
             android:textColor="@android:color/white"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:letterSpacing="-0.01" />
 
         <TextView
             android:id="@+id/domainProgressText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="#DDF7EE"
-            android:textSize="13sp" />
+            android:layout_marginTop="6dp"
+            android:textColor="#C0FFFFFF"
+            android:textSize="11sp" />
 
         <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/domainProgress"
@@ -45,7 +48,9 @@
             android:max="100"
             android:progress="40"
             app:indicatorColor="#FFFFFF"
-            app:trackColor="#4DFFFFFF" />
+            app:trackColor="#30FFFFFF"
+            app:trackCornerRadius="4dp"
+            app:trackThickness="4dp" />
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

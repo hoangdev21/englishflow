@@ -9,9 +9,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="12dp"
+        android:paddingStart="16dp"
         android:paddingTop="8dp"
-        android:paddingEnd="12dp"
+        android:paddingEnd="16dp"
         android:paddingBottom="24dp">
 
         <!-- Header -->
@@ -21,14 +21,15 @@
             android:text="@string/scan_title"
             android:textAppearance="@style/TextAppearance.EnglishFlow.Title" />
 
-        <!-- Scan Preview Card with CameraX PreviewView -->
+        <!-- Camera Preview -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             app:cardBackgroundColor="@color/ef_surface_variant"
-            app:cardCornerRadius="20dp"
-            app:strokeColor="@color/ef_outline"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/ef_outline_light"
             app:strokeWidth="1dp">
 
             <FrameLayout
@@ -41,7 +42,6 @@
                     android:layout_height="match_parent"
                     android:contentDescription="@string/scan_preview_desc" />
 
-                <!-- Fallback preview (when camera unavailable) -->
                 <ImageView
                     android:id="@+id/scanPreview"
                     android:layout_width="match_parent"
@@ -54,7 +54,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="#80000000"
+                    android:background="#70000000"
                     android:gravity="center"
                     android:orientation="vertical">
 
@@ -73,12 +73,12 @@
                         android:id="@+id/scanPreviewHint"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:paddingStart="14dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="8dp"
+                        android:paddingStart="16dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="10dp"
                         android:background="@drawable/bg_chip_soft"
-                        android:text="Goi y realtime: huong camera vao vat the"
+                        android:text="Hướng camera vào vật thể"
                         android:textColor="@android:color/white"
                         android:textSize="14sp"
                         android:alpha="0.9" />
@@ -91,8 +91,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:orientation="horizontal"
-            android:spacing="8dp">
+            android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTakePhoto"
@@ -100,6 +99,7 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
+                android:layout_marginEnd="6dp"
                 android:text="@string/btn_take_photo"
                 android:textSize="13sp" />
 
@@ -133,14 +133,17 @@
             app:indicatorSize="32dp"
             app:indicatorInset="0dp" />
 
-        <!-- Scan Result Card - Redesigned -->
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- SCAN RESULT CARD                            -->
+        <!-- ═══════════════════════════════════════════ -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             app:cardBackgroundColor="@color/ef_surface"
             app:cardCornerRadius="24dp"
-            app:strokeColor="@color/ef_outline"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/ef_outline_light"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -148,7 +151,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- Header Section -->
+                <!-- Header -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -156,13 +159,6 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="📸"
-                        android:textSize="28sp"
-                        android:layout_marginEnd="12dp" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -173,10 +169,11 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Từ được quét"
+                            android:text="TỪ ĐƯỢC QUÉT"
                             android:textColor="@color/ef_on_tertiary_container"
-                            android:textSize="12sp"
-                            android:alpha="0.85" />
+                            android:textSize="10sp"
+                            android:letterSpacing="0.08"
+                            android:alpha="0.7" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -184,30 +181,32 @@
                             android:layout_marginTop="2dp"
                             android:text="Chi tiết từ vựng"
                             android:textColor="@color/ef_on_tertiary_container"
-                            android:textSize="13sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnPronounceScan"
                         style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:minWidth="44dp"
-                        android:minHeight="44dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:minWidth="40dp"
+                        android:minHeight="40dp"
                         android:padding="0dp"
-                        android:text="🔊"
-                        android:textSize="20sp" />
+                        app:icon="@drawable/ic_volume_up"
+                        app:iconGravity="textStart"
+                        app:iconSize="20dp"
+                        app:iconTint="@color/ef_primary" />
                 </LinearLayout>
 
-                <!-- Content Section -->
+                <!-- Content -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <!-- Word Display Container -->
+                    <!-- Word Display -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -221,7 +220,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="14dp">
+                            android:padding="16dp">
 
                             <TextView
                                 android:id="@+id/scanWord"
@@ -229,8 +228,9 @@
                                 android:layout_height="wrap_content"
                                 android:text="word"
                                 android:textColor="@color/ef_on_tertiary_container"
-                                android:textSize="32sp"
-                                android:textStyle="bold" />
+                                android:textSize="30sp"
+                                android:textStyle="bold"
+                                android:letterSpacing="-0.02" />
 
                             <TextView
                                 android:id="@+id/scanIpaMeaning"
@@ -239,11 +239,12 @@
                                 android:layout_marginTop="8dp"
                                 android:textColor="@color/ef_on_tertiary_container"
                                 android:textSize="13sp"
-                                android:alpha="0.85"
-                                android:lineSpacingExtra="2dp" />
+                                android:alpha="0.8"
+                                android:lineSpacingExtra="3dp" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
+                    <!-- Debug Info -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -255,8 +256,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Nhan tho AI: object"
-                            android:textColor="@color/ef_text_secondary"
-                            android:textSize="12sp"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="11sp"
                             android:lineSpacingExtra="1dp" />
 
                         <TextView
@@ -265,8 +266,8 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:text="Tu da map: object"
-                            android:textColor="@color/ef_text_secondary"
-                            android:textSize="12sp"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="11sp"
                             android:textStyle="bold"
                             android:lineSpacingExtra="1dp" />
 
@@ -276,17 +277,17 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:text="Do tin cay: 0%"
-                            android:textColor="@color/ef_text_secondary"
-                            android:textSize="12sp"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="11sp"
                             android:textStyle="bold"
                             android:lineSpacingExtra="1dp" />
                     </LinearLayout>
 
-                    <!-- Category Badge -->
+                    <!-- Category -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
+                        android:layout_marginBottom="14dp"
                         android:orientation="horizontal">
 
                         <TextView
@@ -294,16 +295,16 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_chip_soft"
-                            android:paddingStart="12dp"
+                            android:paddingStart="14dp"
                             android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
+                            android:paddingEnd="14dp"
                             android:paddingBottom="6dp"
                             android:textColor="@color/ef_primary"
                             android:textSize="12sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <!-- Example Section -->
+                    <!-- Example -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -313,18 +314,18 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="💬 Ví dụ:"
-                            android:textColor="@color/ef_text_secondary"
-                            android:textSize="11sp"
+                            android:text="VÍ DỤ"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="10sp"
                             android:textStyle="bold"
-                            android:alpha="0.7" />
+                            android:letterSpacing="0.08" />
 
                         <com.google.android.material.card.MaterialCardView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             app:cardBackgroundColor="@color/ef_surface_variant"
-                            app:cardCornerRadius="12dp"
+                            app:cardCornerRadius="14dp"
                             app:cardElevation="0dp"
                             app:strokeWidth="0dp">
 
@@ -339,7 +340,7 @@
                         </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
 
-                    <!-- Fun Fact Section -->
+                    <!-- Fun Fact -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -349,18 +350,18 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="💡 Mẹo:"
-                            android:textColor="@color/ef_text_secondary"
-                            android:textSize="11sp"
+                            android:text="MẸO"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="10sp"
                             android:textStyle="bold"
-                            android:alpha="0.7" />
+                            android:letterSpacing="0.08" />
 
                         <com.google.android.material.card.MaterialCardView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             app:cardBackgroundColor="@color/ef_primary_container"
-                            app:cardCornerRadius="12dp"
+                            app:cardCornerRadius="14dp"
                             app:cardElevation="0dp"
                             app:strokeWidth="0dp">
 
@@ -375,7 +376,7 @@
                         </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
 
-                    <!-- Related Words Section -->
+                    <!-- Related Words -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -385,18 +386,18 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🔗 Từ liên quan:"
-                            android:textColor="@color/ef_text_secondary"
-                            android:textSize="11sp"
+                            android:text="TỪ LIÊN QUAN"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="10sp"
                             android:textStyle="bold"
-                            android:alpha="0.7" />
+                            android:letterSpacing="0.08" />
 
                         <com.google.android.material.card.MaterialCardView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
                             app:cardBackgroundColor="@color/ef_surface_variant"
-                            app:cardCornerRadius="12dp"
+                            app:cardCornerRadius="14dp"
                             app:cardElevation="0dp"
                             app:strokeWidth="0dp">
 
@@ -422,18 +423,18 @@
                             android:id="@+id/btnManageCustomWords"
                             style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="wrap_content"
-                            android:layout_height="48dp"
+                            android:layout_height="44dp"
                             android:layout_marginEnd="8dp"
-                            android:text="Quan ly tu"
+                            android:text="Quản lý từ"
                             android:textSize="13sp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnSaveScan"
                             style="@style/Widget.Material3.Button"
                             android:layout_width="wrap_content"
-                            android:layout_height="48dp"
-                            android:paddingStart="28dp"
-                            android:paddingEnd="28dp"
+                            android:layout_height="44dp"
+                            android:paddingStart="24dp"
+                            android:paddingEnd="24dp"
                             android:text="@string/btn_save_word"
                             android:textSize="13sp" />
                     </LinearLayout>

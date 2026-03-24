@@ -15,18 +15,20 @@
         android:id="@+id/flashcardCount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="6dp"
         android:textColor="@color/ef_text_secondary"
         android:textSize="13sp" />
 
+    <!-- Flashcard -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/flashcardCard"
         android:layout_width="match_parent"
         android:layout_height="300dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="18dp"
         app:cardBackgroundColor="@color/ef_surface"
         app:cardCornerRadius="24dp"
-        app:strokeColor="@color/ef_outline"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/ef_outline_light"
         app:strokeWidth="1dp">
 
         <LinearLayout
@@ -34,22 +36,23 @@
             android:layout_height="match_parent"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="18dp">
+            android:padding="24dp">
 
             <TextView
                 android:id="@+id/flashcardEmoji"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="44sp" />
+                android:textSize="40sp" />
 
             <TextView
                 android:id="@+id/flashcardWord"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="10dp"
                 android:textColor="@color/ef_text_primary"
-                android:textSize="34sp"
-                android:textStyle="bold" />
+                android:textSize="32sp"
+                android:textStyle="bold"
+                android:letterSpacing="-0.02" />
 
             <TextView
                 android:id="@+id/flashcardIpa"
@@ -57,55 +60,68 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:textColor="@color/ef_text_secondary"
-                android:textSize="18sp"
+                android:textSize="17sp"
                 android:visibility="gone" />
 
             <TextView
                 android:id="@+id/flashcardMeaning"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="10dp"
                 android:textColor="@color/ef_text_primary"
-                android:textSize="19sp"
+                android:textSize="18sp"
                 android:visibility="gone" />
 
             <TextView
                 android:id="@+id/flashcardExample"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="14dp"
                 android:gravity="center"
                 android:textColor="@color/ef_text_secondary"
                 android:textSize="14sp"
+                android:lineSpacingExtra="3dp"
                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnPronounceFlashcard"
-                
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="14dp"
                 android:text="@string/btn_pronounce"
+                android:textSize="13sp"
                 android:visibility="gone" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <TextView
-        android:id="@+id/srsHint"
+    <!-- SRS Hint -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_warning_block"
-        android:padding="10dp"
-        android:text="Lật thẻ để đánh giá độ khó và lên lịch SRS"
-        android:textColor="@color/ef_warning_text"
-        android:textSize="13sp" />
+        android:layout_marginTop="14dp"
+        app:cardBackgroundColor="@color/ef_tertiary_container"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
 
+        <TextView
+            android:id="@+id/srsHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:text="Lật thẻ để đánh giá độ khó và lên lịch SRS"
+            android:textColor="@color/ef_on_tertiary_container"
+            android:textSize="13sp"
+            android:lineSpacingExtra="2dp" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- SRS Difficulty Buttons -->
     <LinearLayout
         android:id="@+id/srsButtons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="14dp"
         android:gravity="center"
         android:orientation="horizontal"
         android:visibility="gone">
@@ -114,27 +130,27 @@
             android:id="@+id/btnHard"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="46dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:text="😰 Khó" />
+            android:text="Khó" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnOkay"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="46dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:text="😐 Ổn" />
+            android:text="Ổn" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnEasy"
-            
+            style="@style/Widget.Material3.Button"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="46dp"
             android:layout_weight="1"
-            android:text="😄 Dễ" />
+            android:text="Dễ" />
     </LinearLayout>
 
 </LinearLayout>

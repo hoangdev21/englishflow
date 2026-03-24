@@ -7,18 +7,34 @@
     android:gravity="start"
     android:paddingStart="12dp"
     android:paddingEnd="32dp"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
 
-    <!-- AI Icon -->
-    <TextView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:gravity="center"
-        android:text="🤖"
-        android:textSize="24sp"
+    <!-- AI Avatar -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="32dp"
+        android:layout_height="32dp"
         android:layout_marginEnd="10dp"
-        android:layout_marginTop="4dp" />
+        android:layout_marginTop="4dp"
+        app:cardBackgroundColor="@color/ef_primary_container"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AI"
+                android:textColor="@color/ef_primary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- AI Message Container -->
     <LinearLayout
@@ -27,13 +43,13 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
-        <!-- English Response Section -->
+        <!-- English Section -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="6dp"
             app:cardBackgroundColor="@color/ef_surface_variant"
-            app:cardCornerRadius="14dp"
+            app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp">
 
@@ -50,48 +66,47 @@
                     android:gravity="center_vertical">
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🇬🇧 Tiếng Anh:"
-                        android:textColor="@color/ef_text_secondary"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-
-                    <View
                         android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:layout_weight="1" />
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="ENGLISH"
+                        android:textColor="@color/ef_text_tertiary"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.1" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnPronounceEnglish"
                         style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:minWidth="32dp"
-                        android:minHeight="32dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:minWidth="30dp"
+                        android:minHeight="30dp"
                         android:padding="0dp"
-                        android:text="🔊"
-                        android:textSize="16sp" />
+                        app:icon="@drawable/ic_volume_up"
+                        app:iconGravity="textStart"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/ef_primary" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/txtAiMessageEnglish"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="6dp"
                     android:textColor="@color/ef_text_primary"
                     android:textSize="13sp"
-                    android:lineSpacingExtra="2dp" />
+                    android:lineSpacingExtra="3dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Vietnamese Response Section -->
+        <!-- Vietnamese Section -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="6dp"
             app:cardBackgroundColor="@color/ef_primary_container"
-            app:cardCornerRadius="14dp"
+            app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp">
 
@@ -108,48 +123,48 @@
                     android:gravity="center_vertical">
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🇻🇳 Tiếng Việt:"
-                        android:textColor="@color/ef_on_primary_container"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-
-                    <View
                         android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:layout_weight="1" />
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="TIẾNG VIỆT"
+                        android:textColor="@color/ef_on_primary_container"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.1"
+                        android:alpha="0.7" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnPronounceVietnamese"
                         style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:minWidth="32dp"
-                        android:minHeight="32dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:minWidth="30dp"
+                        android:minHeight="30dp"
                         android:padding="0dp"
-                        android:text="🔊"
-                        android:textSize="16sp" />
+                        app:icon="@drawable/ic_volume_up"
+                        app:iconGravity="textStart"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/ef_primary" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/txtAiMessageVietnamese"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="6dp"
                     android:textColor="@color/ef_on_primary_container"
                     android:textSize="13sp"
-                    android:lineSpacingExtra="2dp" />
+                    android:lineSpacingExtra="3dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Grammar/Correction Section (optional) -->
+        <!-- Grammar Section -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/grammarCardContainer"
             app:cardBackgroundColor="@color/ef_secondary_container"
-            app:cardCornerRadius="14dp"
+            app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp">
 
@@ -162,10 +177,12 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="✏️ Gợi ý:"
+                    android:text="GỢI Ý"
                     android:textColor="@color/ef_on_secondary_container"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:alpha="0.7" />
 
                 <TextView
                     android:id="@+id/txtGrammarCorrection"
@@ -174,7 +191,7 @@
                     android:layout_marginTop="6dp"
                     android:textColor="@color/ef_on_secondary_container"
                     android:textSize="12sp"
-                    android:lineSpacingExtra="2dp" />
+                    android:lineSpacingExtra="3dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -183,11 +200,10 @@
             android:id="@+id/txtAiTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
             android:layout_marginStart="4dp"
-            android:textColor="@color/ef_text_secondary"
-            android:textSize="11sp"
-            android:alpha="0.6" />
+            android:textColor="@color/ef_text_tertiary"
+            android:textSize="10sp" />
     </LinearLayout>
 
 </LinearLayout>

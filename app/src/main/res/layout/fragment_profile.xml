@@ -9,9 +9,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="12dp"
+        android:paddingStart="16dp"
         android:paddingTop="8dp"
-        android:paddingEnd="12dp"
+        android:paddingEnd="16dp"
         android:paddingBottom="24dp">
 
         <!-- Title -->
@@ -21,14 +21,17 @@
             android:text="@string/profile_title"
             android:textAppearance="@style/TextAppearance.EnglishFlow.Title" />
 
-        <!-- Profile Header Card -->
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- PROFILE HEADER CARD                         -->
+        <!-- ═══════════════════════════════════════════ -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             app:cardBackgroundColor="@color/ef_surface"
             app:cardCornerRadius="24dp"
-            app:strokeColor="@color/ef_outline"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/ef_outline_light"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -36,7 +39,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- Header Background Section -->
+                <!-- Header with Avatar -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -45,12 +48,12 @@
                     android:gravity="center_vertical"
                     android:padding="20dp">
 
-                    <!-- Avatar -->
+                    <!-- Avatar Circle -->
                     <com.google.android.material.card.MaterialCardView
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
                         app:cardBackgroundColor="@color/ef_primary"
-                        app:cardCornerRadius="64dp"
+                        app:cardCornerRadius="56dp"
                         app:cardElevation="0dp"
                         app:strokeWidth="0dp">
 
@@ -62,8 +65,10 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="👤"
-                                android:textSize="32sp" />
+                                android:text="EF"
+                                android:textColor="@color/white"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
@@ -80,7 +85,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@color/ef_on_primary_container"
-                            android:textSize="22sp"
+                            android:textSize="20sp"
                             android:textStyle="bold" />
 
                         <TextView
@@ -90,20 +95,20 @@
                             android:layout_marginTop="4dp"
                             android:textColor="@color/ef_on_primary_container"
                             android:textSize="12sp"
-                            android:alpha="0.85" />
+                            android:alpha="0.75" />
                     </LinearLayout>
 
                     <!-- Edit Button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnChangeName"
                         style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:minWidth="44dp"
-                        android:minHeight="44dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:minWidth="40dp"
+                        android:minHeight="40dp"
                         android:padding="0dp"
-                        android:text="✏️"
-                        android:textSize="20sp" />
+                        android:text="✎"
+                        android:textSize="18sp" />
                 </LinearLayout>
 
                 <!-- Stats Row -->
@@ -111,16 +116,16 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:padding="16dp"
-                    android:spacing="8dp">
+                    android:padding="14dp">
 
-                    <!-- Learned Words Stat -->
+                    <!-- Learned -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:layout_marginEnd="6dp"
                         app:cardBackgroundColor="@color/ef_primary_container"
-                        app:cardCornerRadius="12dp"
+                        app:cardCornerRadius="14dp"
                         app:cardElevation="0dp"
                         app:strokeWidth="0dp">
 
@@ -134,15 +139,8 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="📚"
-                                android:textSize="24sp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
                                 android:textColor="@color/ef_on_primary_container"
-                                android:textSize="16sp"
+                                android:textSize="18sp"
                                 android:textStyle="bold"
                                 android:text="86" />
 
@@ -152,18 +150,19 @@
                                 android:layout_marginTop="2dp"
                                 android:textColor="@color/ef_on_primary_container"
                                 android:textSize="10sp"
-                                android:alpha="0.8"
+                                android:alpha="0.7"
                                 android:text="Learned" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Streak Stat -->
+                    <!-- Streak -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:layout_marginEnd="6dp"
                         app:cardBackgroundColor="@color/ef_tertiary_container"
-                        app:cardCornerRadius="12dp"
+                        app:cardCornerRadius="14dp"
                         app:cardElevation="0dp"
                         app:strokeWidth="0dp">
 
@@ -177,15 +176,8 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="🔥"
-                                android:textSize="24sp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
                                 android:textColor="@color/ef_on_tertiary_container"
-                                android:textSize="16sp"
+                                android:textSize="18sp"
                                 android:textStyle="bold"
                                 android:text="12" />
 
@@ -195,18 +187,18 @@
                                 android:layout_marginTop="2dp"
                                 android:textColor="@color/ef_on_tertiary_container"
                                 android:textSize="10sp"
-                                android:alpha="0.8"
+                                android:alpha="0.7"
                                 android:text="Streak" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Total XP Stat -->
+                    <!-- XP -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         app:cardBackgroundColor="@color/ef_secondary_container"
-                        app:cardCornerRadius="12dp"
+                        app:cardCornerRadius="14dp"
                         app:cardElevation="0dp"
                         app:strokeWidth="0dp">
 
@@ -220,15 +212,8 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="⭐"
-                                android:textSize="24sp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="6dp"
                                 android:textColor="@color/ef_on_secondary_container"
-                                android:textSize="16sp"
+                                android:textSize="18sp"
                                 android:textStyle="bold"
                                 android:text="234" />
 
@@ -238,7 +223,7 @@
                                 android:layout_marginTop="2dp"
                                 android:textColor="@color/ef_on_secondary_container"
                                 android:textSize="10sp"
-                                android:alpha="0.8"
+                                android:alpha="0.7"
                                 android:text="XP" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
@@ -246,14 +231,17 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Full Stats Card -->
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- DETAILED STATS                              -->
+        <!-- ═══════════════════════════════════════════ -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             app:cardBackgroundColor="@color/ef_surface"
             app:cardCornerRadius="20dp"
-            app:strokeColor="@color/ef_outline"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/ef_outline_light"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -262,28 +250,15 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="📊"
-                        android:textSize="20sp"
-                        android:layout_marginEnd="10dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Thống kê chi tiết"
-                        android:textColor="@color/ef_text_primary"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    android:text="THỐNG KÊ CHI TIẾT"
+                    android:textColor="@color/ef_text_tertiary"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08"
+                    android:layout_marginBottom="12dp" />
 
                 <TextView
                     android:id="@+id/profileStats"
@@ -291,18 +266,21 @@
                     android:layout_height="wrap_content"
                     android:textColor="@color/ef_text_primary"
                     android:textSize="13sp"
-                    android:lineSpacingExtra="4dp" />
+                    android:lineSpacingExtra="5dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Weekly Study Chart Card -->
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- WEEKLY CHART                                -->
+        <!-- ═══════════════════════════════════════════ -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             app:cardBackgroundColor="@color/ef_surface"
             app:cardCornerRadius="20dp"
-            app:strokeColor="@color/ef_outline"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/ef_outline_light"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -311,28 +289,15 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="📈"
-                        android:textSize="20sp"
-                        android:layout_marginEnd="10dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="7 ngày học gần nhất"
-                        android:textColor="@color/ef_text_primary"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    android:text="7 NGÀY HỌC GẦN NHẤT"
+                    android:textColor="@color/ef_text_tertiary"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08"
+                    android:layout_marginBottom="14dp" />
 
                 <LinearLayout
                     android:id="@+id/chartContainer"
@@ -343,27 +308,25 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Achievements Section -->
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- ACHIEVEMENTS                                -->
+        <!-- ═══════════════════════════════════════════ -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="20dp"
             android:layout_marginBottom="8dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="🏆 Thành tựu"
+                android:layout_weight="1"
+                android:text="Thành tựu"
                 android:textColor="@color/ef_text_primary"
                 android:textSize="15sp"
                 android:textStyle="bold" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -380,27 +343,25 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp" />
 
-        <!-- Personal Dictionary Section -->
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- PERSONAL DICTIONARY                         -->
+        <!-- ═══════════════════════════════════════════ -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="20dp"
             android:layout_marginBottom="8dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="📖 Từ điển cá nhân"
+                android:layout_weight="1"
+                android:text="Từ điển cá nhân"
                 android:textColor="@color/ef_text_primary"
                 android:textSize="15sp"
                 android:textStyle="bold" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -417,13 +378,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp" />
 
-        <!-- Action Buttons Section -->
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- ACTION BUTTONS                              -->
+        <!-- ═══════════════════════════════════════════ -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:orientation="vertical"
-            android:spacing="10dp">
+            android:layout_marginTop="24dp"
+            android:orientation="vertical">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnResetProgress"
@@ -431,15 +393,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:text="@string/btn_reset"
-                android:textSize="13sp" />
+                android:textSize="14sp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLogout"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:text="🚪 Đăng xuất"
-                android:textSize="13sp" />
+                android:layout_marginTop="10dp"
+                android:text="Đăng xuất"
+                android:textSize="14sp" />
         </LinearLayout>
 
     </LinearLayout>
