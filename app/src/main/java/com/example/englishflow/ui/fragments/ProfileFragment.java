@@ -31,6 +31,9 @@ import java.util.Locale;
 
 public class ProfileFragment extends Fragment {
 
+    private static final float TTS_SPEECH_RATE = 0.9f;
+    private static final float TTS_PITCH = 1.0f;
+
     private AppRepository repository;
     private LocalAuthStore localAuthStore;
     private TextToSpeech textToSpeech;
@@ -72,6 +75,8 @@ public class ProfileFragment extends Fragment {
         textToSpeech = new TextToSpeech(requireContext(), status -> {
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeech.setLanguage(Locale.US);
+                textToSpeech.setSpeechRate(TTS_SPEECH_RATE);
+                textToSpeech.setPitch(TTS_PITCH);
             }
         });
 

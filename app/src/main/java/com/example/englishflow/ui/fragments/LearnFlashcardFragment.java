@@ -36,6 +36,8 @@ public class LearnFlashcardFragment extends Fragment {
 
     private static final String ARG_DOMAIN = "arg_domain";
     private static final String ARG_TOPIC = "arg_topic";
+    private static final float TTS_SPEECH_RATE = 0.9f;
+    private static final float TTS_PITCH = 1.0f;
 
     private TextView titleText;
     private TextView countText;
@@ -135,6 +137,8 @@ public class LearnFlashcardFragment extends Fragment {
         textToSpeech = new TextToSpeech(requireContext(), status -> {
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeech.setLanguage(Locale.US);
+                textToSpeech.setSpeechRate(TTS_SPEECH_RATE);
+                textToSpeech.setPitch(TTS_PITCH);
             }
         });
 
