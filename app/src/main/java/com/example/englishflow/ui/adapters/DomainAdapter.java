@@ -50,6 +50,13 @@ public class DomainAdapter extends RecyclerView.Adapter<DomainAdapter.DomainView
         return currentViewType;
     }
 
+    public void submitDomains(List<DomainItem> domains) {
+        originalDomains.clear();
+        originalDomains.addAll(domains);
+        filteredDomains = new ArrayList<>(domains);
+        notifyDataSetChanged();
+    }
+
     public void filter(String query) {
         if (query.isEmpty()) {
             filteredDomains = new ArrayList<>(originalDomains);

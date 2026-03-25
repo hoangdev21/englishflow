@@ -115,5 +115,15 @@ public class LearnDomainsFragment extends Fragment {
             btn.setImageResource(R.drawable.ic_grid);
         }
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (!isAdded() || adapter == null) {
+            return;
+        }
+        List<DomainItem> domains = AppRepository.getInstance(requireContext()).getDomains();
+        adapter.submitDomains(domains);
+    }
 }
 
