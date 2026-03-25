@@ -1,21 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
-    android:padding="32dp">
+    android:background="@drawable/bg_learn_gradient_premium"
+    android:clipChildren="false"
+    android:padding="24dp">
 
-    <!-- Decorative Soft Background Orbs -->
-    <View
-        android:layout_width="300dp"
-        android:layout_height="300dp"
-        android:background="@drawable/bg_circle_white_alpha"
-        android:alpha="0.3"
+    <!-- Konfetti for the celebration effect -->
+    <nl.dionsegijn.konfetti.xml.KonfettiView
+        android:id="@+id/konfettiView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Decorative Stars for the "flying stars" effect -->
+    <ImageView
+        android:id="@+id/star1"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_ai_stars"
+        android:alpha="0"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="100dp"
+        android:layout_marginStart="40dp"
+        app:tint="#FFD700" />
+
+    <ImageView
+        android:id="@+id/star2"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_ai_stars"
+        android:alpha="0"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="-100dp" />
+        android:layout_marginTop="150dp"
+        android:layout_marginEnd="60dp"
+        app:tint="#FFD700" />
+
+    <ImageView
+        android:id="@+id/star3"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/ic_ai_stars"
+        android:alpha="0"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="250dp"
+        android:layout_marginStart="80dp"
+        app:tint="#FFD700" />
 
     <LinearLayout
         android:id="@+id/successIconGroup"
@@ -23,77 +57,115 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="vertical"
+        android:clipChildren="false"
         app:layout_constraintBottom_toTopOf="@+id/celebrationTextGroup"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed">
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/celebrationCard"
-            android:layout_width="140dp"
-            android:layout_height="140dp"
-            app:cardBackgroundColor="#E6F4EA"
-            app:cardCornerRadius="100dp"
-            app:cardElevation="0dp">
-
-            <ImageView
-                android:id="@+id/celebrationIcon"
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_nav_learn"
-                app:tint="@color/ef_primary" />
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
+        <!-- Animated Badge Container -->
+        <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="-24dp"
-            app:cardBackgroundColor="@color/ef_primary"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="6dp">
+            android:clipChildren="false">
 
-            <TextView
-                android:id="@+id/xpText"
+            <!-- Glow Effect -->
+            <View
+                android:layout_width="180dp"
+                android:layout_height="180dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_circle_white_alpha"
+                android:alpha="0.4" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/celebrationCard"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_gravity="center"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="75dp"
+                app:cardElevation="12dp"
+                app:strokeWidth="4dp"
+                app:strokeColor="#F0F9FF">
+
+                <ImageView
+                    android:id="@+id/celebrationIcon"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_nav_learn"
+                    app:tint="@color/ef_primary" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- XP Badge positioned as a 3D overlay -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
-                android:fontFamily="sans-serif-black"
-                android:textColor="#FFFFFF"
-                android:textSize="18sp"
-                android:text="+25 XP" />
-        </com.google.android.material.card.MaterialCardView>
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginBottom="-10dp"
+                app:cardBackgroundColor="@color/ef_primary"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="16dp"
+                app:strokeWidth="2dp"
+                app:strokeColor="#FFFFFF">
+
+                <TextView
+                    android:id="@+id/xpText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="24dp"
+                    android:paddingVertical="10dp"
+                    android:fontFamily="sans-serif-black"
+                    android:textColor="#FFFFFF"
+                    android:textSize="20sp"
+                    android:text="+25 XP" />
+            </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
+
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/celebrationTextGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="56dp"
         android:gravity="center"
         android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/celebrationButtonGroup"
         app:layout_constraintTop_toBottomOf="@+id/successIconGroup">
 
         <TextView
+            android:id="@+id/tvCelebrationTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif-black"
             android:gravity="center"
-            android:text="Tuyệt vời! Bạn đã \n hoàn thành bài học"
+            android:text="Tuyệt vời!"
             android:textColor="@color/ef_text_primary"
-            android:textSize="26sp"
+            android:textSize="32sp"
             android:letterSpacing="-0.02" />
 
         <TextView
+            android:id="@+id/tvCelebrationSubTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:text="Bạn đã hoàn thành bài học"
+            android:textColor="@color/ef_text_primary"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/tvCelebrationDesc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:gravity="center"
+            android:paddingHorizontal="16dp"
             android:text="Kiến thức mới đã được ghi lại. Hãy tiếp tục duy trì đà hưng phấn này nhé!"
             android:textColor="@color/ef_text_secondary"
-            android:textSize="15sp"
-            android:lineSpacingExtra="4dp" />
+            android:textSize="16sp"
+            android:lineSpacingExtra="6dp" />
     </LinearLayout>
 
     <LinearLayout
@@ -101,46 +173,93 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="48dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="40dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/celebrationTextGroup">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCelebrationNext"
-            style="@style/Widget.Material3.Button"
+        <!-- 3D NEXT BUTTON -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="Học tiếp bài mới"
-            android:textSize="16sp"
-            app:cornerRadius="20dp" />
+            android:layout_height="wrap_content">
+            
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="@drawable/bg_button_premium_primary" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCelebrationNext"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:text="Học tiếp bài mới"
+                android:textSize="18sp"
+                android:textAllCaps="true"
+                android:letterSpacing="0.05"
+                android:paddingBottom="4dp"
+                app:cornerRadius="14dp"
+                android:backgroundTint="@android:color/transparent"
+                app:backgroundTint="@null" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
             android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCelebrationHome"
-                style="@style/Widget.Material3.Button.TonalButton"
+            <!-- 3D HOME BUTTON -->
+            <FrameLayout
                 android:layout_width="0dp"
-                android:layout_height="56dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Trang chủ"
-                app:cornerRadius="18dp" />
+                android:layout_marginEnd="10dp">
+                
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:background="@drawable/bg_3d_badge_silver" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCelebrationBackToTopics"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCelebrationHome"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:text="Trang chủ"
+                    android:textSize="15sp"
+                    android:paddingBottom="6dp"
+                    app:cornerRadius="32dp"
+                    android:backgroundTint="@android:color/transparent"
+                    app:backgroundTint="@null" />
+            </FrameLayout>
+
+            <!-- 3D BACK BUTTON -->
+            <FrameLayout
                 android:layout_width="0dp"
-                android:layout_height="56dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:text="Trở về bài học"
-                app:cornerRadius="18dp" />
+                android:layout_marginStart="10dp">
+                
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:background="@drawable/bg_3d_badge_silver" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCelebrationBackToTopics"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:text="Học lại"
+                    android:textSize="15sp"
+                    android:paddingBottom="6dp"
+                    app:cornerRadius="32dp"
+                    android:backgroundTint="@android:color/transparent"
+                    app:backgroundTint="@null" />
+            </FrameLayout>
         </LinearLayout>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+

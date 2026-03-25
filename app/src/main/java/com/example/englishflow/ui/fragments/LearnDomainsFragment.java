@@ -8,7 +8,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.PopupMenu;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.TextView;
+import android.widget.ImageView;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -65,25 +70,9 @@ public class LearnDomainsFragment extends Fragment {
             public void afterTextChanged(Editable s) {}
         });
 
-        // Sort logic
+        // Sort logic (Custom Premium Popup)
         ImageButton btnSort = view.findViewById(R.id.btnSort);
-        btnSort.setOnClickListener(v -> {
-            PopupMenu popup = new PopupMenu(requireContext(), btnSort);
-            popup.getMenu().add("Tên (A-Z)");
-            popup.getMenu().add("Tên (Z-A)");
-            popup.getMenu().add("Tiến độ thấp nhất");
-            popup.getMenu().add("Tiến độ cao nhất");
-            
-            popup.setOnMenuItemClickListener(item -> {
-                String title = item.getTitle().toString();
-                if (title.equals("Tên (A-Z)")) adapter.sort(true);
-                else if (title.equals("Tên (Z-A)")) adapter.sort(false);
-                else if (title.equals("Tiến độ thấp nhất")) adapter.sortByProgress(true);
-                else if (title.equals("Tiến độ cao nhất")) adapter.sortByProgress(false);
-                return true;
-            });
-            popup.show();
-        });
+        btnSort.setOnClickListener(v -> showCustomSortPopup(btnSort));
 
         // View toggle logic
         ImageButton btnToggleView = view.findViewById(R.id.btnToggleView);
@@ -114,6 +103,43 @@ public class LearnDomainsFragment extends Fragment {
         } else {
             btn.setImageResource(R.drawable.ic_grid);
         }
+    }
+
+    private void showCustomSortPopup(View anchor) {
+        View popupView = LayoutInflater.from(requireContext()).inflate(R.layout.layout_sort_popup, null);
+        PopupWindow popup = new PopupWindow(popupView, 
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true);
+        
+        popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popup.setAnimationStyle(android.R.style.Animation_Dialog);
+        // Setup Items
+        setupSortOption(popupView.findViewById(R.id.sortNameAsc), "Tên (A-Z)", () -> {
+            adapter.sort(true);
+            popup.dismiss();
+        });
+        setupSortOption(popupView.findViewById(R.id.sortNameDesc), "Tên (Z-A)", () -> {
+            adapter.sort(false);
+            popup.dismiss();
+        });
+        setupSortOption(popupView.findViewById(R.id.sortProgressLow), "Tiến độ thấp nhất", () -> {
+            adapter.sortByProgress(true);
+            popup.dismiss();
+        });
+        setupSortOption(popupView.findViewById(R.id.sortProgressHigh), "Tiến độ cao nhất", () -> {
+            adapter.sortByProgress(false);
+            popup.dismiss();
+        });
+
+        popup.setElevation(20f);
+        popup.showAsDropDown(anchor, 0, 10);
+    }
+
+    private void setupSortOption(View container, String label, Runnable action) {
+        TextView txtLabel = container.findViewById(R.id.txtSortLabel);
+        txtLabel.setText(label);
+        container.setOnClickListener(v -> action.run());
     }
 
     @Override

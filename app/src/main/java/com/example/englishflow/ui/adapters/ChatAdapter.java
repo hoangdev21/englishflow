@@ -55,6 +55,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             String rawMessage = item.getMessage() != null ? item.getMessage() : "";
             String htmlMessage = rawMessage
                     .replaceAll("\\*\\*(.*?)\\*\\*", "<b>$1</b>")
+                    .replaceAll("\\*(.*?)\\*", "<i>$1</i>")
+                    .replaceAll("\\[color:(.*?)\\](.*?)\\[/color\\]", "<font color='$1'>$2</font>")
                     .replace("\n", "<br>");
             
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {

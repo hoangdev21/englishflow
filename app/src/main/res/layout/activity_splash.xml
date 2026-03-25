@@ -5,26 +5,51 @@
     android:layout_height="match_parent"
     android:background="@drawable/bg_splash_gradient">
 
-    <!-- Sea Waves at bottom -->
+    <!-- Moving starry sky background -->
+    <com.example.englishflow.ui.views.StarrySkyView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Realistic Sea Waves at bottom -->
     <ImageView
-        android:id="@+id/waveBack"
-        android:layout_width="800dp"
+        android:id="@+id/waveDeep"
+        android:layout_width="1200dp"
+        android:layout_height="220dp"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="-40dp"
+        android:src="@drawable/bg_splash_wave_deep"
+        android:scaleType="matrix"
+        android:alpha="0.3" />
+
+    <ImageView
+        android:id="@+id/waveMid"
+        android:layout_width="1200dp"
         android:layout_height="180dp"
         android:layout_gravity="bottom"
-        android:layout_marginBottom="-20dp"
-        android:src="@drawable/bg_splash_wave_back"
+        android:layout_marginBottom="-30dp"
+        android:src="@drawable/bg_splash_wave_mid"
         android:scaleType="matrix"
-        android:alpha="0.4" />
+        android:alpha="0.5" />
 
     <ImageView
         android:id="@+id/waveFront"
-        android:layout_width="800dp"
+        android:layout_width="1200dp"
         android:layout_height="140dp"
         android:layout_gravity="bottom"
-        android:layout_marginBottom="-10dp"
-        android:src="@drawable/bg_splash_wave_front"
+        android:layout_marginBottom="-20dp"
+        android:src="@drawable/bg_splash_wave_front_new"
         android:scaleType="matrix"
-        android:alpha="0.6" />
+        android:alpha="0.8" />
+
+    <!-- Glow effect behind logo -->
+    <View
+        android:id="@+id/logoGlow"
+        android:layout_width="320dp"
+        android:layout_height="320dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="60dp"
+        android:alpha="0"
+        android:background="@drawable/bg_splash_glow" />
 
     <!-- Centered Content -->
     <LinearLayout

@@ -8,6 +8,8 @@ public class LearnedWordEntity {
     @PrimaryKey(autoGenerate = true)
     public int id;
     
+    @androidx.annotation.NonNull
+    public String userEmail = "";
     public String word;
     public String ipa;
     public String meaning;

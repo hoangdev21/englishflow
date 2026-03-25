@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_stats_premium_card"
+    android:elevation="12dp"
+    android:minWidth="220dp"
+    android:orientation="vertical"
+    android:paddingTop="8dp"
+    android:paddingBottom="12dp">
+
+    <!-- Item 1: Name A-Z -->
+    <include
+        android:id="@+id/sortNameAsc"
+        layout="@layout/item_sort_option" />
+
+    <!-- Item 2: Name Z-A -->
+    <include
+        android:id="@+id/sortNameDesc"
+        layout="@layout/item_sort_option" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="8dp"
+        android:alpha="0.1"
+        android:background="@color/ef_card_blue_text" />
+
+    <!-- Item 3: Progress Low -->
+    <include
+        android:id="@+id/sortProgressLow"
+        layout="@layout/item_sort_option" />
+
+    <!-- Item 4: Progress High -->
+    <include
+        android:id="@+id/sortProgressHigh"
+        layout="@layout/item_sort_option" />
+
+</LinearLayout>

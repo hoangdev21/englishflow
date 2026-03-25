@@ -109,7 +109,9 @@ public class ChatFragment extends Fragment {
                     chatItems.clear();
                     adapter.notifyDataSetChanged();
 
-                    String greeting = "Xin chào! Tôi là Flow, trợ lý Tiếng Anh của bạn. Hôm nay chúng ta sẽ cùng ôn tập về chủ đề **" + selectedTopic + "** nhé! 🚀";
+                    String userName = repository.getUserName();
+                    String styledName = "[color:#2563EB]***" + userName + "***[/color]";
+                    String greeting = "Xin chào " + styledName + "! Tôi là Flow, trợ lý Tiếng Anh của bạn. Hôm nay chúng ta sẽ cùng ôn tập về chủ đề **" + selectedTopic + "** nhé! 🚀";
                     animateTypewriterResponse(greeting, null, null);
                     saveSession("Hội thoại: " + selectedTopic);
                 }
@@ -241,7 +243,9 @@ public class ChatFragment extends Fragment {
         adapter.notifyDataSetChanged();
         
         // Initial AI Greeting
-        String welcome = "Xin chào! Tôi là Flow, trợ lý Tiếng Anh từ EnglishFlow. Hôm nay bạn muốn luyện tập về chủ đề gì?";
+        String userName = repository.getUserName();
+        String styledName = "[color:#2563EB]***" + userName + "***[/color]";
+        String welcome = "Xin chào " + styledName + "! Tôi là Flow, trợ lý Tiếng Anh từ EnglishFlow. Hôm nay bạn muốn luyện tập về chủ đề gì?";
         addMessage(new ChatItem(ChatItem.ROLE_AI, welcome, null, null));
         saveSession(welcome);
     }

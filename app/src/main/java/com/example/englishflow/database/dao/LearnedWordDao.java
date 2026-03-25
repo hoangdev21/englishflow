@@ -15,21 +15,21 @@ public interface LearnedWordDao {
     @Insert
     long insert(LearnedWordEntity word);
     
-    @Query("SELECT * FROM learned_words ORDER BY learnedAt DESC")
-    List<LearnedWordEntity> getAllWords();
+    @Query("SELECT * FROM learned_words WHERE userEmail = :userEmail ORDER BY learnedAt DESC")
+    List<LearnedWordEntity> getAllWords(String userEmail);
     
-    @Query("SELECT * FROM learned_words WHERE domain = :domain ORDER BY learnedAt DESC")
-    List<LearnedWordEntity> getWordsByDomain(String domain);
+    @Query("SELECT * FROM learned_words WHERE userEmail = :userEmail AND domain = :domain ORDER BY learnedAt DESC")
+    List<LearnedWordEntity> getWordsByDomain(String userEmail, String domain);
     
-    @Query("SELECT COUNT(*) FROM learned_words")
-    int getTotalWordsCount();
+    @Query("SELECT COUNT(*) FROM learned_words WHERE userEmail = :userEmail")
+    int getTotalWordsCount(String userEmail);
     
-    @Query("SELECT COUNT(*) FROM learned_words WHERE domain = :domain")
-    int getWordCountByDomain(String domain);
+    @Query("SELECT COUNT(*) FROM learned_words WHERE userEmail = :userEmail AND domain = :domain")
+    int getWordCountByDomain(String userEmail, String domain);
     
-    @Query("SELECT * FROM learned_words WHERE word = :word LIMIT 1")
-    LearnedWordEntity getWordByName(String word);
+    @Query("SELECT * FROM learned_words WHERE userEmail = :userEmail AND word = :word LIMIT 1")
+    LearnedWordEntity getWordByName(String userEmail, String word);
     
-    @Query("DELETE FROM learned_words")
-    void deleteAllWords();
+    @Query("DELETE FROM learned_words WHERE userEmail = :userEmail")
+    void deleteAllWords(String userEmail);
 }
