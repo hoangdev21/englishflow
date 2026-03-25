@@ -233,29 +233,24 @@
 
                 <!-- Learned Words Card -->
                 <LinearLayout
+                    android:id="@+id/btnLearnedWords"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="10dp"
                     android:layout_weight="1"
                     android:background="@drawable/bg_stats_premium_card"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:orientation="vertical"
                     android:paddingStart="18dp"
                     android:paddingTop="18dp"
                     android:paddingEnd="18dp"
                     android:paddingBottom="22dp">
 
-                    <FrameLayout
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_icon_circle_emerald">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="📚"
-                            android:textSize="22sp" />
-                    </FrameLayout>
+                    <ImageView
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:src="@drawable/book" />
 
                     <TextView
                         android:id="@+id/txtLearnedCount"
@@ -300,18 +295,10 @@
                     android:paddingEnd="18dp"
                     android:paddingBottom="22dp">
 
-                    <FrameLayout
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/bg_icon_circle_amber">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="🏆"
-                            android:textSize="22sp" />
-                    </FrameLayout>
+                    <ImageView
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:src="@drawable/cup" />
 
                     <TextView
                         android:id="@+id/txtBestStreakCount"
@@ -366,18 +353,10 @@
                     android:paddingEnd="14dp"
                     android:paddingBottom="18dp">
 
-                    <FrameLayout
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:background="@drawable/bg_icon_circle_blue">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="🔥"
-                            android:textSize="20sp" />
-                    </FrameLayout>
+                    <ImageView
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:src="@drawable/flames" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -416,18 +395,10 @@
                     android:paddingEnd="14dp"
                     android:paddingBottom="18dp">
 
-                    <FrameLayout
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:background="@drawable/bg_icon_circle_rose">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="📷"
-                            android:textSize="20sp" />
-                    </FrameLayout>
+                    <ImageView
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:src="@drawable/camera" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -539,6 +510,62 @@
                     app:trackCornerRadius="6dp"
                     app:trackThickness="12dp" />
             </LinearLayout>
+
+            <!-- Leaderboard Entry (NEW) -->
+            <LinearLayout
+                android:id="@+id/btnLeaderboard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_stats_premium_card"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="18dp">
+
+                <FrameLayout
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:background="@drawable/bg_icon_circle_amber">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="🏆"
+                        android:textSize="24sp" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Bảng Xếp Hạng Siêu Cấp"
+                        android:textColor="@color/ef_text_primary"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Thi đua cùng những học viên xuất sắc nhất"
+                        android:textColor="@color/ef_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textSize="24sp"
+                    android:textColor="@color/ef_primary"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
 
     <LinearLayout
@@ -603,11 +630,10 @@
                     android:paddingTop="12dp"
                     android:paddingBottom="14dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="📖"
-                        android:textSize="22sp" />
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/book" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -634,11 +660,10 @@
                     android:paddingTop="12dp"
                     android:paddingBottom="14dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="📷"
-                        android:textSize="22sp" />
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/camera" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -665,11 +690,10 @@
                     android:paddingTop="12dp"
                     android:paddingBottom="14dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="💬"
-                        android:textSize="22sp" />
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/chat_bot_avatar" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -695,11 +719,11 @@
                     android:paddingTop="12dp"
                     android:paddingBottom="14dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="💾"
-                        android:textSize="22sp" />
+                    <ImageView
+                        android:id="@+id/imgSavedWords"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_bookmark" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -733,17 +757,10 @@
                     android:paddingEnd="18dp"
                     android:paddingBottom="12dp">
 
-                    <FrameLayout
+                    <ImageView
                         android:layout_width="44dp"
                         android:layout_height="44dp"
-                        android:background="@drawable/bg_icon_circle_emerald">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="📖"
-                            android:textSize="22sp" />
-                    </FrameLayout>
+                        android:src="@drawable/book_tra_tu" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -793,7 +810,7 @@
                         android:layout_height="50dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_dict_search_input"
-                        android:hint="🔍  Nhập từ Anh hoặc Việt..."
+                        android:hint="Nhập từ Anh hoặc Việt..."
                         android:imeOptions="actionSearch"
                         android:inputType="text"
                         android:paddingStart="16dp"
@@ -855,7 +872,8 @@
                         android:id="@+id/dictResultContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_dict_result_card"
+                        android:background="@drawable/bg_stats_premium_card"
+                        android:elevation="0dp"
                         android:orientation="vertical"
                         android:padding="18dp">
 
@@ -941,15 +959,13 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
-                            android:background="@drawable/bg_tag_emerald"
-                            android:alpha="0.9"
+                            android:background="@drawable/bg_badge_white_alpha"
                             android:padding="14dp"
                             android:orientation="horizontal">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="💡"
-                                android:textSize="14sp" />
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/creativity" />
                             <TextView
                                 android:id="@+id/txtDictionaryExample"
                                 android:layout_width="0dp"
@@ -1022,7 +1038,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
+                android:layout_marginTop="24dp"
                 android:background="@drawable/bg_stats_premium_card"
                 android:orientation="vertical"
                 android:padding="20dp">
@@ -1034,41 +1050,30 @@
                     android:orientation="horizontal">
 
                     <FrameLayout
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="45dp"
+                        android:layout_height="45dp"
                         android:background="@drawable/bg_3d_badge_silver">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
                             android:layout_gravity="center"
-                            android:text="🎯"
-                            android:textSize="16sp" />
+                            android:src="@drawable/book_ghi" />
                     </FrameLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="@string/home_continue"
-                        android:textColor="@color/ef_section_header"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <!-- Topic info -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
                         android:layout_weight="1"
                         android:orientation="vertical">
-
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/home_continue"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.05" />
                         <TextView
                             android:id="@+id/txtContinueTitle"
                             android:layout_width="wrap_content"
@@ -1077,30 +1082,40 @@
                             android:textColor="@color/ef_text_primary"
                             android:textSize="18sp"
                             android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/txtContinueProgress"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="8 thẻ còn lại"
-                            android:textColor="@color/ef_text_secondary"
-                            android:textSize="13sp" />
                     </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/txtContinueProgress"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="8 thẻ còn lại"
+                        android:textColor="@color/ef_primary_dark"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnContinue"
                         android:layout_width="wrap_content"
-                        android:layout_height="46dp"
+                        android:layout_height="48dp"
                         android:background="@drawable/bg_button_premium_primary"
-                        android:minHeight="46dp"
+                        android:minHeight="48dp"
                         app:backgroundTint="@null"
-                        android:paddingStart="22dp"
-                        android:paddingEnd="22dp"
-                        android:text="Tiếp tục →"
+                        android:paddingStart="24dp"
+                        android:paddingEnd="24dp"
+                        android:text="TIẾP TỤC →"
                         android:textColor="@color/white"
                         android:textSize="13sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:elevation="4dp" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -1119,17 +1134,10 @@
                 android:orientation="horizontal"
                 android:padding="20dp">
 
-                <FrameLayout
+                <ImageView
                     android:layout_width="48dp"
                     android:layout_height="48dp"
-                    android:background="@drawable/bg_3d_badge_silver">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="⏰"
-                        android:textSize="22sp" />
-                </FrameLayout>
+                    android:src="@drawable/clock" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -1183,17 +1191,10 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <FrameLayout
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/bg_3d_badge_silver">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="📊"
-                        android:textSize="14sp" />
-                </FrameLayout>
+                <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:src="@drawable/analysis" />
 
                 <TextView
                     android:layout_width="0dp"
@@ -1499,93 +1500,74 @@
                 android:orientation="horizontal">
 
                 <!-- Unlearned Words Card -->
-                <com.google.android.material.card.MaterialCardView
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="@color/ef_card_indigo"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="0dp">
+                    android:background="@drawable/bg_stats_premium_card"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/goal" />
+
+                    <TextView
+                        android:id="@+id/txtUnlearnedCount"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="vertical"
-                        android:padding="16dp">
+                        android:layout_marginTop="10dp"
+                        android:text="3000 từ"
+                        android:textColor="@color/ef_text_primary"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="📝"
-                            android:textSize="20sp" />
-
-                        <TextView
-                            android:id="@+id/txtUnlearnedCount"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="3000 từ"
-                            android:textColor="@color/ef_card_indigo_text"
-                            android:textSize="20sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:alpha="0.7"
-                            android:text="Từ chưa học"
-                            android:textColor="@color/ef_card_indigo_text"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:alpha="0.7"
+                        android:text="Từ chưa học"
+                        android:textColor="@color/ef_text_secondary"
+                        android:textSize="11sp" />
+                </LinearLayout>
 
                 <!-- CEFR Level Card -->
-                <com.google.android.material.card.MaterialCardView
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    app:cardBackgroundColor="@color/ef_secondary_container"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="0dp"
-                    app:strokeWidth="0dp">
+                    android:background="@drawable/bg_stats_premium_card"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/graduation" />
+
+                    <TextView
+                        android:id="@+id/txtCefrLevel"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
+                        android:layout_marginTop="10dp"
+                        android:text="A1 - Sơ cấp"
+                        android:textColor="@color/ef_text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🎓"
-                            android:textSize="20sp" />
-
-                        <TextView
-                            android:id="@+id/txtCefrLevel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="A1 - Sơ cấp"
-                            android:textColor="@color/ef_on_secondary_container"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/txtProgressToNext"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:alpha="0.7"
-                            android:text="Trình độ CEFR"
-                            android:textColor="@color/ef_on_secondary_container"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                    <TextView
+                        android:id="@+id/txtProgressToNext"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:alpha="0.7"
+                        android:text="Trình độ CEFR"
+                        android:textColor="@color/ef_text_secondary"
+                        android:textSize="11sp" />
+                </LinearLayout>
             </LinearLayout>
 
         </LinearLayout>

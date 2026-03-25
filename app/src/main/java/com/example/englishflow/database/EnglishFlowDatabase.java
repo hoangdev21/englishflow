@@ -39,7 +39,7 @@ import com.example.englishflow.database.entity.UserStatsEntity;
         SeedPackageStateEntity.class,
         LocalUserEntity.class
     },
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 public abstract class EnglishFlowDatabase extends RoomDatabase {

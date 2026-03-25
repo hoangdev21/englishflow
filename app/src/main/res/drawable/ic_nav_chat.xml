@@ -3,17 +3,8 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-  <path
-      android:fillColor="#FF000000"
-      android:pathData="M20,2H4C2.9,2 2,2.9 2,4v18l4-4h14c1.1,0 2-0.9 2-2V4C22,2.9 21.1,2 20,2zM20,16H5.17L4,17.17V4h16V16z"/>
-  <!-- Dots as paths -->
-  <path
-      android:fillColor="#FF000000"
-      android:pathData="M7,10m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0"/>
-  <path
-      android:fillColor="#FF000000"
-      android:pathData="M12,10m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0"/>
-  <path
-      android:fillColor="#FF000000"
-      android:pathData="M17,10m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0"/>
+    <!-- Premium Soft Chat Bubble -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M20,2H4C2.9,2 2,2.9 2,4V16C2,17.1 2.9,18 4,18H16L20,22V18C21.1,18 22,17.1 22,16V4C22,2.9 21.1,2 20,2ZM18,14H6V12H18V14ZM18,10H6V8H18V10Z"/>
 </vector>

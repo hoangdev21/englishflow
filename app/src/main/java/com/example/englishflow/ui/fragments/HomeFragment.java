@@ -3,6 +3,7 @@ package com.example.englishflow.ui.fragments;
 import android.Manifest;
 import android.app.TimePickerDialog;
 import android.content.pm.PackageManager;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -30,6 +31,8 @@ import com.example.englishflow.data.FreeDictionaryService;
 import com.example.englishflow.data.MyMemoryService;
 import com.example.englishflow.data.WordEntry;
 import com.example.englishflow.reminder.StudyReminderScheduler;
+import com.example.englishflow.ui.LearnedWordsActivity;
+import com.example.englishflow.ui.LeaderboardActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
@@ -78,7 +81,7 @@ public class HomeFragment extends Fragment {
 
         try {
             setupBasicViews(view);
-            loadDataAsync(view);
+            refreshData();
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(requireContext(), "Lỗi tải dữ liệu trang chủ", Toast.LENGTH_SHORT).show();
@@ -88,9 +91,8 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        View root = getView();
-        if (root != null && repository != null) {
-            loadDataAsync(root);
+        if (getView() != null && repository != null) {
+            refreshData();
         }
     }
 
@@ -173,6 +175,23 @@ public class HomeFragment extends Fragment {
                                 Toast.makeText(requireContext(), "Đã đặt nhắc học hằng ngày", Toast.LENGTH_SHORT).show();
                             }, currentHour, currentMinute, true);
                     dialog.show();
+                });
+            }
+
+            // Learned Words & Leaderboard
+            View learnedWordsCard = view.findViewById(R.id.btnLearnedWords);
+            if (learnedWordsCard != null) {
+                learnedWordsCard.setOnClickListener(v -> {
+                    Intent intent = new Intent(requireContext(), LearnedWordsActivity.class);
+                    startActivity(intent);
+                });
+            }
+
+            View leaderboardCard = view.findViewById(R.id.btnLeaderboard);
+            if (leaderboardCard != null) {
+                leaderboardCard.setOnClickListener(v -> {
+                    Intent intent = new Intent(requireContext(), LeaderboardActivity.class);
+                    startActivity(intent);
                 });
             }
         } catch (Exception e) {
@@ -271,14 +290,21 @@ public class HomeFragment extends Fragment {
 
         // Word + Translation
         if (dictTitle != null) {
-            String word = safeText(result.getWord(), "Không rõ từ");
-            String translation = safeText(result.getTranslatedWord(), "");
+            String queryWord = result.getQueryWord();
+            String englishWord = result.getWord();
+            String translatedWord = result.getTranslatedWord();
             
-            String displayWord = capitalize(word);
-            if (!translation.isEmpty()) {
-                dictTitle.setText(displayWord + " (" + translation + ")");
+            if (result.isVietnameseSearch()) {
+                // Search "Mèo" -> Mèo (Cat)
+                dictTitle.setText(capitalize(queryWord) + " (" + capitalize(englishWord) + ")");
             } else {
-                dictTitle.setText(displayWord);
+                // Search "Cat" -> Cat (con mèo)
+                String displayWord = capitalize(englishWord);
+                if (translatedWord != null && !translatedWord.isEmpty()) {
+                    dictTitle.setText(displayWord + " (" + translatedWord + ")");
+                } else {
+                    dictTitle.setText(displayWord);
+                }
             }
         }
 
@@ -536,53 +562,44 @@ public class HomeFragment extends Fragment {
     // ASYNC DATA LOADING
     // ─────────────────────────────────────────────────────────
 
-    private void loadDataAsync(View view) {
-        new Thread(() -> {
-            try {
-                loadRealData(view);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
-    private void loadRealData(View view) {
-        try {
+    private void refreshData() {
+        if (!isAdded() || repository == null) return;
+        
+        repository.getUserProgressAsync(progress -> {
             if (!isAdded()) return;
-
+            
+            View view = getView();
+            if (view == null) return;
+            
             Calendar calendar = Calendar.getInstance();
             int hour = calendar.get(Calendar.HOUR_OF_DAY);
             int minute = calendar.get(Calendar.MINUTE);
-
+            
             String emoji = getTimeEmoji(hour);
             String greeting = buildGreeting(repository.getUserName());
-
-            int learnedWords = repository.getLearnedWords();
-            int streak = repository.getStreakDays();
-            int bestStreak = repository.getBestStreak();
-            int scanned = repository.getScannedImages();
-            int xpToday = repository.getXpToday();
             int xpGoal = repository.getXpGoal();
+            
+            // Extract from progress object
             List<Integer> weeklyMinutes = repository.getWeeklyStudyMinutes();
-            int weeklyTotal = weeklyMinutes != null
+            int weeklyTotal = weeklyMinutes != null 
                     ? weeklyMinutes.stream().mapToInt(Integer::intValue).sum() : 0;
-            String cefrLevel = repository.getCefrLevel();
-            int unlearnedCount = repository.getUnlearnedWordsCount();
-
-            if (isAdded()) {
-                requireActivity().runOnUiThread(() -> updateUIWithData(view, emoji, greeting,
-                        hour, minute, learnedWords, streak, bestStreak, scanned, xpToday, xpGoal,
-                        weeklyTotal, weeklyMinutes, cefrLevel, unlearnedCount));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            
+            updateUIWithData(view, emoji, greeting,
+                    hour, minute, progress.totalWordsLearned, progress.currentStreak, 
+                    progress.bestStreak, progress.totalWordsScanned, progress.xpTodayEarned, 
+                    xpGoal, weeklyTotal, weeklyMinutes, progress.cefrLevel, 
+                    repository.getUnlearnedWordsCount(),
+                    repository.getLastTopicTitle(),
+                    repository.getLastTopicDomain(),
+                    repository.getLastTopicRemainingCount());
+        });
     }
 
     private void updateUIWithData(View view, String emoji, String greeting, int hour, int minute,
                                    int learnedWords, int streak, int bestStreak, int scanned,
                                    int xpToday, int xpGoal, int weeklyTotal,
-                                   List<Integer> weeklyMinutes, String cefrLevel, int unlearnedCount) {
+                                   List<Integer> weeklyMinutes, String cefrLevel, int unlearnedCount,
+                                   String lastTopicTitle, String lastTopicDomain, int lastTopicRemaining) {
         try {
             // Header
             TextView greetingText = view.findViewById(R.id.txtGreeting);
@@ -651,6 +668,19 @@ public class HomeFragment extends Fragment {
             // Unlearned count
             TextView unlearnedCountText = view.findViewById(R.id.txtUnlearnedCount);
             if (unlearnedCountText != null) unlearnedCountText.setText(unlearnedCount + " từ");
+
+            // Continue Learning
+            TextView continueTitle = view.findViewById(R.id.txtContinueTitle);
+            TextView continueProgress = view.findViewById(R.id.txtContinueProgress);
+            View continueBtn = view.findViewById(R.id.btnContinue);
+            if (continueTitle != null) continueTitle.setText(lastTopicTitle);
+            if (continueProgress != null) continueProgress.setText(lastTopicRemaining + " thẻ còn lại");
+            if (continueBtn != null) {
+                continueBtn.setOnClickListener(v -> {
+                    repository.setPendingTopicRequest(lastTopicDomain, lastTopicTitle);
+                    navigateToTab(1);
+                });
+            }
 
             // Reminder
             renderReminderText();

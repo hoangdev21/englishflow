@@ -6,7 +6,8 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "user_stats")
 public class UserStatsEntity {
     @PrimaryKey
-    public int id = 1; // Single row for user stats
+    @androidx.annotation.NonNull
+    public String userEmail = "";
     
     public int totalWordsLearned = 0;
     public int totalWordsScanned = 0;

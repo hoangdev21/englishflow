@@ -54,6 +54,16 @@
             android:name=".ui.CustomVocabularyManagerActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.LearnedWordsActivity"
+            android:exported="false"
+            android:label="Từ Đã Học" />
+
+        <activity
+            android:name=".ui.LeaderboardActivity"
+            android:exported="false"
+            android:label="Bảng Xếp Hạng" />
+
         <receiver
             android:name=".reminder.StudyReminderReceiver"
             android:exported="false" />

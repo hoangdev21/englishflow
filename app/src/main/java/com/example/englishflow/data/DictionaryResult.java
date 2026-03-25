@@ -8,6 +8,8 @@ public class DictionaryResult {
     private String translatedWord;
     private String ipa;
     private String audioUrl;
+    private String queryWord;
+    private boolean isVietnameseSearch;
     private List<Definition> definitions;
     private List<String> synonyms;
 
@@ -75,6 +77,22 @@ public class DictionaryResult {
 
     public void setSynonyms(List<String> synonyms) {
         this.synonyms = synonyms != null ? synonyms : new ArrayList<>();
+    }
+
+    public String getQueryWord() {
+        return queryWord;
+    }
+
+    public void setQueryWord(String queryWord) {
+        this.queryWord = queryWord;
+    }
+
+    public boolean isVietnameseSearch() {
+        return isVietnameseSearch;
+    }
+
+    public void setIsVietnameseSearch(boolean vietnameseSearch) {
+        isVietnameseSearch = vietnameseSearch;
     }
 
     public static class Definition {

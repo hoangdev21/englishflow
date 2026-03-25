@@ -6,6 +6,8 @@ import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
+import java.util.List;
+
 import com.example.englishflow.database.entity.LocalUserEntity;
 
 @Dao
@@ -20,4 +22,7 @@ public interface LocalUserDao {
 
     @Query("UPDATE local_users SET displayName = :displayName, updatedAt = :updatedAt WHERE email = :email")
     int updateDisplayName(String email, String displayName, long updatedAt);
+
+    @Query("SELECT * FROM local_users")
+    List<LocalUserEntity> getAllUsers();
 }

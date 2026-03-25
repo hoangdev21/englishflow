@@ -30,28 +30,30 @@ public class DictionaryRepository {
         }
 
         String normalizedQuery = query.trim();
-        if (containsVietnameseChars(normalizedQuery)) {
+        boolean isVietnamese = containsVietnameseChars(normalizedQuery);
+        
+        if (isVietnamese) {
             myMemoryService.translateViToEn(normalizedQuery, new MyMemoryService.TranslationCallback() {
                 @Override
                 public void onSuccess(String translatedWord) {
-                    lookupEnglishWord(translatedWord, callback);
+                    lookupEnglishWord(translatedWord, normalizedQuery, true, callback);
                 }
 
                 @Override
                 public void onError(Exception exception) {
-                    callback.onError("Khong the dich tieng Viet: " + safeMessage(exception));
+                    callback.onError("Không thể dịch tiếng Việt: " + safeMessage(exception));
                 }
             });
             return;
         }
 
-        lookupEnglishWord(normalizedQuery, callback);
+        lookupEnglishWord(normalizedQuery, normalizedQuery, false, callback);
     }
 
-    private void lookupEnglishWord(String query, SearchCallback callback) {
-        String lookupQuery = sanitizeEnglishQuery(query);
+    private void lookupEnglishWord(String englishWord, String queryWord, boolean isVietnamese, SearchCallback callback) {
+        String lookupQuery = sanitizeEnglishQuery(englishWord);
         if (lookupQuery.isEmpty()) {
-            callback.onError("Tu can tra khong hop le");
+            callback.onError("Từ cần tra không hợp lệ");
             return;
         }
 
@@ -60,22 +62,24 @@ public class DictionaryRepository {
             @Override
             public void onSuccess(String translatedWord) {
                 // Now lookup the dictionary for IPA, Synonyms, and English definitions
-                performFinalLookup(lookupQuery, translatedWord, callback);
+                performFinalLookup(lookupQuery, queryWord, isVietnamese, translatedWord, callback);
             }
 
             @Override
             public void onError(Exception e) {
                 // If word translation fails, proceed with empty translated word
-                performFinalLookup(lookupQuery, "", callback);
+                performFinalLookup(lookupQuery, queryWord, isVietnamese, "", callback);
             }
         });
     }
 
-    private void performFinalLookup(String lookupQuery, String translatedWord, SearchCallback callback) {
+    private void performFinalLookup(String lookupQuery, String originalQueryWord, boolean isVietnamese, String translatedWord, SearchCallback callback) {
         freeDictionaryService.lookupWord(lookupQuery, new FreeDictionaryService.LookupCallback() {
             @Override
             public void onSuccess(DictionaryResult result) {
                 result.setTranslatedWord(translatedWord);
+                result.setQueryWord(originalQueryWord);
+                result.setIsVietnameseSearch(isVietnamese);
                 
                 // If there are definitions, translate the first one's meaning for the explanation
                 if (result.getDefinitions() != null && !result.getDefinitions().isEmpty()) {
@@ -92,7 +96,6 @@ public class DictionaryRepository {
 
                         @Override
                         public void onError(Exception e) {
-                            // Even if meaning translation fails, we have word translation and English result
                             def.setUsageNote(generateUsageNote(def.getPartOfSpeech(), lookupQuery));
                             callback.onSuccess(result);
                         }
@@ -109,13 +112,22 @@ public class DictionaryRepository {
                     DictionaryResult result = new DictionaryResult();
                     result.setWord(lookupQuery);
                     result.setTranslatedWord(translatedWord);
+                    result.setQueryWord(originalQueryWord);
+                    result.setIsVietnameseSearch(isVietnamese);
                     result.setIpa("");
                     ArrayList<DictionaryResult.Definition> definitions = new ArrayList<>();
                     definitions.add(new DictionaryResult.Definition("translation", translatedWord, "Dùng trong giao tiếp hàng ngày."));
                     result.setDefinitions(definitions);
                     callback.onSuccess(result);
                 } else {
-                    callback.onNotFound(lookupQuery);
+                    DictionaryResult offlineResult = buildOfflineFallback(lookupQuery);
+                    if (offlineResult != null) {
+                        offlineResult.setQueryWord(originalQueryWord);
+                        offlineResult.setIsVietnameseSearch(isVietnamese);
+                        callback.onSuccess(offlineResult);
+                    } else {
+                        callback.onNotFound(lookupQuery);
+                    }
                 }
             }
 
@@ -123,18 +135,17 @@ public class DictionaryRepository {
             public void onError(Exception exception) {
                 String message = safeMessage(exception);
                 if (exception instanceof UnknownHostException || message.contains("Unable to connect dictionary service")) {
-                    // Fallback: return a minimal translation-based result so UI still works without DNS.
                     myMemoryService.translateEnToVi(lookupQuery, new MyMemoryService.RawTranslationCallback() {
                         @Override
                         public void onSuccess(String translatedText) {
                             DictionaryResult result = new DictionaryResult();
                             result.setWord(lookupQuery);
+                            result.setQueryWord(originalQueryWord);
+                            result.setIsVietnameseSearch(isVietnamese);
                             result.setIpa("");
-                            result.setAudioUrl("");
                             ArrayList<DictionaryResult.Definition> definitions = new ArrayList<>();
                             definitions.add(new DictionaryResult.Definition("translation", translatedText, ""));
                             result.setDefinitions(definitions);
-                            result.setSynonyms(new ArrayList<>());
                             callback.onSuccess(result);
                         }
 
@@ -142,6 +153,8 @@ public class DictionaryRepository {
                         public void onError(Exception fallbackError) {
                             DictionaryResult offlineResult = buildOfflineFallback(lookupQuery);
                             if (offlineResult != null) {
+                                offlineResult.setQueryWord(originalQueryWord);
+                                offlineResult.setIsVietnameseSearch(isVietnamese);
                                 callback.onSuccess(offlineResult);
                                 return;
                             }
@@ -150,8 +163,11 @@ public class DictionaryRepository {
                     });
                     return;
                 }
+                
                 DictionaryResult offlineResult = buildOfflineFallback(lookupQuery);
                 if (offlineResult != null) {
+                    offlineResult.setQueryWord(originalQueryWord);
+                    offlineResult.setIsVietnameseSearch(isVietnamese);
                     callback.onSuccess(offlineResult);
                     return;
                 }

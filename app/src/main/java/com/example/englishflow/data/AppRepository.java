@@ -11,6 +11,7 @@ import com.example.englishflow.database.entity.CustomVocabularyEntity;
 import com.example.englishflow.database.entity.FailedLabelLogEntity;
 import com.example.englishflow.database.entity.LearnedWordEntity;
 import com.example.englishflow.database.entity.SeedPackageStateEntity;
+import com.example.englishflow.database.entity.LocalUserEntity;
 import com.example.englishflow.database.entity.StudySessionEntity;
 import com.example.englishflow.database.entity.UserStatsEntity;
 
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -44,12 +46,16 @@ public class AppRepository {
     private static final String KEY_SEED_IMPORTED = "seed_vocabulary_imported";
     private static final String KEY_TOPIC_WORD_SCORES_PREFIX = "topic_word_scores_";
     private static final String KEY_TOPIC_LEARNED_WORDS_PREFIX = "topic_learned_words_";
+    private static final String KEY_LAST_TOPIC_TITLE = "last_topic_title";
+    private static final String KEY_LAST_TOPIC_DOMAIN = "last_topic_domain";
+    private static final String KEY_LAST_TOPIC_REMAINING_CARDS = "last_topic_remaining_cards";
     private static final String SEED_FILE_NAME = "vocab_seed_packages.json";
 
     private static AppRepository instance;
 
     private final SharedPreferences preferences;
     private final EnglishFlowDatabase database;
+    private final LocalAuthStore authStore;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Context appContext;
@@ -58,6 +64,7 @@ public class AppRepository {
         appContext = context.getApplicationContext();
         preferences = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         database = EnglishFlowDatabase.getInstance(appContext);
+        authStore = new LocalAuthStore(appContext);
         importSeedVocabularyIfNeeded();
     }
 
@@ -72,62 +79,100 @@ public class AppRepository {
         return database;
     }
 
+    public String getCurrentEmail() {
+        String email = authStore.getCurrentUser() != null ? authStore.getCurrentUser().email : "guest";
+        return email != null ? email : "guest";
+    }
+
+    private String getPrefKey(String baseKey) {
+        return getCurrentEmail() + "_" + baseKey;
+    }
+
     public String getUserName() {
-        return preferences.getString(KEY_NAME, "An");
+        return preferences.getString(getPrefKey(KEY_NAME), "An");
     }
 
     public void setUserName(String name) {
-        preferences.edit().putString(KEY_NAME, name).apply();
+        preferences.edit().putString(getPrefKey(KEY_NAME), name).apply();
     }
 
     public int getReminderHour() {
-        return preferences.getInt(KEY_REMINDER_HOUR, 20);
+        return preferences.getInt(getPrefKey(KEY_REMINDER_HOUR), 20);
     }
 
     public int getReminderMinute() {
-        return preferences.getInt(KEY_REMINDER_MINUTE, 0);
+        return preferences.getInt(getPrefKey(KEY_REMINDER_MINUTE), 0);
+    }
+
+    public void setLastTopicProgress(String title, String domain, int remaining) {
+        preferences.edit()
+                .putString(getPrefKey(KEY_LAST_TOPIC_TITLE), title)
+                .putString(getPrefKey(KEY_LAST_TOPIC_DOMAIN), domain)
+                .putInt(getPrefKey(KEY_LAST_TOPIC_REMAINING_CARDS), remaining)
+                .apply();
+    }
+
+    public String getLastTopicTitle() {
+        String saved = preferences.getString(getPrefKey(KEY_LAST_TOPIC_TITLE), null);
+        if (saved != null) return saved;
+        
+        // Fallback to last session from DB
+        StudySessionEntity last = database.studySessionDao().getLastSession(getCurrentEmail());
+        if (last != null) return last.topic;
+        
+        return "Giao tiếp cơ bản"; // Default if clean slate
+    }
+
+    public String getLastTopicDomain() {
+        String saved = preferences.getString(getPrefKey(KEY_LAST_TOPIC_DOMAIN), null);
+        if (saved != null) return saved;
+        
+        StudySessionEntity last = database.studySessionDao().getLastSession(getCurrentEmail());
+        if (last != null) return last.domain;
+        
+        return "Tổng quát";
+    }
+
+    public int getLastTopicRemainingCount() {
+        int saved = preferences.getInt(getPrefKey(KEY_LAST_TOPIC_REMAINING_CARDS), -1);
+        if (saved != -1) return saved;
+        
+        return 10; // Default count
     }
 
     public void setReminderTime(int hour, int minute) {
-        preferences.edit().putInt(KEY_REMINDER_HOUR, hour).putInt(KEY_REMINDER_MINUTE, minute).apply();
+        preferences.edit().putInt(getPrefKey(KEY_REMINDER_HOUR), hour).putInt(getPrefKey(KEY_REMINDER_MINUTE), minute).apply();
     }
 
     // ===== User Progress & Statistics (REAL DATA) =====
     
     public UserProgress getUserProgress() {
         try {
-            UserStatsEntity stats = database.userStatsDao().getUserStats();
-            if (stats == null) {
-                stats = new UserStatsEntity();
-                database.userStatsDao().insert(stats);
-            }
+            // Use specialized internal getters to ensure logic consistency (like daily reset)
+            UserStatsEntity stats = getOrCreateUserStats();
+            String email = getCurrentEmail();
             
-            List<StudySessionEntity> sessions = database.studySessionDao().getAllSessions();
-            if (sessions == null) {
-                sessions = new ArrayList<>();
-            }
-            
+            List<StudySessionEntity> sessions = database.studySessionDao().getAllSessions(email);
             List<StudySession> studySessions = new ArrayList<>();
-            for (StudySessionEntity entity : sessions) {
-                studySessions.add(new StudySession(
-                    entity.startTime,
-                    entity.endTime,
-                    entity.wordsLearned,
-                    entity.domain,
-                    entity.topic,
-                    entity.xpEarned
-                ));
+            if (sessions != null) {
+                for (StudySessionEntity entity : sessions) {
+                    studySessions.add(new StudySession(
+                        entity.startTime, entity.endTime, entity.wordsLearned,
+                        entity.domain, entity.topic, entity.xpEarned
+                    ));
+                }
             }
             
             UserProgress progress = new UserProgress();
-            progress.totalWordsLearned = stats.totalWordsLearned;
+            // Use real-time counts from DAOs/Calculated logic for better accuracy
+            progress.totalWordsLearned = getLearnedWords(); 
             progress.totalWordsScanned = stats.totalWordsScanned;
             progress.currentStreak = stats.currentStreak;
             progress.bestStreak = stats.bestStreak;
             progress.totalXpEarned = stats.totalXpEarned;
             progress.xpTodayEarned = stats.xpTodayEarned;
             progress.totalStudyMinutes = stats.totalStudyMinutes;
-            progress.cefrLevel = stats.cefrLevel;
+            progress.cefrLevel = getCefrLevel();
             progress.setStudySessions(studySessions);
             
             return progress;
@@ -135,6 +180,33 @@ public class AppRepository {
             e.printStackTrace();
             return new UserProgress();
         }
+    }
+
+    private String pendingTopicDomain = null;
+    private String pendingTopicTitle = null;
+
+    public void setPendingTopicRequest(String domain, String title) {
+        this.pendingTopicDomain = domain;
+        this.pendingTopicTitle = title;
+    }
+
+    public boolean hasPendingTopicRequest() {
+        return pendingTopicDomain != null && pendingTopicTitle != null;
+    }
+
+    public String getPendingTopicDomain() { return pendingTopicDomain; }
+    public String getPendingTopicTitle() { return pendingTopicTitle; }
+
+    public void clearPendingTopicRequest() {
+        this.pendingTopicDomain = null;
+        this.pendingTopicTitle = null;
+    }
+
+    public void getUserProgressAsync(DataCallback<UserProgress> callback) {
+        executorService.execute(() -> {
+            UserProgress progress = getUserProgress();
+            mainHandler.post(() -> callback.onResult(progress));
+        });
     }
 
     public int getStreakDays() {
@@ -149,7 +221,7 @@ public class AppRepository {
     public int getXpToday() {
         try {
             UserStatsEntity stats = getOrCreateUserStats();
-            return stats != null ? stats.xpTodayEarned : 0;
+            return stats.xpTodayEarned;
         } catch (Exception e) {
             return 0;
         }
@@ -161,7 +233,7 @@ public class AppRepository {
 
     public int getLearnedWords() {
         try {
-            Integer count = database.learnedWordDao().getTotalWordsCount();
+            Integer count = database.learnedWordDao().getTotalWordsCount(getCurrentEmail());
             return count != null ? count : 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -204,16 +276,17 @@ public class AppRepository {
     public List<Integer> getWeeklyStudyMinutes() {
         List<Integer> weeklyMinutes = new ArrayList<>();
         try {
-            Calendar cal = Calendar.getInstance();
-            
-            // Get minutes for each day of the past 7 days
+            Calendar now = Calendar.getInstance();
+            // Get minutes for each day of the past 7 days (including today)
             for (int i = 6; i >= 0; i--) {
+                Calendar cal = (Calendar) now.clone();
                 cal.add(Calendar.DAY_OF_MONTH, -i);
+                
                 long startOfDay = getStartOfDay(cal.getTimeInMillis());
                 long endOfDay = getEndOfDay(cal.getTimeInMillis());
                 
                 try {
-                    Integer minutes = database.studySessionDao().getStudyMinutesForPeriod(startOfDay, endOfDay);
+                    Integer minutes = database.studySessionDao().getStudyMinutesForPeriod(getCurrentEmail(), startOfDay, endOfDay);
                     weeklyMinutes.add(minutes != null ? minutes : 0);
                 } catch (Exception e) {
                     weeklyMinutes.add(0);
@@ -221,7 +294,7 @@ public class AppRepository {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // Return 7 zeros if database fails
+            // Return 7 zeros if logic fails
             for (int i = 0; i < 7; i++) {
                 weeklyMinutes.add(0);
             }
@@ -235,7 +308,7 @@ public class AppRepository {
 
     public int getTotalStudyMinutes() {
         try {
-            Integer minutes = database.studySessionDao().getTotalStudyMinutes();
+            Integer minutes = database.studySessionDao().getTotalStudyMinutes(getCurrentEmail());
             return minutes != null ? minutes : 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -386,7 +459,7 @@ public class AppRepository {
 
     private int getWordCountByDomain(String domain) {
         try {
-            Integer count = database.learnedWordDao().getWordCountByDomain(domain);
+            Integer count = database.learnedWordDao().getWordCountByDomain(getCurrentEmail(), domain);
             return count != null ? count : 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -459,7 +532,7 @@ public class AppRepository {
     public List<WordEntry> getSavedWords() {
         List<WordEntry> words = new ArrayList<>();
         try {
-            List<LearnedWordEntity> entities = database.learnedWordDao().getAllWords();
+            List<LearnedWordEntity> entities = database.learnedWordDao().getAllWords(getCurrentEmail());
             if (entities != null) {
                 for (LearnedWordEntity entity : entities) {
                     words.add(new WordEntry(
@@ -483,8 +556,9 @@ public class AppRepository {
     public void saveWord(WordEntry wordEntry) {
         executorService.execute(() -> {
             try {
+                String email = getCurrentEmail();
                 // Check if word already exists
-                LearnedWordEntity existing = database.learnedWordDao().getWordByName(wordEntry.getWord());
+                LearnedWordEntity existing = database.learnedWordDao().getWordByName(email, wordEntry.getWord());
                 if (existing != null) {
                     return;
                 }
@@ -500,14 +574,12 @@ public class AppRepository {
                     wordEntry.getCategory(),
                     ""
                 );
+                entity.userEmail = email;
                 database.learnedWordDao().insert(entity);
                 
                 // Update stats
-                UserStatsEntity stats = database.userStatsDao().getUserStats();
-                if (stats != null) {
-                    stats.totalWordsLearned += 1;
-                    database.userStatsDao().update(stats);
-                }
+                // Robust specific update
+                database.userStatsDao().incrementWordsLearned(email, 1);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -810,14 +882,17 @@ public class AppRepository {
     }
 
     public void addXp(int xp) {
+        if (xp <= 0) return;
         executorService.execute(() -> {
             try {
-                UserStatsEntity stats = getOrCreateUserStats();
-                if (stats != null) {
-                    stats.xpTodayEarned += xp;
-                    stats.totalXpEarned += xp;
-                    database.userStatsDao().update(stats);
-                }
+                // Ensure daily XP is for today
+                String email = getCurrentEmail();
+                getOrCreateUserStats(); 
+                
+                // Specific updates to avoid overwriting
+                database.userStatsDao().addTotalXp(email, xp);
+                database.userStatsDao().addDailyXp(email, xp);
+                database.userStatsDao().updateLastStudyDate(email, System.currentTimeMillis());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -827,6 +902,7 @@ public class AppRepository {
     public void addStudySession(StudySession session) {
         executorService.execute(() -> {
             try {
+                String email = getCurrentEmail();
                 StudySessionEntity entity = new StudySessionEntity(
                     session.getStartTime(),
                     session.getEndTime(),
@@ -835,16 +911,19 @@ public class AppRepository {
                     session.getTopicName(),
                     session.getXpEarned()
                 );
+                entity.userEmail = email;
                 database.studySessionDao().insert(entity);
                 
-                // Update user stats
-                UserStatsEntity stats = getOrCreateUserStats();
-                if (stats != null) {
-                    stats.totalStudyMinutes += entity.getDurationMinutes();
-                    stats.xpTodayEarned += session.getXpEarned();
-                    stats.totalXpEarned += session.getXpEarned();
-                    database.userStatsDao().update(stats);
+                // Ensure daily context
+                getOrCreateUserStats();
+                
+                // Use robust specialized updates
+                database.userStatsDao().addStudyMinutes(email, (int) entity.getDurationMinutes());
+                if (session.getXpEarned() > 0) {
+                    database.userStatsDao().addTotalXp(email, session.getXpEarned());
+                    database.userStatsDao().addDailyXp(email, session.getXpEarned());
                 }
+                database.userStatsDao().updateLastStudyDate(email, System.currentTimeMillis());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -864,19 +943,19 @@ public class AppRepository {
     public void resetProgress() {
         executorService.execute(() -> {
             try {
-                database.learnedWordDao().deleteAllWords();
-                database.studySessionDao().deleteAllSessions();
-                database.chatMessageDao().deleteAllMessages();
+                String email = getCurrentEmail();
+                database.learnedWordDao().deleteAllWords(email);
+                database.studySessionDao().deleteAllSessions(email);
+                // database.chatMessageDao().deleteAllMessages(email); // If chat supports multi-user
                 
                 UserStatsEntity stats = new UserStatsEntity();
+                stats.userEmail = email;
                 database.userStatsDao().update(stats);
 
                 SharedPreferences.Editor editor = preferences.edit();
+                String prefix = getPrefKey("");
                 for (String key : preferences.getAll().keySet()) {
-                    if (key.startsWith(KEY_TOPIC_WORD_SCORES_PREFIX)) {
-                        editor.remove(key);
-                    }
-                    if (key.startsWith(KEY_TOPIC_LEARNED_WORDS_PREFIX)) {
+                    if (key.startsWith(prefix)) {
                         editor.remove(key);
                     }
                 }
@@ -917,10 +996,29 @@ public class AppRepository {
     }
 
     private UserStatsEntity getOrCreateUserStats() {
-        UserStatsEntity stats = database.userStatsDao().getUserStats();
+        String email = getCurrentEmail();
+        UserStatsEntity stats = database.userStatsDao().getUserStats(email);
         if (stats == null) {
             stats = new UserStatsEntity();
+            stats.userEmail = email;
             database.userStatsDao().insert(stats);
+        } else {
+            // Robust New Day Reset check
+            long lastStudyTime = stats.lastStudyDate;
+            if (lastStudyTime > 0) {
+                Calendar lastCal = Calendar.getInstance();
+                lastCal.setTimeInMillis(lastStudyTime);
+                Calendar currentCal = Calendar.getInstance();
+                
+                boolean isNewDay = lastCal.get(Calendar.DAY_OF_YEAR) != currentCal.get(Calendar.DAY_OF_YEAR) ||
+                                 lastCal.get(Calendar.YEAR) != currentCal.get(Calendar.YEAR);
+                
+                if (isNewDay) {
+                    database.userStatsDao().resetDailyXp(email);
+                    stats.xpTodayEarned = 0;
+                    // Note: update lastStudyDate only when they actually earn new XP to avoid continuous resets if they just open the app
+                }
+            }
         }
         return stats;
     }
@@ -965,7 +1063,7 @@ public class AppRepository {
             return learnedWords;
         }
 
-        String raw = preferences.getString(KEY_TOPIC_LEARNED_WORDS_PREFIX + topic.trim(), "");
+        String raw = preferences.getString(getPrefKey(KEY_TOPIC_LEARNED_WORDS_PREFIX + topic.trim()), "");
         if (raw == null || raw.trim().isEmpty()) {
             return learnedWords;
         }
@@ -989,7 +1087,7 @@ public class AppRepository {
             jsonArray.put(word);
         }
         preferences.edit()
-                .putString(KEY_TOPIC_LEARNED_WORDS_PREFIX + topic.trim(), jsonArray.toString())
+                .putString(getPrefKey(KEY_TOPIC_LEARNED_WORDS_PREFIX + topic.trim()), jsonArray.toString())
                 .apply();
     }
 
@@ -1067,7 +1165,7 @@ public class AppRepository {
             return wordScores;
         }
 
-        String raw = preferences.getString(KEY_TOPIC_WORD_SCORES_PREFIX + topic.trim(), "");
+        String raw = preferences.getString(getPrefKey(KEY_TOPIC_WORD_SCORES_PREFIX + topic.trim()), "");
         if (raw != null && !raw.trim().isEmpty()) {
             try {
                 JSONObject jsonObject = new JSONObject(raw);
@@ -1102,8 +1200,55 @@ public class AppRepository {
         }
 
         preferences.edit()
-                .putString(KEY_TOPIC_WORD_SCORES_PREFIX + topic.trim(), jsonObject.toString())
+                .putString(getPrefKey(KEY_TOPIC_WORD_SCORES_PREFIX + topic.trim()), jsonObject.toString())
                 .apply();
+    }
+
+    public void getSavedWordsAsync(DataCallback<List<WordEntry>> callback) {
+        executorService.execute(() -> {
+            List<WordEntry> result = getSavedWords();
+            mainHandler.post(() -> callback.onResult(result));
+        });
+    }
+
+    public void getLeaderboardAsync(String period, DataCallback<List<LeaderboardItem>> callback) {
+        executorService.execute(() -> {
+            List<LeaderboardItem> items = new ArrayList<>();
+            try {
+                List<UserStatsEntity> allStats = database.userStatsDao().getAllStats();
+                Map<String, UserStatsEntity> statsMap = new HashMap<>();
+                for (UserStatsEntity s : allStats) {
+                    statsMap.put(s.userEmail, s);
+                }
+
+                List<LocalUserEntity> allUsers = database.localUserDao().getAllUsers();
+                for (LocalUserEntity user : allUsers) {
+                    UserStatsEntity s = statsMap.get(user.email);
+                    int score = 0;
+                    if (s != null) {
+                        if ("today".equals(period)) {
+                            score = s.xpTodayEarned;
+                        } else {
+                            score = s.totalXpEarned;
+                        }
+                    }
+                    items.add(new LeaderboardItem(user.displayName, user.email, score, 0));
+                }
+
+                // (Mock data removed as requested - showing real database data only)
+
+                // Sort by score descending
+                Collections.sort(items, (a, b) -> Integer.compare(b.score, a.score));
+                
+                // Assign ranks
+                for (int i = 0; i < items.size(); i++) {
+                    items.get(i).rank = i + 1;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            mainHandler.post(() -> callback.onResult(items));
+        });
     }
 
     private String normalizeWord(String word) {

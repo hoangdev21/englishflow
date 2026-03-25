@@ -8,6 +8,8 @@ public class StudySessionEntity {
     @PrimaryKey(autoGenerate = true)
     public int id;
     
+    @androidx.annotation.NonNull
+    public String userEmail = "";
     public long startTime;
     public long endTime;
     public int wordsLearned;

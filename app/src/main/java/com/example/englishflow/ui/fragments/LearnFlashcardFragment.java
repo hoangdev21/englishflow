@@ -186,6 +186,9 @@ public class LearnFlashcardFragment extends Fragment {
 
     private void bindFlashcard() {
         FlashcardItem card = flashcards.get(currentIndex);
+        int remaining = flashcards.size() - currentIndex;
+        AppRepository.getInstance(requireContext()).setLastTopicProgress(currentTopic, currentDomain, remaining);
+        
         countText.setText("Thẻ " + (currentIndex + 1) + " / " + flashcards.size());
         emojiText.setText(card.getEmoji());
         wordText.setText(card.getWord());
@@ -249,7 +252,9 @@ public class LearnFlashcardFragment extends Fragment {
         } else {
             learnedWordsInSession.remove(normalizedWord);
         }
-        earnedXp += score * 10;
+        int points = score * 5; // Balanced XP: 5, 10, 15
+        earnedXp += points;
+        repository.addXp(points); 
         // In real app, update individual card Spaced Repetition data here
         goNext();
     }
@@ -294,20 +299,22 @@ public class LearnFlashcardFragment extends Fragment {
         repo.addStudySession(new StudySession(
                 sessionStartTime,
                 System.currentTimeMillis(),
-            learnedWordsInSession.size(),
+                learnedWordsInSession.size(),
                 currentDomain,
                 currentTopic,
-                sessionXp
+                0 // XP already added card-by-card to avoid double counting
         ));
 
         boolean isTopicCompleted = repo.getFlashcardsForTopic(currentTopic).isEmpty();
         repo.updateTopicStatus(currentTopic, isTopicCompleted ? TopicItem.STATUS_COMPLETED : TopicItem.STATUS_LEARNING);
+
+        boolean isSessionProductive = learnedWordsInSession.size() > 0 || earnedXp > 0;
         
         Fragment parent = getParentFragment();
-        if (parent instanceof LearnFlowNavigator && isTopicCompleted) {
-            ((LearnFlowNavigator) parent).openCelebration(sessionXp);
+        if (parent instanceof LearnFlowNavigator && isSessionProductive) {
+            ((LearnFlowNavigator) parent).openCelebration(earnedXp > 0 ? earnedXp : 20);
         } else {
-            Toast.makeText(requireContext(), "Đã lưu tiến độ, bạn có thể học tiếp sau.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Đã lưu hoàn tất bài học.", Toast.LENGTH_SHORT).show();
             getParentFragmentManager().popBackStack();
         }
     }

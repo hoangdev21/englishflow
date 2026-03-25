@@ -34,11 +34,12 @@ public class StudyReminderReceiver extends BroadcastReceiver {
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, StudyReminderScheduler.CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_app_logo)
-                .setContentTitle("Den gio hoc roi!")
-                .setContentText("Mo EnglishFlow de tiep tuc bai hoc hom nay.")
+                .setSmallIcon(R.drawable.ic_app_logo)
+                .setContentTitle("Đến giờ học rồi! 🚀")
+                .setContentText("Mở EnglishFlow ngay để chinh phục mục tiêu hôm nay!")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
+                .setColor(ContextCompat.getColor(context, R.color.ef_primary))
                 .setContentIntent(openAppPendingIntent);
 
         NotificationManagerCompat manager = NotificationManagerCompat.from(context);

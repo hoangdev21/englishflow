@@ -14,27 +14,30 @@ public interface StudySessionDao {
     @Insert
     long insert(StudySessionEntity session);
     
-    @Query("SELECT * FROM study_sessions ORDER BY startTime DESC")
-    List<StudySessionEntity> getAllSessions();
+    @Query("SELECT * FROM study_sessions WHERE userEmail = :userEmail ORDER BY startTime DESC")
+    List<StudySessionEntity> getAllSessions(String userEmail);
+
+    @Query("SELECT * FROM study_sessions WHERE userEmail = :userEmail ORDER BY startTime DESC LIMIT 1")
+    StudySessionEntity getLastSession(String userEmail);
     
-    @Query("SELECT * FROM study_sessions WHERE startTime >= :startOfDay AND startTime < :endOfDay ORDER BY startTime DESC")
-    List<StudySessionEntity> getSessionsForDay(long startOfDay, long endOfDay);
+    @Query("SELECT * FROM study_sessions WHERE userEmail = :userEmail AND startTime >= :startOfDay AND startTime < :endOfDay ORDER BY startTime DESC")
+    List<StudySessionEntity> getSessionsForDay(String userEmail, long startOfDay, long endOfDay);
     
-    @Query("SELECT SUM(wordsLearned) FROM study_sessions WHERE startTime >= :startTime")
-    Integer getTotalWordsLearnedSince(long startTime);
+    @Query("SELECT SUM(wordsLearned) FROM study_sessions WHERE userEmail = :userEmail AND startTime >= :startTime")
+    Integer getTotalWordsLearnedSince(String userEmail, long startTime);
     
-    @Query("SELECT SUM(xpEarned) FROM study_sessions WHERE startTime >= :startOfDay AND startTime < :endOfDay")
-    Integer getXpEarnedToday(long startOfDay, long endOfDay);
+    @Query("SELECT SUM(xpEarned) FROM study_sessions WHERE userEmail = :userEmail AND startTime >= :startOfDay AND startTime < :endOfDay")
+    Integer getXpEarnedToday(String userEmail, long startOfDay, long endOfDay);
     
-    @Query("SELECT SUM(endTime - startTime) / 60000 FROM study_sessions")
-    Integer getTotalStudyMinutes();
+    @Query("SELECT SUM(endTime - startTime) / 60000 FROM study_sessions WHERE userEmail = :userEmail")
+    Integer getTotalStudyMinutes(String userEmail);
     
-    @Query("SELECT SUM(endTime - startTime) / 60000 FROM study_sessions WHERE startTime >= :startTime AND startTime < :endTime")
-    Integer getStudyMinutesForPeriod(long startTime, long endTime);
+    @Query("SELECT SUM(endTime - startTime) / 60000 FROM study_sessions WHERE userEmail = :userEmail AND startTime >= :startTime AND startTime < :endTime")
+    Integer getStudyMinutesForPeriod(String userEmail, long startTime, long endTime);
     
-    @Query("SELECT COUNT(*) FROM study_sessions")
-    int getSessionCount();
+    @Query("SELECT COUNT(*) FROM study_sessions WHERE userEmail = :userEmail")
+    int getSessionCount(String userEmail);
     
-    @Query("DELETE FROM study_sessions")
-    void deleteAllSessions();
+    @Query("DELETE FROM study_sessions WHERE userEmail = :userEmail")
+    void deleteAllSessions(String userEmail);
 }

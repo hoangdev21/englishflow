@@ -35,7 +35,10 @@ public class SplashActivity extends AppCompatActivity {
             ImageView logoView = findViewById(R.id.splashLogo);
             View titleView = findViewById(R.id.splashTitle);
             View subtitleView = findViewById(R.id.splashSubtitle);
-            ImageView waveBack = findViewById(R.id.waveBack);
+            View logoGlow = findViewById(R.id.logoGlow);
+            
+            ImageView waveDeep = findViewById(R.id.waveDeep);
+            ImageView waveMid = findViewById(R.id.waveMid);
             ImageView waveFront = findViewById(R.id.waveFront);
 
             if (logoView == null || titleView == null || subtitleView == null) {
@@ -45,56 +48,83 @@ public class SplashActivity extends AppCompatActivity {
 
             // Initial states
             logoView.setAlpha(0f);
-            logoView.setTranslationY(100f);
+            logoView.setTranslationY(60f);
+            logoView.setScaleX(0.8f);
+            logoView.setScaleY(0.8f);
+            
             titleView.setAlpha(0f);
-            titleView.setScaleX(0.9f);
-            titleView.setScaleY(0.9f);
+            titleView.setTranslationY(30f);
             subtitleView.setAlpha(0f);
+            subtitleView.setTranslationY(20f);
 
-            // Animate waves
-            animateWave(waveBack, 3000, -200f);
-            animateWave(waveFront, 2000, -400f);
+            // Animate realistic waves layers with different speeds
+            animateWave(waveDeep, 7000, -100f, 10f);   // Very slow, far away
+            animateWave(waveMid, 5000, -250f, 15f);    // Medium depth
+            animateWave(waveFront, 3500, -400f, 25f);  // Faster, prominent
 
-            // Dolphin Jump Animation
+            // Logo Glow Pulse
+            if (logoGlow != null) {
+                logoGlow.animate().alpha(1f).setDuration(2000).start();
+                ObjectAnimator glowPulser = ObjectAnimator.ofFloat(logoGlow, "scaleX", 0.9f, 1.2f);
+                glowPulser.setDuration(3000);
+                glowPulser.setRepeatMode(ValueAnimator.REVERSE);
+                glowPulser.setRepeatCount(ValueAnimator.INFINITE);
+                glowPulser.setInterpolator(new AccelerateDecelerateInterpolator());
+                glowPulser.start();
+                ObjectAnimator glowPulserY = ObjectAnimator.ofFloat(logoGlow, "scaleY", 0.9f, 1.2f);
+                glowPulserY.setDuration(3000);
+                glowPulserY.setRepeatMode(ValueAnimator.REVERSE);
+                glowPulserY.setRepeatCount(ValueAnimator.INFINITE);
+                glowPulserY.start();
+            }
+
+            // High-end Logo Entrance Animation
             logoView.animate()
                     .alpha(1f)
                     .translationY(0f)
-                    .scaleX(1.1f)
-                    .scaleY(1.1f)
-                    .setDuration(1200)
-                    .setInterpolator(new DecelerateInterpolator())
+                    .scaleX(1.0f)
+                    .scaleY(1.0f)
+                    .setDuration(1500)
+                    .setInterpolator(new AccelerateDecelerateInterpolator())
                     .setListener(new AnimatorListenerAdapter() {
                         @Override
                         public void onAnimationEnd(Animator animation) {
-                            // Subtle breathing effect for the dolphin
-                            ObjectAnimator breather = ObjectAnimator.ofFloat(logoView, "scaleX", 1.1f, 1.05f);
-                            breather.setDuration(1000);
+                            // Subtle breathing effect for the dolphin logo
+                            ObjectAnimator breather = ObjectAnimator.ofFloat(logoView, "scaleX", 1.0f, 1.05f);
+                            breather.setDuration(1500);
                             breather.setRepeatMode(ValueAnimator.REVERSE);
                             breather.setRepeatCount(ValueAnimator.INFINITE);
+                            breather.setInterpolator(new AccelerateDecelerateInterpolator());
                             breather.start();
+                            
+                            ObjectAnimator breatherY = ObjectAnimator.ofFloat(logoView, "scaleY", 1.0f, 1.05f);
+                            breatherY.setDuration(1500);
+                            breatherY.setRepeatMode(ValueAnimator.REVERSE);
+                            breatherY.setRepeatCount(ValueAnimator.INFINITE);
+                            breatherY.start();
                         }
                     })
                     .start();
 
-            // Text Animations
+            // Refined Text Animations
             titleView.animate()
                     .alpha(1f)
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setStartDelay(500)
-                    .setDuration(800)
-                    .setInterpolator(new AccelerateDecelerateInterpolator())
+                    .translationY(0f)
+                    .setStartDelay(600)
+                    .setDuration(1000)
+                    .setInterpolator(new DecelerateInterpolator())
                     .start();
 
             subtitleView.animate()
-                    .alpha(1f)
-                    .setStartDelay(800)
-                    .setDuration(800)
+                    .alpha(0.8f)
+                    .translationY(0f)
+                    .setStartDelay(1000)
+                    .setDuration(1000)
                     .setListener(new AnimatorListenerAdapter() {
                         @Override
                         public void onAnimationEnd(Animator animation) {
-                            // Stay on splash for a bit then navigate
-                            subtitleView.postDelayed(() -> navigateToNextScreen(), 1200);
+                            // Longer wait for the user to enjoy the ocean atmosphere
+                            subtitleView.postDelayed(() -> navigateToNextScreen(), 1500);
                         }
                     })
                     .start();
@@ -105,7 +135,10 @@ public class SplashActivity extends AppCompatActivity {
         }
     }
 
-    private void animateWave(ImageView wave, int duration, float translationX) {
+    private void animateWave(ImageView wave, int duration, float translationX, float floatY) {
+        if (wave == null) return;
+        
+        // Horizontal scroll
         ObjectAnimator animator = ObjectAnimator.ofFloat(wave, "translationX", 0f, translationX);
         animator.setDuration(duration);
         animator.setInterpolator(new LinearInterpolator());
@@ -113,8 +146,8 @@ public class SplashActivity extends AppCompatActivity {
         animator.setRepeatMode(ValueAnimator.REVERSE);
         animator.start();
         
-        // Add vertical floating to wave
-        ObjectAnimator floater = ObjectAnimator.ofFloat(wave, "translationY", 0f, 20f);
+        // Vertical float (gentle bobbing)
+        ObjectAnimator floater = ObjectAnimator.ofFloat(wave, "translationY", 0f, floatY);
         floater.setDuration(duration / 2);
         floater.setInterpolator(new AccelerateDecelerateInterpolator());
         floater.setRepeatCount(ValueAnimator.INFINITE);
