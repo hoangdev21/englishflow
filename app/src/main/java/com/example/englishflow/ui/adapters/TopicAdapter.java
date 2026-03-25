@@ -49,6 +49,13 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
         return filteredTopics.size();
     }
 
+    public void submitTopics(List<TopicItem> topics) {
+        originalTopics.clear();
+        originalTopics.addAll(topics);
+        filteredTopics = new java.util.ArrayList<>(topics);
+        notifyDataSetChanged();
+    }
+
     public void filter(String query) {
         filteredTopics.clear();
         if (query == null || query.isEmpty()) {

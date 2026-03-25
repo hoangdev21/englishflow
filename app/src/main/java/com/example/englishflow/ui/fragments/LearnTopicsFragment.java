@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
+import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.DomainItem;
 import com.example.englishflow.data.TopicItem;
 import com.example.englishflow.ui.adapters.TopicAdapter;
@@ -21,6 +22,7 @@ public class LearnTopicsFragment extends Fragment {
 
     private static final String ARG_DOMAIN_NAME = "arg_domain_name";
     private DomainItem domainItem;
+    private TopicAdapter topicAdapter;
 
     public static LearnTopicsFragment newInstance(DomainItem domainItem) {
         LearnTopicsFragment fragment = new LearnTopicsFragment();
@@ -60,21 +62,32 @@ public class LearnTopicsFragment extends Fragment {
         RecyclerView recyclerView = view.findViewById(R.id.topicRecycler);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         
-        final TopicAdapter adapter = new TopicAdapter(domainItem.getTopics(), topicItem -> {
+        topicAdapter = new TopicAdapter(domainItem.getTopics(), topicItem -> {
             Fragment parent = getParentFragment();
             if (parent instanceof LearnFlowNavigator) {
                 ((LearnFlowNavigator) parent).openFlashcards(domainItem, topicItem);
             }
         });
-        recyclerView.setAdapter(adapter);
+        recyclerView.setAdapter(topicAdapter);
 
         android.widget.EditText search = view.findViewById(R.id.topicSearch);
         search.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                adapter.filter(s.toString());
+                if (topicAdapter != null) {
+                    topicAdapter.filter(s.toString());
+                }
             }
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (!isAdded() || domainItem == null || topicAdapter == null) {
+            return;
+        }
+        topicAdapter.submitTopics(AppRepository.getInstance(requireContext()).getTopicsForDomain(domainItem.getName()));
     }
 }

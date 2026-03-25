@@ -77,6 +77,15 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        View root = getView();
+        if (root != null && repository != null) {
+            loadDataAsync(root);
+        }
+    }
+
     private void setupBasicViews(View view) {
         try {
             // Premium header defaults

@@ -21,12 +21,16 @@ import androidx.fragment.app.Fragment;
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.FlashcardItem;
+import com.example.englishflow.data.StudySession;
 import com.example.englishflow.data.TopicItem;
+import com.example.englishflow.data.WordEntry;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class LearnFlashcardFragment extends Fragment {
 
@@ -55,7 +59,10 @@ public class LearnFlashcardFragment extends Fragment {
     private int currentIndex = 0;
     private boolean isBack = false;
     private int earnedXp = 0;
+    private long sessionStartTime = 0L;
+    private String currentDomain;
     private String currentTopic;
+    private final Set<String> learnedWordsInSession = new HashSet<>();
 
     private TextToSpeech textToSpeech;
 
@@ -107,9 +114,22 @@ public class LearnFlashcardFragment extends Fragment {
             domain = getArguments().getString(ARG_DOMAIN, domain);
             currentTopic = getArguments().getString(ARG_TOPIC, currentTopic);
         }
+        currentDomain = domain;
+        sessionStartTime = System.currentTimeMillis();
         titleText.setText(domain + " • " + currentTopic);
 
-        flashcards = AppRepository.getInstance(requireContext()).getFlashcardsForTopic(currentTopic);
+        AppRepository repository = AppRepository.getInstance(requireContext());
+        repository.updateTopicStatus(currentTopic, TopicItem.STATUS_LEARNING);
+        flashcards = repository.getFlashcardsForTopic(currentTopic);
+
+        if (flashcards.isEmpty()) {
+            countText.setText("Đã hoàn thành");
+            srsHint.setText("Bạn đã học hết các từ trong chủ đề này");
+            cardView.setVisibility(View.GONE);
+            srsButtons.setVisibility(View.GONE);
+            return;
+        }
+
         bindFlashcard();
 
         textToSpeech = new TextToSpeech(requireContext(), status -> {
@@ -213,6 +233,18 @@ public class LearnFlashcardFragment extends Fragment {
     }
 
     private void rateCard(int score, String feedback) {
+        FlashcardItem currentCard = flashcards.get(currentIndex);
+        String normalizedWord = currentCard.getWord() != null
+                ? currentCard.getWord().trim().toLowerCase(Locale.US)
+                : "";
+        AppRepository repository = AppRepository.getInstance(requireContext());
+
+        repository.recordTopicWordRating(currentTopic, currentCard.getWord(), score);
+        if (score >= 3) {
+            learnedWordsInSession.add(normalizedWord);
+        } else {
+            learnedWordsInSession.remove(normalizedWord);
+        }
         earnedXp += score * 10;
         // In real app, update individual card Spaced Repetition data here
         goNext();
@@ -236,12 +268,43 @@ public class LearnFlashcardFragment extends Fragment {
 
     private void finishSession() {
         AppRepository repo = AppRepository.getInstance(requireContext());
-        repo.addXp(earnedXp);
-        repo.updateTopicStatus(currentTopic, TopicItem.STATUS_COMPLETED);
+        int sessionXp = earnedXp > 0 ? earnedXp : 20;
+
+        for (FlashcardItem card : flashcards) {
+            String normalizedWord = card.getWord() != null ? card.getWord().trim().toLowerCase(Locale.US) : "";
+            if (!learnedWordsInSession.contains(normalizedWord)) {
+                continue;
+            }
+            repo.saveWord(new WordEntry(
+                    card.getWord(),
+                    card.getIpa(),
+                    card.getMeaning(),
+                    "noun",
+                    card.getExample(),
+                    "",
+                    currentDomain,
+                    currentTopic
+            ));
+        }
+
+        repo.addStudySession(new StudySession(
+                sessionStartTime,
+                System.currentTimeMillis(),
+            learnedWordsInSession.size(),
+                currentDomain,
+                currentTopic,
+                sessionXp
+        ));
+
+        boolean isTopicCompleted = repo.getFlashcardsForTopic(currentTopic).isEmpty();
+        repo.updateTopicStatus(currentTopic, isTopicCompleted ? TopicItem.STATUS_COMPLETED : TopicItem.STATUS_LEARNING);
         
         Fragment parent = getParentFragment();
-        if (parent instanceof LearnFlowNavigator) {
-            ((LearnFlowNavigator) parent).openCelebration(earnedXp);
+        if (parent instanceof LearnFlowNavigator && isTopicCompleted) {
+            ((LearnFlowNavigator) parent).openCelebration(sessionXp);
+        } else {
+            Toast.makeText(requireContext(), "Đã lưu tiến độ, bạn có thể học tiếp sau.", Toast.LENGTH_SHORT).show();
+            getParentFragmentManager().popBackStack();
         }
     }
 }

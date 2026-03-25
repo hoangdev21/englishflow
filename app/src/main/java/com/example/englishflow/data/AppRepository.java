@@ -16,11 +16,17 @@ import com.example.englishflow.database.entity.UserStatsEntity;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Iterator;
+import java.util.Map;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -36,6 +42,8 @@ public class AppRepository {
     private static final String KEY_REMINDER_HOUR = "reminder_hour";
     private static final String KEY_REMINDER_MINUTE = "reminder_minute";
     private static final String KEY_SEED_IMPORTED = "seed_vocabulary_imported";
+    private static final String KEY_TOPIC_WORD_SCORES_PREFIX = "topic_word_scores_";
+    private static final String KEY_TOPIC_LEARNED_WORDS_PREFIX = "topic_learned_words_";
     private static final String SEED_FILE_NAME = "vocab_seed_packages.json";
 
     private static AppRepository instance;
@@ -131,7 +139,7 @@ public class AppRepository {
 
     public int getStreakDays() {
         try {
-            UserStatsEntity stats = database.userStatsDao().getUserStats();
+            UserStatsEntity stats = getOrCreateUserStats();
             return stats != null ? stats.currentStreak : 0;
         } catch (Exception e) {
             return 0;
@@ -140,7 +148,7 @@ public class AppRepository {
 
     public int getXpToday() {
         try {
-            UserStatsEntity stats = database.userStatsDao().getUserStats();
+            UserStatsEntity stats = getOrCreateUserStats();
             return stats != null ? stats.xpTodayEarned : 0;
         } catch (Exception e) {
             return 0;
@@ -163,7 +171,7 @@ public class AppRepository {
 
     public int getScannedImages() {
         try {
-            UserStatsEntity stats = database.userStatsDao().getUserStats();
+            UserStatsEntity stats = getOrCreateUserStats();
             return stats != null ? stats.totalWordsScanned : 0;
         } catch (Exception e) {
             return 0;
@@ -182,7 +190,7 @@ public class AppRepository {
 
     public int getBestStreak() {
         try {
-            UserStatsEntity stats = database.userStatsDao().getUserStats();
+            UserStatsEntity stats = getOrCreateUserStats();
             return stats != null ? stats.bestStreak : 0;
         } catch (Exception e) {
             return 0;
@@ -261,6 +269,13 @@ public class AppRepository {
     }
 
     public String getTopicStatus(String topic) {
+        int progress = getTopicProgressPercent(topic);
+        if (progress >= 100) {
+            return TopicItem.STATUS_COMPLETED;
+        }
+        if (progress > 0) {
+            return TopicItem.STATUS_LEARNING;
+        }
         return TOPIC_PROGRESS.getOrDefault(topic, TopicItem.STATUS_NOT_STARTED);
     }
 
@@ -295,6 +310,10 @@ public class AppRepository {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public List<TopicItem> getTopicsForDomain(String domain) {
+        return sampleTopics(domain);
     }
 
     private String getEmojiForDomain(String domain) {
@@ -353,10 +372,16 @@ public class AppRepository {
     }
 
     private int getDomainProgress(String domain) {
-        // Mock progress for now based on words learned in this domain
-        int total = 15; // Assume 15 per domain
-        int learned = getWordCountByDomain(domain);
-        return Math.min(100, (learned * 100) / total);
+        List<TopicItem> topics = sampleTopics(domain);
+        if (topics.isEmpty()) {
+            return 0;
+        }
+
+        float score = 0f;
+        for (TopicItem topic : topics) {
+            score += getTopicProgressPercent(topic.getTitle());
+        }
+        return Math.min(100, Math.round(score / topics.size()));
     }
 
     private int getWordCountByDomain(String domain) {
@@ -370,39 +395,24 @@ public class AppRepository {
     }
 
     public List<FlashcardItem> getFlashcardsForTopic(String topic) {
-        String domain = topic;
-        int startIndex = 0;
-        
-        if (topic.contains(" cơ bản")) {
-            domain = topic.replace(" cơ bản", "");
-            startIndex = 0;
-        } else if (topic.contains(" giao tiếp")) {
-            domain = topic.replace(" giao tiếp", "");
-            startIndex = 5;
-        } else if (topic.contains(" nâng cao")) {
-            domain = topic.replace(" nâng cao", "");
-            startIndex = 10;
-        } else if (topic.contains(" thực chiến")) {
-            domain = topic.replace(" thực chiến", "");
-            startIndex = 0; // Re-use/Loop for now
-        }
-
         List<FlashcardItem> cards = new ArrayList<>();
+        Map<String, Integer> wordScores = getTopicWordScores(topic);
         try {
-            List<CustomVocabularyEntity> entities = database.customVocabularyDao().getByDomain(domain);
-            
-            // Aim for 10 cards per sub-topic
-            int targetSize = 10;
-            if (!entities.isEmpty()) {
-                for (int i = 0; i < targetSize; i++) {
-                    int index = (startIndex + i) % entities.size();
-                    CustomVocabularyEntity entity = entities.get(index);
+            List<CustomVocabularyEntity> topicPool = getTopicVocabularyPool(topic);
+            if (!topicPool.isEmpty()) {
+                String domain = getDomainFromTopic(topic);
+                for (CustomVocabularyEntity entity : topicPool) {
+                    String normalizedWord = normalizeWord(entity.word);
+                    int score = wordScores.getOrDefault(normalizedWord, 0);
+                    if (score >= 100) {
+                        continue;
+                    }
                     cards.add(new FlashcardItem(
-                        getEmojiForDomain(domain),
-                        entity.word,
-                        entity.ipa,
-                        entity.meaning,
-                        entity.example
+                            getEmojiForDomain(domain),
+                            entity.word,
+                            entity.ipa,
+                            entity.meaning,
+                            entity.example
                     ));
                 }
             }
@@ -411,6 +421,12 @@ public class AppRepository {
         }
         
         if (cards.isEmpty()) {
+            updateTopicStatus(topic, TopicItem.STATUS_COMPLETED);
+        } else if (getTopicProgressPercent(topic) > 0) {
+            updateTopicStatus(topic, TopicItem.STATUS_LEARNING);
+        }
+
+        if (cards.isEmpty() && getTopicVocabularyPool(topic).isEmpty()) {
             // High-quality mock fallback for UI testing
             cards.add(new FlashcardItem("🍽️", "menu", "/ˈmen.juː/", "thực đơn", "Could I see the menu, please?"));
             cards.add(new FlashcardItem("🥗", "healthy", "/ˈhel.θi/", "lành mạnh", "I try to eat healthy meals every day."));
@@ -778,7 +794,7 @@ public class AppRepository {
     public void increaseScanCount() {
         executorService.execute(() -> {
             try {
-                UserStatsEntity stats = database.userStatsDao().getUserStats();
+                UserStatsEntity stats = getOrCreateUserStats();
                 if (stats != null) {
                     stats.totalWordsScanned += 1;
                     database.userStatsDao().update(stats);
@@ -796,7 +812,7 @@ public class AppRepository {
     public void addXp(int xp) {
         executorService.execute(() -> {
             try {
-                UserStatsEntity stats = database.userStatsDao().getUserStats();
+                UserStatsEntity stats = getOrCreateUserStats();
                 if (stats != null) {
                     stats.xpTodayEarned += xp;
                     stats.totalXpEarned += xp;
@@ -822,7 +838,7 @@ public class AppRepository {
                 database.studySessionDao().insert(entity);
                 
                 // Update user stats
-                UserStatsEntity stats = database.userStatsDao().getUserStats();
+                UserStatsEntity stats = getOrCreateUserStats();
                 if (stats != null) {
                     stats.totalStudyMinutes += entity.getDurationMinutes();
                     stats.xpTodayEarned += session.getXpEarned();
@@ -854,6 +870,17 @@ public class AppRepository {
                 
                 UserStatsEntity stats = new UserStatsEntity();
                 database.userStatsDao().update(stats);
+
+                SharedPreferences.Editor editor = preferences.edit();
+                for (String key : preferences.getAll().keySet()) {
+                    if (key.startsWith(KEY_TOPIC_WORD_SCORES_PREFIX)) {
+                        editor.remove(key);
+                    }
+                    if (key.startsWith(KEY_TOPIC_LEARNED_WORDS_PREFIX)) {
+                        editor.remove(key);
+                    }
+                }
+                editor.apply();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -887,5 +914,202 @@ public class AppRepository {
         cal.set(Calendar.SECOND, 59);
         cal.set(Calendar.MILLISECOND, 999);
         return cal.getTimeInMillis();
+    }
+
+    private UserStatsEntity getOrCreateUserStats() {
+        UserStatsEntity stats = database.userStatsDao().getUserStats();
+        if (stats == null) {
+            stats = new UserStatsEntity();
+            database.userStatsDao().insert(stats);
+        }
+        return stats;
+    }
+
+    public void markTopicWordLearned(String topic, String word) {
+        recordTopicWordRating(topic, word, 3);
+    }
+
+    public void unmarkTopicWordLearned(String topic, String word) {
+        recordTopicWordRating(topic, word, 1);
+    }
+
+    public void recordTopicWordRating(String topic, String word, int ratingScore) {
+        if (topic == null || topic.trim().isEmpty() || word == null || word.trim().isEmpty()) {
+            return;
+        }
+
+        int progressScore;
+        if (ratingScore >= 3) {
+            progressScore = 100;
+        } else if (ratingScore == 2) {
+            progressScore = 50;
+        } else {
+            progressScore = 20;
+        }
+
+        Map<String, Integer> wordScores = getTopicWordScores(topic);
+        String normalizedWord = normalizeWord(word);
+        wordScores.put(normalizedWord, progressScore);
+        saveTopicWordScores(topic, wordScores);
+
+        if (progressScore >= 100) {
+            Set<String> learnedWords = getLearnedWordsForTopic(topic);
+            learnedWords.add(normalizedWord);
+            saveLearnedWordsForTopic(topic, learnedWords);
+        }
+    }
+
+    public Set<String> getLearnedWordsForTopic(String topic) {
+        Set<String> learnedWords = new HashSet<>();
+        if (topic == null || topic.trim().isEmpty()) {
+            return learnedWords;
+        }
+
+        String raw = preferences.getString(KEY_TOPIC_LEARNED_WORDS_PREFIX + topic.trim(), "");
+        if (raw == null || raw.trim().isEmpty()) {
+            return learnedWords;
+        }
+
+        try {
+            JSONArray jsonArray = new JSONArray(raw);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                String value = jsonArray.optString(i, "");
+                if (!value.trim().isEmpty()) {
+                    learnedWords.add(value.trim());
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return learnedWords;
+    }
+
+    private void saveLearnedWordsForTopic(String topic, Set<String> learnedWords) {
+        JSONArray jsonArray = new JSONArray();
+        for (String word : learnedWords) {
+            jsonArray.put(word);
+        }
+        preferences.edit()
+                .putString(KEY_TOPIC_LEARNED_WORDS_PREFIX + topic.trim(), jsonArray.toString())
+                .apply();
+    }
+
+    private int getTopicProgressPercent(String topic) {
+        List<CustomVocabularyEntity> topicPool = getTopicVocabularyPool(topic);
+        if (topicPool.isEmpty()) {
+            return 0;
+        }
+
+        Map<String, Integer> wordScores = getTopicWordScores(topic);
+        int totalScore = 0;
+        for (CustomVocabularyEntity entity : topicPool) {
+            String normalizedWord = normalizeWord(entity.word);
+            totalScore += wordScores.getOrDefault(normalizedWord, 0);
+        }
+
+        return Math.min(100, Math.round((float) totalScore / topicPool.size()));
+    }
+
+    private List<CustomVocabularyEntity> getTopicVocabularyPool(String topic) {
+        List<CustomVocabularyEntity> topicPool = new ArrayList<>();
+        try {
+            String domain = getDomainFromTopic(topic);
+            int startIndex = getStartIndexForTopic(topic);
+            List<CustomVocabularyEntity> entities = database.customVocabularyDao().getByDomain(domain);
+            if (entities == null || entities.isEmpty()) {
+                return topicPool;
+            }
+
+            int targetSize = Math.min(10, entities.size());
+            for (int i = 0; i < targetSize; i++) {
+                int index = (startIndex + i) % entities.size();
+                topicPool.add(entities.get(index));
+            }
+        } catch (Exception ignored) {
+        }
+        return topicPool;
+    }
+
+    private String getDomainFromTopic(String topic) {
+        if (topic == null) {
+            return "";
+        }
+        if (topic.contains(" cơ bản")) {
+            return topic.replace(" cơ bản", "");
+        }
+        if (topic.contains(" giao tiếp")) {
+            return topic.replace(" giao tiếp", "");
+        }
+        if (topic.contains(" nâng cao")) {
+            return topic.replace(" nâng cao", "");
+        }
+        if (topic.contains(" thực chiến")) {
+            return topic.replace(" thực chiến", "");
+        }
+        return topic;
+    }
+
+    private int getStartIndexForTopic(String topic) {
+        if (topic == null) {
+            return 0;
+        }
+        if (topic.contains(" giao tiếp")) {
+            return 5;
+        }
+        if (topic.contains(" nâng cao")) {
+            return 10;
+        }
+        return 0;
+    }
+
+    private Map<String, Integer> getTopicWordScores(String topic) {
+        Map<String, Integer> wordScores = new HashMap<>();
+        if (topic == null || topic.trim().isEmpty()) {
+            return wordScores;
+        }
+
+        String raw = preferences.getString(KEY_TOPIC_WORD_SCORES_PREFIX + topic.trim(), "");
+        if (raw != null && !raw.trim().isEmpty()) {
+            try {
+                JSONObject jsonObject = new JSONObject(raw);
+                Iterator<String> keys = jsonObject.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    int value = jsonObject.optInt(key, 0);
+                    wordScores.put(key, Math.max(0, Math.min(100, value)));
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        // Backward compatibility for old learned set data.
+        Set<String> legacyLearnedWords = getLearnedWordsForTopic(topic);
+        for (String word : legacyLearnedWords) {
+            if (!wordScores.containsKey(word)) {
+                wordScores.put(word, 100);
+            }
+        }
+
+        return wordScores;
+    }
+
+    private void saveTopicWordScores(String topic, Map<String, Integer> wordScores) {
+        JSONObject jsonObject = new JSONObject();
+        try {
+            for (Map.Entry<String, Integer> entry : wordScores.entrySet()) {
+                jsonObject.put(entry.getKey(), Math.max(0, Math.min(100, entry.getValue())));
+            }
+        } catch (Exception ignored) {
+        }
+
+        preferences.edit()
+                .putString(KEY_TOPIC_WORD_SCORES_PREFIX + topic.trim(), jsonObject.toString())
+                .apply();
+    }
+
+    private String normalizeWord(String word) {
+        if (word == null) {
+            return "";
+        }
+        return word.trim().toLowerCase(Locale.US);
     }
 }
