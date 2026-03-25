@@ -61,4 +61,7 @@
     <string name="status_not_started">Chưa học</string>
     <string name="status_learning">Đang học</string>
     <string name="status_completed">Hoàn thành</string>
+
+    <string name="reminder_notification_title">Đến giờ học rồi!</string>
+    <string name="reminder_notification_message">Mở EnglishFlow để tiếp tục bài học hôm nay🐳.</string>
 </resources>
