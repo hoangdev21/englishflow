@@ -1,6 +1,9 @@
 package com.example.englishflow.ui.fragments;
 
+import android.Manifest;
 import android.app.TimePickerDialog;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -15,6 +18,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -24,6 +28,8 @@ import com.example.englishflow.data.DictionaryRepository;
 import com.example.englishflow.data.DictionaryResult;
 import com.example.englishflow.data.FreeDictionaryService;
 import com.example.englishflow.data.MyMemoryService;
+import com.example.englishflow.data.WordEntry;
+import com.example.englishflow.reminder.StudyReminderScheduler;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
@@ -36,6 +42,7 @@ import okhttp3.OkHttpClient;
 public class HomeFragment extends Fragment {
 
     private static final OkHttpClient SHARED_HTTP_CLIENT = new OkHttpClient();
+    private static final int REQUEST_NOTIFICATION_PERMISSION = 9001;
     private static final String DEFAULT_DICT_TITLE = "Mở tra từ điển";
     private static final String DEFAULT_DICT_HINT = "Nhập từ tiếng Anh hoặc tiếng Việt để tra IPA, nghĩa, ví dụ và từ đồng nghĩa.";
     private static final String DEFAULT_DICT_EXAMPLE = "Bạn có thể bấm vào từ đồng nghĩa trong kết quả để tra tiếp ngay lập tức.";
@@ -43,6 +50,7 @@ public class HomeFragment extends Fragment {
     private AppRepository repository;
     private DictionaryRepository dictionaryRepository;
     private TextView reminderText;
+    private DictionaryResult currentDictionaryResult;
 
     @Nullable
     @Override
@@ -128,18 +136,16 @@ public class HomeFragment extends Fragment {
             if (continueBtn != null) continueBtn.setOnClickListener(v -> navigateToTab(1));
 
             // Dictionary buttons
-            MaterialButton openDictionaryIconBtn = view.findViewById(R.id.btnOpenDictionarySheet);
-            MaterialButton openDictionaryTextBtn = view.findViewById(R.id.btnOpenDictionaryText);
+            MaterialButton saveDictionaryWordBtn = view.findViewById(R.id.btnSaveDictionaryWord);
             MaterialButton homeDictSearchBtn = view.findViewById(R.id.btnHomeDictSearch);
             EditText homeDictInput = view.findViewById(R.id.homeDictInput);
 
             View.OnClickListener searchDictionaryAction = v -> performHomeDictionarySearch(view);
 
-            if (openDictionaryIconBtn != null)
-                openDictionaryIconBtn.setOnClickListener(searchDictionaryAction);
-            if (openDictionaryTextBtn != null)
-                openDictionaryTextBtn.setOnClickListener(searchDictionaryAction);
             if (homeDictSearchBtn != null) homeDictSearchBtn.setOnClickListener(searchDictionaryAction);
+            if (saveDictionaryWordBtn != null) {
+                saveDictionaryWordBtn.setOnClickListener(v -> saveCurrentDictionaryWord());
+            }
 
             if (homeDictInput != null) {
                 homeDictInput.setOnEditorActionListener((textView, actionId, keyEvent) -> {
@@ -161,7 +167,10 @@ public class HomeFragment extends Fragment {
                     TimePickerDialog dialog = new TimePickerDialog(requireContext(),
                             (timePicker, selectedHour, selectedMinute) -> {
                                 repository.setReminderTime(selectedHour, selectedMinute);
+                                StudyReminderScheduler.scheduleDailyReminder(requireContext(), selectedHour, selectedMinute);
+                                ensureNotificationPermission();
                                 renderReminderText();
+                                Toast.makeText(requireContext(), "Đã đặt nhắc học hằng ngày", Toast.LENGTH_SHORT).show();
                             }, currentHour, currentMinute, true);
                     dialog.show();
                 });
@@ -249,6 +258,7 @@ public class HomeFragment extends Fragment {
 
     private void bindHomeDictionaryResult(View rootView, DictionaryResult result) {
         if (result == null) return;
+        currentDictionaryResult = result;
 
         TextView dictTitle = rootView.findViewById(R.id.txtDictionaryTitle);
         TextView dictIpa = rootView.findViewById(R.id.txtDictIpa);
@@ -407,6 +417,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void resetDictionaryCard(View rootView) {
+        currentDictionaryResult = null;
         TextView dictTitle = rootView.findViewById(R.id.txtDictionaryTitle);
         TextView dictIpa = rootView.findViewById(R.id.txtDictIpa);
         TextView dictPartOfSpeech = rootView.findViewById(R.id.txtDictPartOfSpeech);
@@ -424,6 +435,67 @@ public class HomeFragment extends Fragment {
         if (dictExampleContainer != null) dictExampleContainer.setVisibility(View.VISIBLE);
         if (dictSynonymsContainer != null) dictSynonymsContainer.setVisibility(View.GONE);
         if (dictUsageContainer != null) dictUsageContainer.setVisibility(View.GONE);
+    }
+
+    private void saveCurrentDictionaryWord() {
+        if (repository == null || currentDictionaryResult == null) {
+            Toast.makeText(requireContext(), "Hãy tra từ trước khi lưu", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String word = safeText(currentDictionaryResult.getWord(), "");
+        if (word.isEmpty()) {
+            Toast.makeText(requireContext(), "Không có từ để lưu", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        DictionaryResult.Definition firstDefinition = null;
+        if (currentDictionaryResult.getDefinitions() != null && !currentDictionaryResult.getDefinitions().isEmpty()) {
+            firstDefinition = currentDictionaryResult.getDefinitions().get(0);
+        }
+
+        String ipa = safeText(currentDictionaryResult.getIpa(), "-");
+        String wordType = firstDefinition != null ? safeText(firstDefinition.getPartOfSpeech(), "noun") : "noun";
+        String meaning = firstDefinition != null
+                ? safeText(firstDefinition.getTranslatedMeaning(), safeText(firstDefinition.getMeaning(), ""))
+                : safeText(currentDictionaryResult.getTranslatedWord(), "");
+        String example = firstDefinition != null ? safeText(firstDefinition.getExample(), "") : "";
+
+        repository.saveWord(new WordEntry(
+                word,
+                ipa,
+                meaning,
+                wordType,
+                example,
+                "",
+                "Từ điển",
+                "Lưu từ trang chủ"
+        ));
+        Toast.makeText(requireContext(), "Đã lưu từ: " + word, Toast.LENGTH_SHORT).show();
+    }
+
+    private void ensureNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || !isAdded()) {
+            return;
+        }
+
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATION_PERMISSION);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_NOTIFICATION_PERMISSION && isAdded()) {
+            boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            if (!granted) {
+                Toast.makeText(requireContext(), "Bạn cần bật quyền thông báo để nhận nhắc học", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     // ─────────────────────────────────────────────────────────

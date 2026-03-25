@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.englishflow.data.LocalAuthStore;
+import com.example.englishflow.reminder.StudyReminderScheduler;
 
 public class SplashActivity extends AppCompatActivity {
 
@@ -28,6 +29,7 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
         localAuthStore = new LocalAuthStore(getApplicationContext());
+        StudyReminderScheduler.rescheduleFromPreferences(getApplicationContext());
 
         try {
             ImageView logoView = findViewById(R.id.splashLogo);

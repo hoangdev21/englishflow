@@ -996,22 +996,7 @@
                             android:orientation="horizontal">
 
                             <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnOpenDictionarySheet"
-                                android:layout_width="wrap_content"
-                                android:layout_height="44dp"
-                                android:layout_marginEnd="10dp"
-                                android:background="@drawable/bg_button_premium_outlined"
-                                android:minHeight="44dp"
-                                app:backgroundTint="@null"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="16dp"
-                                android:text="Từ điển đầy đủ"
-                                android:textColor="@color/ef_text_primary"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnOpenDictionaryText"
+                                android:id="@+id/btnSaveDictionaryWord"
                                 android:layout_width="wrap_content"
                                 android:layout_height="44dp"
                                 android:background="@drawable/bg_button_premium_primary"
@@ -1019,7 +1004,7 @@
                                 app:backgroundTint="@null"
                                 android:paddingStart="22dp"
                                 android:paddingEnd="22dp"
-                                android:text="Tra từ"
+                                android:text="Lưu từ"
                                 android:textColor="@color/white"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
