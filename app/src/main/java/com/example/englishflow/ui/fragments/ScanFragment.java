@@ -59,6 +59,8 @@ import java.util.concurrent.Executors;
 
 public class ScanFragment extends Fragment {
     private static final int REQUEST_CAMERA_PERMISSION = 100;
+    private static final float TTS_SPEECH_RATE = 0.9f;
+    private static final float TTS_PITCH = 1.0f;
     private static final int MAX_GALLERY_IMAGE_DIMENSION = 1280;
     private static final long PREVIEW_HINT_INTERVAL_MS = 4500L;
 
@@ -180,6 +182,8 @@ public class ScanFragment extends Fragment {
         textToSpeech = new TextToSpeech(requireContext(), status -> {
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeech.setLanguage(Locale.US);
+                textToSpeech.setSpeechRate(TTS_SPEECH_RATE);
+                textToSpeech.setPitch(TTS_PITCH);
             }
         });
     }
