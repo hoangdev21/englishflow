@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
 
 public class GeminiVisionService {
     private static final String DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+    private static final String SECONDARY_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"; // same model
+    private static final String TERTIARY_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"; // same model
     private static final String API_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
     private static final Pattern ENGLISH_WORD_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z\\-]{1,}");
     private static final int MAX_CACHE_SIZE = 128;
@@ -98,36 +100,82 @@ public class GeminiVisionService {
         android.util.Log.d("GeminiVisionService", "API key validated successfully");
     }
 
+    public static class VisionData {
+        public String word;
+        public String ipa;
+        public String meaning;
+        public String wordType;
+        public String example;
+        public String exampleVi;
+        public String category;
+        public String note;
+        public java.util.List<String> related;
+    }
+
     /**
-    * Analyze an image using Groq + Llama 4 Vision and extract object labels.
-     * Returns a label string that can be processed by ScanAnalyzer.
+     * Analyze an image using Groq + Vision and return a full ScanResult.
      */
-    public String analyzeImage(Bitmap bitmap) throws Exception {
-        return analyzeImageWithConfidence(bitmap).getPrimaryLabel();
+    public ScanResult analyzeImageFull(Bitmap bitmap) throws Exception {
+        if (bitmap == null) throw new IllegalArgumentException("Bitmap cannot be null");
+
+        String prompt = "Identify the main object in this image and provide English learning details.\n"
+                + "Return ONLY a JSON object with this structure:\n"
+                + "{\n"
+                + "  \"word\": \"English name (e.g., 'Apple')\",\n"
+                + "  \"ipa\": \"IPA pronunciation (e.g., '/ˈæp.əl/')\",\n"
+                + "  \"meaning\": \"Vietnamese translation\",\n"
+                + "  \"wordType\": \"Part of speech (noun/verb/adj)\",\n"
+                + "  \"example\": \"Short English sentence using the word\",\n"
+                + "  \"exampleVi\": \"Vietnamese translation of the example\",\n"
+                + "  \"category\": \"Category (e.g., Food, Tech, Nature)\",\n"
+                + "  \"note\": \"One interesting fact or usage note\",\n"
+                + "  \"related\": [\"3-4 related english words\"]\n"
+                + "}\n"
+                + "Strictly return JSON only. No other text.";
+
+        VisionResult result = analyzeVision(bitmap, prompt, false, "full_scan");
+        String json = result.getRawResponse();
+        
+        // Clean up common AI commentary if any
+        if (json.contains("{") && json.contains("}")) {
+            json = json.substring(json.indexOf("{"), json.lastIndexOf("}") + 1);
+        }
+
+        try {
+            VisionData data = gson.fromJson(json, VisionData.class);
+            return new ScanResult(
+                    data.word != null ? data.word : "object",
+                    data.ipa != null ? data.ipa : "-",
+                    data.meaning != null ? data.meaning : "vật thể",
+                    data.wordType != null ? data.wordType : "noun",
+                    data.example != null ? data.example : "Empty example",
+                    data.exampleVi != null ? data.exampleVi : "VD trống",
+                    data.category != null ? data.category : "General",
+                    data.note != null ? data.note : "No note",
+                    data.related != null ? data.related : java.util.Arrays.asList("thing", "item")
+            );
+        } catch (Exception e) {
+            android.util.Log.e("GeminiVisionService", "JSON Parse error: " + e.getMessage());
+            // Fallback
+            return new ScanResult(result.getPrimaryLabel(), "-", "vật thể", "noun", 
+                "No example", "VD trống", "General", "JSON error", java.util.Arrays.asList("object"));
+        }
     }
 
     public VisionResult analyzeImageWithConfidence(Bitmap bitmap) throws Exception {
-        if (bitmap == null) {
-            throw new IllegalArgumentException("Bitmap cannot be null");
-        }
-
+        if (bitmap == null) throw new IllegalArgumentException("Bitmap cannot be null");
         String prompt = "Identify the main object or subject in this image. "
                 + "Respond with ONLY the object name in English, nothing else. "
                 + "For example: 'bottle', 'book', 'phone', 'cup', 'chair', 'table', etc. "
                 + "If uncertain, respond 'object'.";
-
         return analyzeVision(bitmap, prompt, true, "scan");
     }
 
     public VisionResult analyzePreviewVietnamese(Bitmap bitmap) throws Exception {
-        if (bitmap == null) {
-            throw new IllegalArgumentException("Bitmap cannot be null");
-        }
-
+        if (bitmap == null) throw new IllegalArgumentException("Bitmap cannot be null");
         String prompt = "Nhan dien vat the chinh trong anh va tra loi bang TIENG VIET. "
                 + "Chi tra ve duy nhat 1-3 tu, khong giai thich, khong dau cau. "
                 + "Neu khong chac, tra ve 'vat the'.";
-
         return analyzeVision(bitmap, prompt, false, "preview");
     }
 
@@ -143,21 +191,38 @@ public class GeminiVisionService {
 
         String base64Image = bitmapToBase64(bitmap);
 
-        try {
-            JsonObject requestBody = buildVisionRequest(prompt, base64Image);
-            String responseText = callGroqApi(requestBody);
+        String[] models = {
+                modelName,
+                SECONDARY_MODEL,
+                TERTIARY_MODEL
+        };
 
-            String normalizedLabel = expectEnglishLabel
-                    ? extractBestEnglishLabel(responseText)
-                    : extractBestVietnameseHint(responseText);
-            float confidence = estimateConfidence(responseText, normalizedLabel, bitmap, expectEnglishLabel);
+        Exception lastEx = null;
+        for (String model : models) {
+            try {
+                JsonObject requestBody = buildVisionRequest(prompt, base64Image, model);
+                String responseText = callGroqApi(requestBody);
 
-            VisionResult result = new VisionResult(normalizedLabel, confidence, false, responseText);
-            cacheResult(cacheKey, result);
-            return result;
-        } catch (Exception e) {
-            throw new RuntimeException("Error analyzing image with Groq: " + e.getMessage(), e);
+                String normalizedLabel = expectEnglishLabel
+                        ? extractBestEnglishLabel(responseText)
+                        : extractBestVietnameseHint(responseText);
+                float confidence = estimateConfidence(responseText, normalizedLabel, bitmap, expectEnglishLabel);
+
+                VisionResult result = new VisionResult(normalizedLabel, confidence, false, responseText);
+                cacheResult(cacheKey, result);
+                return result;
+            } catch (Exception e) {
+                lastEx = e;
+                String msg = e.getMessage() != null ? e.getMessage() : "";
+                if (msg.contains("429") || msg.contains("400") || msg.contains("404")) {
+                    android.util.Log.w("GeminiVisionService", "Model " + model + " failed (HTTP error), trying fallback...");
+                    continue;
+                }
+                break; // Don't retry for other errors (e.g. 401)
+            }
         }
+        throw new RuntimeException("Error analyzing image with Groq (exhausted fallbacks): " + 
+                (lastEx != null ? lastEx.getMessage() : "Unknown error"), lastEx);
     }
 
     private VisionResult getCached(String cacheKey) {
@@ -293,19 +358,29 @@ public class GeminiVisionService {
                 + "\nRespond with ONLY the Vietnamese translation, no explanation.";
 
         try {
-            JsonObject requestBody = buildTextRequest(prompt);
-            String responseText = callGroqApi(requestBody);
-            
-            if (responseText == null || responseText.trim().isEmpty()) {
-                return null;
+            String[] models = {"llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", modelName};
+            for (String model : models) {
+                try {
+                    JsonObject requestBody = buildTextRequest(prompt, model);
+                    String responseText = callGroqApi(requestBody);
+                    
+                    if (responseText == null || responseText.trim().isEmpty()) {
+                        continue;
+                    }
+                    
+                    String[] lines = responseText.trim().split("\n");
+                    if (lines.length > 0) {
+                        return lines[0].trim();
+                    }
+                } catch (Exception e) {
+                    String msg = e.getMessage() != null ? e.getMessage() : "";
+                    if (msg.contains("429") || msg.contains("400") || msg.contains("404")) {
+                        continue;
+                    }
+                    break;
+                }
             }
-            
-            String[] lines = responseText.trim().split("\n");
-            if (lines.length == 0) {
-                return null;
-            }
-            
-            return lines[0].trim();
+            return null;
         } catch (Exception e) {
             return null; // Fallback on error, don't throw
         }
@@ -322,20 +397,30 @@ public class GeminiVisionService {
         String prompt = "Correct the grammar in this sentence and explain the correction briefly.\nSentence: " + sentence 
                 + "\nProvide: [CORRECTED SENTENCE] then [EXPLANATION]";
 
-        try {
-            JsonObject requestBody = buildTextRequest(prompt);
-            return callGroqApi(requestBody);
-        } catch (Exception e) {
-            throw new RuntimeException("Grammar correction error: " + e.getMessage(), e);
+        String[] models = {"llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", modelName};
+        Exception lastEx = null;
+        for (String model : models) {
+            try {
+                JsonObject requestBody = buildTextRequest(prompt, model);
+                return callGroqApi(requestBody);
+            } catch (Exception e) {
+                lastEx = e;
+                String msg = e.getMessage() != null ? e.getMessage() : "";
+                if (msg.contains("429") || msg.contains("400") || msg.contains("404")) {
+                    continue;
+                }
+                break;
+            }
         }
+        throw new RuntimeException("Grammar correction error (exhausted fallbacks): " + (lastEx != null ? lastEx.getMessage() : ""), lastEx);
     }
 
     /**
      * Build text-only request for Groq Chat Completions API
      */
-    private JsonObject buildTextRequest(String prompt) {
+    private JsonObject buildTextRequest(String prompt, String model) {
         JsonObject request = new JsonObject();
-        request.addProperty("model", modelName);
+        request.addProperty("model", model);
         request.addProperty("temperature", 0.2);
         request.addProperty("max_tokens", 256);
 
@@ -352,11 +437,11 @@ public class GeminiVisionService {
     /**
      * Build image + text request for Groq Vision API
      */
-    private JsonObject buildVisionRequest(String prompt, String base64Image) {
+    private JsonObject buildVisionRequest(String prompt, String base64Image, String model) {
         JsonObject request = new JsonObject();
-        request.addProperty("model", modelName);
+        request.addProperty("model", model);
         request.addProperty("temperature", 0.2);
-        request.addProperty("max_tokens", 64);
+        request.addProperty("max_tokens", 1024); // Increased for full scan detail
 
         JsonArray messages = new JsonArray();
         JsonObject user = new JsonObject();
@@ -391,7 +476,8 @@ public class GeminiVisionService {
         String requestBodyStr = requestBody.toString();
         android.util.Log.d("GeminiVisionService", "Request body: " + requestBodyStr.substring(0, Math.min(200, requestBodyStr.length())) + "...");
 
-        android.util.Log.d("GeminiVisionService", "Using single model: " + modelName);
+        String currentModel = requestBody.has("model") ? requestBody.get("model").getAsString() : modelName;
+        android.util.Log.d("GeminiVisionService", "Using model handle: " + currentModel);
 
         RequestBody body = RequestBody.create(
                 requestBodyStr,

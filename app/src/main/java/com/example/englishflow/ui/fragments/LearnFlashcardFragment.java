@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,6 +21,7 @@ import androidx.fragment.app.Fragment;
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.FlashcardItem;
+import com.example.englishflow.data.TopicItem;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 
@@ -34,19 +36,26 @@ public class LearnFlashcardFragment extends Fragment {
     private TextView titleText;
     private TextView countText;
     private MaterialCardView cardView;
+    private View cardContentRoot;
+    private View frontLayout;
+    private View backLayout;
+    
     private TextView emojiText;
     private TextView wordText;
     private TextView ipaText;
     private TextView meaningText;
     private TextView exampleText;
     private MaterialButton pronounceButton;
+    
     private LinearLayout srsButtons;
     private TextView srsHint;
+    private com.google.android.material.progressindicator.LinearProgressIndicator sessionProgress;
 
     private List<FlashcardItem> flashcards;
     private int currentIndex = 0;
     private boolean isBack = false;
     private int earnedXp = 0;
+    private String currentTopic;
 
     private TextToSpeech textToSpeech;
 
@@ -73,24 +82,34 @@ public class LearnFlashcardFragment extends Fragment {
         titleText = view.findViewById(R.id.flashcardTitle);
         countText = view.findViewById(R.id.flashcardCount);
         cardView = view.findViewById(R.id.flashcardCard);
+        cardContentRoot = view.findViewById(R.id.cardContentRoot);
+        frontLayout = view.findViewById(R.id.frontLayout);
+        backLayout = view.findViewById(R.id.backLayout);
+        
         emojiText = view.findViewById(R.id.flashcardEmoji);
         wordText = view.findViewById(R.id.flashcardWord);
         ipaText = view.findViewById(R.id.flashcardIpa);
         meaningText = view.findViewById(R.id.flashcardMeaning);
         exampleText = view.findViewById(R.id.flashcardExample);
         pronounceButton = view.findViewById(R.id.btnPronounceFlashcard);
+        
         srsButtons = view.findViewById(R.id.srsButtons);
         srsHint = view.findViewById(R.id.srsHint);
+        sessionProgress = view.findViewById(R.id.sessionProgress);
+        
+        view.findViewById(R.id.btnBackFlashcards).setOnClickListener(v -> {
+            getParentFragmentManager().popBackStack();
+        });
 
         String domain = "Lĩnh vực";
-        String topic = "Đề tài";
+        currentTopic = "Đề tài";
         if (getArguments() != null) {
             domain = getArguments().getString(ARG_DOMAIN, domain);
-            topic = getArguments().getString(ARG_TOPIC, topic);
+            currentTopic = getArguments().getString(ARG_TOPIC, currentTopic);
         }
-        titleText.setText(domain + " • " + topic);
+        titleText.setText(domain + " • " + currentTopic);
 
-        flashcards = AppRepository.getInstance(requireContext()).getFlashcardsForTopic(topic);
+        flashcards = AppRepository.getInstance(requireContext()).getFlashcardsForTopic(currentTopic);
         bindFlashcard();
 
         textToSpeech = new TextToSpeech(requireContext(), status -> {
@@ -107,13 +126,13 @@ public class LearnFlashcardFragment extends Fragment {
             textToSpeech.speak(item.getWord(), TextToSpeech.QUEUE_FLUSH, null, "flashcard-word");
         });
 
-        MaterialButton btnHard = view.findViewById(R.id.btnHard);
-        MaterialButton btnOkay = view.findViewById(R.id.btnOkay);
-        MaterialButton btnEasy = view.findViewById(R.id.btnEasy);
-
-        btnHard.setOnClickListener(v -> rateCard(1, "Ôn lại sau 10 phút"));
-        btnOkay.setOnClickListener(v -> rateCard(2, "Ôn lại sau 1 ngày"));
-        btnEasy.setOnClickListener(v -> rateCard(3, "Ôn lại sau 3 ngày"));
+        view.findViewById(R.id.btnHard).setOnClickListener(v -> rateCard(1, "Ôn lại sớm"));
+        view.findViewById(R.id.btnOkay).setOnClickListener(v -> rateCard(2, "Đang học..."));
+        view.findViewById(R.id.btnEasy).setOnClickListener(v -> rateCard(3, "Đã thuộc!"));
+        
+        // Setup distance for 3D effect
+        float scale = getResources().getDisplayMetrics().density;
+        cardView.setCameraDistance(8000 * scale);
     }
 
     @Override
@@ -129,87 +148,100 @@ public class LearnFlashcardFragment extends Fragment {
         GestureDetector detector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                if (e1 == null || e2 == null) {
-                    return false;
-                }
+                if (e1 == null || e2 == null) return false;
                 float deltaX = e2.getX() - e1.getX();
-                if (Math.abs(deltaX) > 140 && Math.abs(velocityX) > 250) {
-                    if (deltaX > 0) {
-                        goPrevious();
-                    } else {
-                        goNext();
-                    }
+                if (Math.abs(deltaX) > 150 && Math.abs(velocityX) > 300) {
+                    if (deltaX > 0) goPrevious(); else goNext();
                     return true;
                 }
                 return false;
             }
         });
-
         cardView.setOnTouchListener((v, event) -> detector.onTouchEvent(event));
     }
 
     private void bindFlashcard() {
         FlashcardItem card = flashcards.get(currentIndex);
-        countText.setText("Thẻ " + (currentIndex + 1) + "/" + flashcards.size() + " • Vuốt để chuyển");
+        countText.setText("Thẻ " + (currentIndex + 1) + " / " + flashcards.size());
         emojiText.setText(card.getEmoji());
         wordText.setText(card.getWord());
         ipaText.setText(card.getIpa());
         meaningText.setText(card.getMeaning());
         exampleText.setText(card.getExample());
-        updateFace();
+        
+        int progress = (int) (((float) (currentIndex + 1) / flashcards.size()) * 100);
+        sessionProgress.setProgress(progress, true);
+        
+        isBack = false;
+        updateUIState(false);
     }
 
     private void flipCard() {
+        // Professional 3D Flip
         cardView.animate()
-                .rotationY(90f)
-                .setDuration(140)
+                .rotationY(isBack ? 0f : 180f)
+                .setDuration(400)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
                 .setListener(new AnimatorListenerAdapter() {
                     @Override
-                    public void onAnimationEnd(Animator animation) {
-                        isBack = !isBack;
-                        updateFace();
-                        cardView.setRotationY(-90f);
-                        cardView.animate().rotationY(0f).setDuration(140).setListener(null).start();
+                    public void onAnimationStart(Animator animation) {
+                        // Switch content midway through the flip
+                        cardView.postDelayed(() -> {
+                            isBack = !isBack;
+                            updateUIState(true);
+                        }, 200);
                     }
                 })
                 .start();
     }
 
-    private void updateFace() {
-        ipaText.setVisibility(isBack ? View.VISIBLE : View.GONE);
-        meaningText.setVisibility(isBack ? View.VISIBLE : View.GONE);
-        exampleText.setVisibility(isBack ? View.VISIBLE : View.GONE);
-        pronounceButton.setVisibility(isBack ? View.VISIBLE : View.GONE);
-        srsButtons.setVisibility(isBack ? View.VISIBLE : View.GONE);
-        srsHint.setText(isBack ? "Đánh giá độ nhớ để hệ thống SRS lên lịch ôn tập" : "Chạm để lật thẻ, sau đó đánh giá độ khó");
+    private void updateUIState(boolean immediate) {
+        if (isBack) {
+            frontLayout.setVisibility(View.GONE);
+            backLayout.setVisibility(View.VISIBLE);
+            // Flip the back layout content so it's not mirrored
+            backLayout.setRotationY(180f); 
+            srsButtons.setVisibility(View.VISIBLE);
+            srsHint.setText("Đánh giá mức độ ghi nhớ");
+        } else {
+            frontLayout.setVisibility(View.VISIBLE);
+            backLayout.setVisibility(View.GONE);
+            srsButtons.setVisibility(View.INVISIBLE);
+            srsHint.setText("Chạm để lật thẻ • Vuốt để chuyển");
+            if (!immediate) cardView.setRotationY(0f);
+        }
     }
 
-    private void rateCard(int score, String scheduleText) {
-        earnedXp += score * 5;
-        Toast.makeText(requireContext(), "SRS: " + scheduleText, Toast.LENGTH_SHORT).show();
+    private void rateCard(int score, String feedback) {
+        earnedXp += score * 10;
+        // In real app, update individual card Spaced Repetition data here
         goNext();
     }
 
     private void goPrevious() {
-        if (currentIndex == 0) {
-            return;
+        if (currentIndex > 0) {
+            currentIndex--;
+            bindFlashcard();
         }
-        currentIndex -= 1;
-        isBack = false;
-        bindFlashcard();
     }
 
     private void goNext() {
         if (currentIndex >= flashcards.size() - 1) {
-            AppRepository.getInstance(requireContext()).addXp(earnedXp);
-            Fragment parent = getParentFragment();
-            if (parent instanceof LearnFlowNavigator) {
-                ((LearnFlowNavigator) parent).openCelebration(earnedXp);
-            }
+            finishSession();
             return;
         }
-        currentIndex += 1;
-        isBack = false;
+        currentIndex++;
         bindFlashcard();
+    }
+
+    private void finishSession() {
+        AppRepository repo = AppRepository.getInstance(requireContext());
+        repo.addXp(earnedXp);
+        repo.updateTopicStatus(currentTopic, TopicItem.STATUS_COMPLETED);
+        
+        Fragment parent = getParentFragment();
+        if (parent instanceof LearnFlowNavigator) {
+            ((LearnFlowNavigator) parent).openCelebration(earnedXp);
+        }
     }
 }

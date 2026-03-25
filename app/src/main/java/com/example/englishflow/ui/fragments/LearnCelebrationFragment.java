@@ -40,10 +40,31 @@ public class LearnCelebrationFragment extends Fragment {
 
         TextView xpText = view.findViewById(R.id.xpText);
         xpText.setText("+" + xp + " XP");
-        TextView confettiText = view.findViewById(R.id.confettiText);
-        confettiText.setScaleX(0.8f);
-        confettiText.setScaleY(0.8f);
-        confettiText.setAlpha(0.1f);
-        confettiText.animate().scaleX(1.1f).scaleY(1.1f).alpha(1f).setDuration(450).start();
+
+        // Animations
+        View iconGroup = view.findViewById(R.id.successIconGroup);
+        iconGroup.setAlpha(0f);
+        iconGroup.setScaleX(0.7f);
+        iconGroup.setScaleY(0.7f);
+        iconGroup.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(600).setInterpolator(new android.view.animation.OvershootInterpolator()).start();
+
+        // Button Listeners
+        view.findViewById(R.id.btnCelebrationNext).setOnClickListener(v -> {
+            getParentFragmentManager().popBackStack(); // Back to Topics
+        });
+
+        view.findViewById(R.id.btnCelebrationBackToTopics).setOnClickListener(v -> {
+            getParentFragmentManager().popBackStack(); // Back to Topics
+        });
+
+        view.findViewById(R.id.btnCelebrationHome).setOnClickListener(v -> {
+            if (getActivity() != null) {
+                // Navigate to index 0 of the activity's viewpager
+                ((com.example.englishflow.MainActivity) getActivity()).setCurrentTab(0);
+                // Or better yet, call a method in MainActivity if it has a way to change page
+                // But simplified for now:
+                getParentFragmentManager().popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            }
+        });
     }
 }

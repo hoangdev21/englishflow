@@ -1,6 +1,5 @@
 package com.example.englishflow.ui.fragments;
 
-import android.app.AlertDialog;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.view.LayoutInflater;
@@ -13,6 +12,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -24,6 +24,7 @@ import com.example.englishflow.data.WordEntry;
 import com.example.englishflow.ui.adapters.AchievementAdapter;
 import com.example.englishflow.ui.adapters.DictionaryAdapter;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.List;
 import java.util.Locale;
@@ -37,6 +38,7 @@ public class ProfileFragment extends Fragment {
     private TextView nameText;
     private TextView levelText;
     private TextView statsText;
+    private TextView tvLearnedCount, tvStreakCount, tvXpCount;
     private LinearLayout chartContainer;
     private RecyclerView dictionaryRecycler;
     private DictionaryAdapter dictionaryAdapter;
@@ -57,6 +59,9 @@ public class ProfileFragment extends Fragment {
         nameText = view.findViewById(R.id.profileName);
         levelText = view.findViewById(R.id.profileLevel);
         statsText = view.findViewById(R.id.profileStats);
+        tvLearnedCount = view.findViewById(R.id.tvLearnedCount);
+        tvStreakCount = view.findViewById(R.id.tvStreakCount);
+        tvXpCount = view.findViewById(R.id.tvXpCount);
         chartContainer = view.findViewById(R.id.chartContainer);
         dictionaryRecycler = view.findViewById(R.id.dictionaryRecycler);
 
@@ -107,6 +112,11 @@ public class ProfileFragment extends Fragment {
     private void renderProfile() {
         nameText.setText(repository.getUserName());
         levelText.setText("Level: " + repository.getCefrLevel() + " • " + repository.getLearnedWords() + " từ đã học");
+        
+        tvLearnedCount.setText(String.valueOf(repository.getLearnedWords()));
+        tvStreakCount.setText(String.valueOf(repository.getStreakDays()));
+        tvXpCount.setText(String.valueOf(repository.getXpToday()));
+
         statsText.setText(
                 "Từ đã học: " + repository.getLearnedWords() + "\n"
                         + "Ảnh đã scan: " + repository.getScannedImages() + "\n"
@@ -138,16 +148,16 @@ public class ProfileFragment extends Fragment {
             column.setLayoutParams(columnParams);
 
             View bar = new View(requireContext());
-            int barHeight = (int) (95f * ((float) value / (float) max));
-            LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Math.max(barHeight, 8));
+            int barHeight = (int) (100f * ((float) value / (float) max));
+            LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Math.max(barHeight, 5));
             bar.setLayoutParams(barParams);
-            bar.setBackgroundResource(R.drawable.bg_card_gradient_green);
+            bar.setBackgroundResource(R.drawable.bg_bar_premium);
 
             TextView label = new TextView(requireContext());
             label.setText(String.valueOf(value));
-            label.setTextSize(11f);
-            label.setTextColor(getResources().getColor(R.color.ef_text_secondary));
-            label.setPadding(0, 6, 0, 0);
+            label.setTextSize(10f);
+            label.setTextColor(ContextCompat.getColor(requireContext(), R.color.ef_text_secondary));
+            label.setPadding(0, 4, 0, 0);
             label.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
 
             column.addView(bar);
@@ -179,15 +189,16 @@ public class ProfileFragment extends Fragment {
         input.setText(repository.getUserName());
         input.setPadding(40, 24, 40, 24);
 
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Đổi tên")
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Đổi tên hiển thị")
                 .setView(input)
-                .setPositiveButton("Lưu", (dialog, which) -> {
+                .setPositiveButton("Lưu thay đổi", (dialog, which) -> {
                     String newName = input.getText() != null ? input.getText().toString().trim() : "";
                     if (!newName.isEmpty()) {
                         repository.setUserName(newName);
                         localAuthStore.updateCurrentDisplayName(newName);
                         renderProfile();
+                        Toast.makeText(requireContext(), "Đã cập nhật tên mới", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton("Huỷ", null)

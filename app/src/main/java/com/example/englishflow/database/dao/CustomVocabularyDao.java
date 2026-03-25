@@ -40,4 +40,16 @@ public interface CustomVocabularyDao {
 
     @Query("DELETE FROM custom_vocabulary WHERE word = :word")
     int deleteByWord(String word);
+
+    @Query("SELECT DISTINCT domain FROM custom_vocabulary")
+    List<String> getUniqueDomains();
+
+    @Query("SELECT * FROM custom_vocabulary WHERE domain = :domain")
+    List<CustomVocabularyEntity> getByDomain(String domain);
+
+    @Query("SELECT COUNT(*) FROM custom_vocabulary WHERE domain = :domain")
+    int getWordCountByDomain(String domain);
+
+    @Query("SELECT * FROM custom_vocabulary WHERE word IN (:words) OR meaning LIKE '%' || :query || '%' LIMIT 5")
+    List<CustomVocabularyEntity> searchRelevant(List<String> words, String query);
 }

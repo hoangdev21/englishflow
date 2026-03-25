@@ -134,17 +134,21 @@ public class DictionaryBottomSheet extends BottomSheetDialogFragment {
             DictionaryResult.Definition firstDefinition = currentResult.getDefinitions().get(0);
             String meaning = safe(firstDefinition.getMeaning());
             String example = safe(firstDefinition.getExample());
-            String category = safe(firstDefinition.getPartOfSpeech());
-            if (category.isEmpty()) {
-                category = "Dictionary";
+            String partOfSpeech = safe(firstDefinition.getPartOfSpeech());
+            if (partOfSpeech.isEmpty()) {
+                partOfSpeech = "noun";
             }
+            String category = "Dictionary";
 
             WordEntry entry = new WordEntry(
                     safe(currentResult.getWord()),
                     safe(currentResult.getIpa()),
                     meaning,
+                    partOfSpeech,
                     example,
-                    category
+                    "",
+                    category,
+                    ""
             );
             appRepository.saveWord(entry);
             Toast.makeText(requireContext(), "Da luu " + safe(currentResult.getWord()), Toast.LENGTH_SHORT).show();

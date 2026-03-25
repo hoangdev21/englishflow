@@ -2,6 +2,7 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/ef_background"
@@ -26,21 +27,250 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="68dp"
-        android:layout_marginBottom="72dp" />
+        android:layout_marginBottom="112dp" />
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNav"
+    <com.google.android.material.bottomappbar.BottomAppBar
+        android:id="@+id/bottomAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:paddingTop="4dp"
-        android:paddingBottom="8dp"
-        android:background="@drawable/bg_bottom_nav"
-        android:elevation="8dp"
-        app:itemActiveIndicatorStyle="@style/Widget.EnglishFlow.BottomIndicator"
-        app:itemIconTint="@color/nav_item_tint"
-        app:itemTextColor="@color/nav_item_tint"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/bottom_nav_menu" />
+        android:backgroundTint="@color/ef_surface"
+        app:fabAlignmentMode="center"
+        app:fabCradleMargin="8dp"
+        app:fabCradleRoundedCornerRadius="14dp"
+        app:fabCradleVerticalOffset="4dp">
+
+        <!-- Custom 3D Premium Tab Bar -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/customBottomNav"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:paddingHorizontal="8dp">
+
+            <!-- Home Item -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/nav_home_btn"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_marginHorizontal="6dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="6dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/nav_learn_btn"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_nav_item_premium"
+                    android:duplicateParentState="true">
+
+                    <ImageView
+                        android:id="@+id/nav_home_icon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_nav_home"
+                        app:tint="@color/ic_nav_item_selector"
+                        android:duplicateParentState="true" />
+
+                    <TextView
+                        android:id="@+id/nav_home_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Trang chủ"
+                        android:textColor="@color/ic_nav_item_selector"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:duplicateParentState="true" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Learn Item -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/nav_learn_btn"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_marginHorizontal="6dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="6dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_left"
+                app:layout_constraintStart_toEndOf="@+id/nav_home_btn"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_nav_item_premium"
+                    android:duplicateParentState="true">
+
+                    <ImageView
+                        android:id="@+id/nav_learn_icon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_nav_learn"
+                        app:tint="@color/ic_nav_item_selector"
+                        android:duplicateParentState="true" />
+
+                    <TextView
+                        android:id="@+id/nav_learn_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Học"
+                        android:textColor="@color/ic_nav_item_selector"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:duplicateParentState="true" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Guideline for FAB cradle space -->
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.4" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.6" />
+
+            <!-- Chat Item -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/nav_chat_btn"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_marginHorizontal="6dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="6dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/nav_profile_btn"
+                app:layout_constraintStart_toEndOf="@+id/guideline_right"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_nav_item_premium"
+                    android:duplicateParentState="true">
+
+                    <ImageView
+                        android:id="@+id/nav_chat_icon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_nav_chat"
+                        app:tint="@color/ic_nav_item_selector"
+                        android:duplicateParentState="true" />
+
+                    <TextView
+                        android:id="@+id/nav_chat_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Chat"
+                        android:textColor="@color/ic_nav_item_selector"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:duplicateParentState="true" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Profile Item -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/nav_profile_btn"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_marginHorizontal="6dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="6dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/nav_chat_btn"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_nav_item_premium"
+                    android:duplicateParentState="true">
+
+                    <ImageView
+                        android:id="@+id/nav_profile_icon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_nav_profile"
+                        app:tint="@color/ic_nav_item_selector"
+                        android:duplicateParentState="true" />
+
+                    <TextView
+                        android:id="@+id/nav_profile_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Hồ sơ"
+                        android:textColor="@color/ic_nav_item_selector"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:duplicateParentState="true" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.bottomappbar.BottomAppBar>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabScan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_lens_orb"
+        app:backgroundTint="@android:color/transparent"
+        app:maxImageSize="64dp"
+        app:fabCustomSize="64dp"
+        app:elevation="0dp"
+        app:pressedTranslationZ="0dp"
+        app:layout_anchor="@id/bottomAppBar"
+        app:borderWidth="0dp"
+        app:tint="@null" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

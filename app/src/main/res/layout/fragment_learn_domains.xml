@@ -1,32 +1,157 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:background="@drawable/bg_learn_gradient_premium">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/learn_fields"
-        android:textAppearance="@style/TextAppearance.EnglishFlow.Title" />
+        android:background="@android:color/transparent"
+        app:elevation="0dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:layout_marginBottom="14dp"
-        android:text="Chọn lĩnh vực bạn muốn tập trung hôm nay"
-        android:textColor="@color/ef_text_secondary"
-        android:textSize="13sp"
-        android:lineSpacingExtra="2dp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_scrollFlags="scroll">
+
+            <!-- Premium Hero Header for Domains - ABSOLUTE FULL WIDTH -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_hero_home_premium"
+                android:orientation="vertical"
+                android:paddingTop="20dp"
+                android:paddingBottom="55dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:alpha="0.8"
+                    android:background="@drawable/bg_3d_badge_silver"
+                    android:elevation="2dp"
+                    android:paddingStart="14dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="8dp"
+                    android:text="Khám phá"
+                    android:textColor="@color/ef_text_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:layout_marginTop="20dp"
+                    android:letterSpacing="-0.03"
+                    android:lineSpacingExtra="4dp"
+                    android:text="Lĩnh vực học"
+                    android:textColor="@color/white"
+                    android:textSize="32sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_marginEnd="24dp"
+                    android:layout_marginTop="8dp"
+                    android:alpha="0.85"
+                    android:text="Chuyên sâu theo từng chủ đề yêu thích"
+                    android:textColor="@color/ef_hero_text_white"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Wave Cutout -->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginTop="-40dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/bg_wave_bottom" />
+
+            <!-- Search and Filter Bar -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="-10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+
+                <RelativeLayout
+                    android:layout_width="0dp"
+                    android:layout_height="54dp"
+                    android:layout_weight="1">
+
+                    <EditText
+                        android:id="@+id/domainSearchInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_dict_search_input"
+                        android:elevation="4dp"
+                        android:hint="Tìm lĩnh vực..."
+                        android:textColorHint="@color/black"
+                        android:textColor="@color/black"
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
+                        android:paddingStart="48dp"
+                        android:paddingEnd="20dp"
+                        android:textSize="15sp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="18dp"
+                        android:elevation="5dp"
+                        android:src="@drawable/ic_search_premium" />
+                </RelativeLayout>
+
+                <ImageButton
+                    android:id="@+id/btnSort"
+                    android:layout_width="54dp"
+                    android:layout_height="54dp"
+                    android:layout_marginStart="10dp"
+                    android:background="@drawable/bg_3d_badge_silver"
+                    android:elevation="4dp"
+                    android:padding="14dp"
+                    android:src="@drawable/ic_sort"
+                    android:tint="@color/ef_text_primary" />
+
+                <ImageButton
+                    android:id="@+id/btnToggleView"
+                    android:layout_width="54dp"
+                    android:layout_height="54dp"
+                    android:layout_marginStart="10dp"
+                    android:background="@drawable/bg_3d_badge_silver"
+                    android:elevation="4dp"
+                    android:padding="14dp"
+                    android:src="@drawable/ic_grid"
+                    android:tint="@color/ef_text_primary" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/domainRecycler"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingBottom="16dp"
-        app:spanCount="2" />
+        android:paddingHorizontal="0dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="24dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        tools:listitem="@layout/item_domain" />
 
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+
+
+
+

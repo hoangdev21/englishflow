@@ -11,16 +11,23 @@ public class LearnedWordEntity {
     public String word;
     public String ipa;
     public String meaning;
+    public String wordType;
     public String example;
+    public String exampleVi;
+    public String note;
     public String domain;
     public String topic;
     public long learnedAt;
     
-    public LearnedWordEntity(String word, String ipa, String meaning, String example, String domain, String topic) {
+    public LearnedWordEntity(String word, String ipa, String meaning, String wordType, String example, 
+                            String exampleVi, String note, String domain, String topic) {
         this.word = word;
         this.ipa = ipa;
         this.meaning = meaning;
+        this.wordType = wordType;
         this.example = example;
+        this.exampleVi = exampleVi;
+        this.note = note;
         this.domain = domain;
         this.topic = topic;
         this.learnedAt = System.currentTimeMillis();

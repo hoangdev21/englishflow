@@ -3,70 +3,132 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    app:cardBackgroundColor="@color/ef_surface"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="0dp"
-    app:strokeColor="@color/ef_outline_light"
-    app:strokeWidth="1dp">
+    android:layout_marginBottom="12dp"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_stats_premium_card"
         android:orientation="vertical"
-        android:padding="14dp">
-
-        <TextView
-            android:id="@+id/textWord"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/ef_text_primary"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/textMeaning"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/ef_text_secondary"
-            android:textSize="13sp"
-            android:lineSpacingExtra="1dp" />
+        android:padding="2dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="22dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnEdit"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="38dp"
-                android:layout_weight="1"
-                android:text="Sửa"
-                android:textSize="12sp" />
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDelete"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="38dp"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:text="Xoá"
-                android:textSize="12sp" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_toStartOf="@+id/btnLock"
+                    android:orientation="vertical">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnLock"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="0dp"
-                android:layout_height="38dp"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:text="Khoá"
-                android:textSize="12sp" />
+                    <TextView
+                        android:id="@+id/textWord"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="-0.02"
+                        android:text="litigation"
+                        android:textColor="@color/ef_text_primary"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/textMeaning"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:alpha="0.85"
+                        android:text="tranh tụng  •  seed / Pháp luật"
+                        android:textColor="@color/ef_text_secondary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <!-- Lock Button (Mini 3D Action) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnLockContainer"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    app:cardElevation="0dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardBackgroundColor="@android:color/transparent">
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLock"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_3d_badge_silver"
+                        app:backgroundTint="@null"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:insetLeft="0dp"
+                        android:insetRight="0dp"
+                        app:icon="@drawable/ic_sort"
+                        app:iconTint="@color/ef_text_primary"
+                        app:iconSize="18dp"
+                        app:iconGravity="textStart" />
+                </com.google.android.material.card.MaterialCardView>
+            </RelativeLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="16dp"
+                android:background="@color/ef_divider" />
+
+            <!-- Action Buttons Footer -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEdit"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/ef_card_blue"
+                    android:text="CHỈNH SỬA"
+                    android:textColor="@color/ef_card_blue_text"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.05"
+                    app:cornerRadius="14dp"
+                    app:icon="@drawable/ic_search_premium"
+                    app:iconSize="14dp"
+                    app:iconTint="@color/ef_card_blue_text" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDelete"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:backgroundTint="@color/ef_card_rose"
+                    android:text="XOÁ TỪ"
+                    android:textColor="@color/ef_card_rose_text"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.05"
+                    app:cornerRadius="14dp"
+                    app:icon="@drawable/ic_delete"
+                    app:iconSize="14dp"
+                    app:iconTint="@color/ef_card_rose_text" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

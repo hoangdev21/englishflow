@@ -49,7 +49,20 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             ((UserViewHolder) holder).message.setText(item.getMessage());
         } else if (holder instanceof AiViewHolder) {
             AiViewHolder aiHolder = (AiViewHolder) holder;
-            aiHolder.message.setText(item.getMessage());
+            
+            // Basic markdown bolding conversion (**bold** -> <b>bold</b>)
+            // and newline to <br> for Html.fromHtml compatibility
+            String rawMessage = item.getMessage() != null ? item.getMessage() : "";
+            String htmlMessage = rawMessage
+                    .replaceAll("\\*\\*(.*?)\\*\\*", "<b>$1</b>")
+                    .replace("\n", "<br>");
+            
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                aiHolder.message.setText(android.text.Html.fromHtml(htmlMessage, android.text.Html.FROM_HTML_MODE_COMPACT));
+            } else {
+                aiHolder.message.setText(android.text.Html.fromHtml(htmlMessage));
+            }
+
             if (item.getCorrection() != null && !item.getCorrection().isEmpty()) {
                 aiHolder.correctionBlock.setVisibility(View.VISIBLE);
                 aiHolder.correctionText.setText("Sửa: " + item.getCorrection());

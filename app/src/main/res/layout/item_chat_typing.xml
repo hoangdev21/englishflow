@@ -1,24 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp">
+    android:orientation="horizontal"
+    android:paddingStart="12dp"
+    android:paddingEnd="48dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
 
-    <TextView
+    <!-- AI Avatar (3D Silver) -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="12dp"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_3d_badge_silver"
+            android:padding="2dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_app_logo"
+                app:tint="@color/ef_primary"
+                android:padding="6dp"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="64dp"
-        android:background="@drawable/bg_bubble_ai"
-        android:paddingStart="16dp"
-        android:paddingTop="12dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="12dp"
-        android:text="AI đang trả lời..."
-        android:textColor="@color/ef_text_secondary"
-        android:textSize="13sp"
-        android:letterSpacing="0.02"
-        android:alpha="0.8" />
+        android:background="@drawable/bg_bubble_ai_premium"
+        android:elevation="2dp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Flow đang suy nghĩ..."
+            android:textColor="@color/ef_text_secondary"
+            android:textSize="14sp"
+            android:alpha="0.8"
+            android:textStyle="italic" />
+    </LinearLayout>
 
 </LinearLayout>

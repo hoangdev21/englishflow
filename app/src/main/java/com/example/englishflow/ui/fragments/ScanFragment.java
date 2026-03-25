@@ -47,7 +47,8 @@ import com.example.englishflow.data.WordEntry;
 import com.example.englishflow.database.entity.CustomVocabularyEntity;
 import com.example.englishflow.ui.viewmodel.ScanViewModel;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.IOException;
@@ -72,16 +73,21 @@ public class ScanFragment extends Fragment {
 
     private PreviewView cameraPreview;
     private TextView wordText;
+    private TextView wordTypeText;
+    private TextView ipaText;
+    private TextView meaningText;
+    private TextView exampleText;
+    private TextView exampleViText;
+    private TextView categoryText;
+    private TextView funFactText;
+    private TextView relatedText;
     private TextView rawLabelText;
     private TextView mappedWordText;
     private TextView confidenceText;
     private TextView previewHintText;
-    private TextView ipaMeaningText;
-    private TextView exampleText;
-    private TextView categoryText;
-    private TextView funFactText;
-    private TextView relatedText;
-    private CircularProgressIndicator scanLoading;
+    private LinearProgressIndicator scanLoading;
+
+
 
     private ScanViewModel scanViewModel;
     private boolean isProcessing = false;
@@ -128,7 +134,7 @@ public class ScanFragment extends Fragment {
         observeUiState();
         initTextToSpeech();
         setupButtons(view);
-        startPreviewHintLoop();
+        // startPreviewHintLoop(); // Removed to support user's wish for a cleaner preview without real-time overrides
 
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -141,16 +147,20 @@ public class ScanFragment extends Fragment {
     private void bindViews(@NonNull View view) {
         cameraPreview = view.findViewById(R.id.cameraPreview);
         wordText = view.findViewById(R.id.scanWord);
-        rawLabelText = view.findViewById(R.id.scanRawLabel);
-        mappedWordText = view.findViewById(R.id.scanMappedWord);
-        confidenceText = view.findViewById(R.id.scanConfidence);
-        previewHintText = view.findViewById(R.id.scanPreviewHint);
-        ipaMeaningText = view.findViewById(R.id.scanIpaMeaning);
+        wordTypeText = view.findViewById(R.id.scanWordType);
+        ipaText = view.findViewById(R.id.scanIpa);
+        meaningText = view.findViewById(R.id.scanMeaning);
         exampleText = view.findViewById(R.id.scanExample);
+        exampleViText = view.findViewById(R.id.scanExampleVi);
         categoryText = view.findViewById(R.id.scanCategory);
         funFactText = view.findViewById(R.id.scanFunFact);
         relatedText = view.findViewById(R.id.scanRelated);
+        confidenceText = view.findViewById(R.id.scanConfidence);
+        rawLabelText = view.findViewById(R.id.scanRawLabel);
+        mappedWordText = view.findViewById(R.id.scanMappedWord);
+        previewHintText = view.findViewById(R.id.scanPreviewHint);
         scanLoading = view.findViewById(R.id.scanLoading);
+
     }
 
     private void observeUiState() {
@@ -175,9 +185,10 @@ public class ScanFragment extends Fragment {
     }
 
     private void setupButtons(@NonNull View view) {
-        MaterialButton takePhotoButton = view.findViewById(R.id.btnTakePhoto);
+        View takePhotoButton = view.findViewById(R.id.btnTakePhoto);
         MaterialButton pickGalleryButton = view.findViewById(R.id.btnPickGallery);
         MaterialButton analyzeButton = view.findViewById(R.id.btnAnalyzeAi);
+
         MaterialButton pronounceButton = view.findViewById(R.id.btnPronounceScan);
         MaterialButton saveButton = view.findViewById(R.id.btnSaveScan);
         MaterialButton manageCustomWordsButton = view.findViewById(R.id.btnManageCustomWords);
@@ -327,22 +338,18 @@ public class ScanFragment extends Fragment {
 
     private void analyzeImageWithGemini(@NonNull Bitmap bitmap) {
         try {
-            android.util.Log.d("ScanFragment", "Starting Groq image analysis...");
-            GeminiVisionService.VisionResult detection = geminiService.analyzeImageWithConfidence(bitmap);
-            String detectedLabel = detection.getPrimaryLabel();
-            float confidence = detection.getConfidence();
-            android.util.Log.d("ScanFragment", "Groq returned label: '" + detectedLabel + "' with confidence=" + confidence);
-            processDetectedLabel(detectedLabel, confidence);
+            android.util.Log.d("ScanFragment", "Starting Groq full image analysis...");
+            ScanResult result = geminiService.analyzeImageFull(bitmap);
+            android.util.Log.d("ScanFragment", "Groq returned full result for: " + result.getWord());
+            
+            new Handler(Looper.getMainLooper()).post(() -> {
+                scanViewModel.completeAnalysis(result, result.getWord(), result.getWord(), 0.98f, "Analysis complete");
+                isProcessing = false;
+            });
         } catch (Exception e) {
             android.util.Log.e("ScanFragment", "Groq error: " + e.getMessage(), e);
             String message = e.getMessage() == null ? "Unknown error" : e.getMessage();
-            if (message.contains("HTTP 429")) {
-                scanViewModel.failAnalysis("Groq dang qua tai hoac het quota (HTTP 429). Vui long doi 1-2 phut hoac doi API key khac.");
-            } else if (message.contains("HTTP 404")) {
-                scanViewModel.failAnalysis("Model Groq/Llama hien khong kha dung voi API key nay (HTTP 404). Hay doi GROQ_MODEL trong local.properties.");
-            } else {
-                scanViewModel.failAnalysis("Groq error: " + message);
-            }
+            scanViewModel.failAnalysis("Groq error: " + message);
             isProcessing = false;
         }
     }
@@ -448,7 +455,9 @@ public class ScanFragment extends Fragment {
                     englishWord,
                     "-",
                     meaning,
-                    "User-added meaning",
+                    "noun",
+                    "A manually saved word.",
+                    "Một từ vựng được lưu thủ công.",
                     "Custom",
                     "This word was learned from real world scanning.",
                     java.util.Arrays.asList("learn", "vocabulary", "custom")
@@ -467,11 +476,16 @@ public class ScanFragment extends Fragment {
         }
 
         wordText.setText(result.getWord());
-        ipaMeaningText.setText(result.getIpa() + " - " + result.getMeaning());
+        if (wordTypeText != null) wordTypeText.setText(result.getWordType());
+        if (ipaText != null) ipaText.setText(result.getIpa());
+        if (meaningText != null) meaningText.setText(result.getMeaning());
+        
         exampleText.setText(result.getExample());
+        if (exampleViText != null) exampleViText.setText(result.getExampleVi());
+        
         categoryText.setText("Category: " + result.getCategory());
-        funFactText.setText("Note: " + result.getFunFact());
-        relatedText.setText("Related: " + formatRelatedWords(result.getRelatedWords()));
+        funFactText.setText(result.getFunFact());
+        relatedText.setText(formatRelatedWords(result.getRelatedWords()));
     }
 
     private void bindDecisionInfo(@Nullable String rawAiLabel, @Nullable String mappedWord, float confidence) {
@@ -506,8 +520,11 @@ public class ScanFragment extends Fragment {
                 currentResult.getWord(),
                 currentResult.getIpa(),
                 currentResult.getMeaning(),
+                currentResult.getWordType(),
                 currentResult.getExample(),
-                currentResult.getCategory()
+                currentResult.getExampleVi(),
+                currentResult.getCategory(),
+                currentResult.getFunFact()
         ));
         repository.increaseScanCount();
         Toast.makeText(requireContext(), "Word saved", Toast.LENGTH_SHORT).show();

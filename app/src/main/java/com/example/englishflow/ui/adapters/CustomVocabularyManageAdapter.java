@@ -50,7 +50,10 @@ public class CustomVocabularyManageAdapter extends RecyclerView.Adapter<CustomVo
         CustomVocabularyEntity item = items.get(position);
         holder.wordText.setText(item.word);
         holder.meaningText.setText(item.meaning + "  •  " + item.source + " / " + item.domain);
-        holder.lockButton.setText(item.isLocked ? "Mo khoa" : "Khoa");
+        
+        // Update lock icon based on state
+        holder.lockButton.setIconResource(item.isLocked ? R.drawable.ic_lock_closed : R.drawable.ic_lock_open);
+        holder.lockButton.setIconTintResource(item.isLocked ? R.color.ef_card_rose_text : R.color.ef_primary);
 
         holder.editButton.setOnClickListener(v -> actionListener.onEdit(item));
         holder.deleteButton.setOnClickListener(v -> actionListener.onDelete(item));

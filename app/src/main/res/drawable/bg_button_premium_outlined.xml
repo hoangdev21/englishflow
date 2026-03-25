@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Shadow -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="14dp" />
+            <solid android:color="@color/ef_silver_shadow" />
+        </shape>
+    </item>
+
+    <!-- Content -->
+    <item android:bottom="3dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="14dp" />
+            <stroke android:width="1dp" android:color="@color/ef_silver_border" />
+            <solid android:color="@color/white" />
+        </shape>
+    </item>
+</layer-list>
