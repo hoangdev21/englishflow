@@ -31,7 +31,7 @@
     <style name="TextAppearance.EnglishFlow.Title" parent="TextAppearance.AppCompat.Title">
         <item name="android:textStyle">bold</item>
         <item name="android:textColor">@color/ef_text_primary</item>
-        <item name="android:textSize">26sp</item>
+        <item name="android:textSize">22sp</item>
         <item name="android:letterSpacing">-0.02</item>
     </style>
 
@@ -82,7 +82,8 @@
     </style>
 
     <style name="Widget.EnglishFlow.BottomIndicator">
-        <item name="android:color">@color/ef_primary_container</item>
+        <item name="android:color">@null</item>
+        <item name="android:drawable">@drawable/bg_nav_indicator</item>
     </style>
 
     <!-- Premium Button Styles -->

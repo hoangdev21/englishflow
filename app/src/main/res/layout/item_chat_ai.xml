@@ -1,34 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="start"
     android:paddingStart="12dp"
-    android:paddingEnd="42dp"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp">
+    android:paddingEnd="48dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
 
-    <!-- AI Avatar -->
+    <!-- AI Avatar (3D Silver) -->
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginTop="2dp"
-        app:cardBackgroundColor="@color/ef_primary_container"
-        app:cardCornerRadius="28dp"
-        app:cardElevation="0dp"
-        app:strokeWidth="0dp">
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="12dp"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="AI"
-            android:textColor="@color/ef_primary"
-            android:textSize="10sp"
-            android:textStyle="bold" />
+            android:background="@drawable/bg_3d_badge_silver"
+            android:padding="2dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/chat_bot_avatar"
+                android:scaleType="centerCrop"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+        </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
     <LinearLayout
@@ -36,66 +40,59 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Message Bubble -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- AI Bubble -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/ef_surface_variant"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="0dp">
+            android:background="@drawable/bg_bubble_ai_premium"
+            android:elevation="2dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp">
 
             <TextView
                 android:id="@+id/chatAiMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingStart="14dp"
-                android:paddingTop="10dp"
-                android:paddingEnd="14dp"
-                android:paddingBottom="10dp"
                 android:textColor="@color/ef_text_primary"
-                android:textSize="14sp"
-                android:lineSpacingExtra="3dp" />
-        </com.google.android.material.card.MaterialCardView>
+                android:textSize="15sp"
+                android:lineSpacingExtra="5dp"
+                android:letterSpacing="0.01" />
+        </LinearLayout>
 
-        <!-- Correction Block -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- Correction block (3D Silver Card) -->
+        <LinearLayout
             android:id="@+id/correctionBlock"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:visibility="gone"
-            app:cardBackgroundColor="@color/ef_secondary_container"
-            app:cardCornerRadius="14dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="0dp">
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_stats_premium_card"
+            android:elevation="4dp"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/correctionText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="12dp">
+                android:textColor="@color/ef_primary_dark"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:drawableStart="@drawable/ic_nav_learn"
+                android:drawablePadding="8dp"
+                app:drawableTint="@color/ef_primary" />
 
-                <TextView
-                    android:id="@+id/correctionText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/ef_on_secondary_container"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/correctionExplain"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:maxWidth="240dp"
-                    android:textColor="@color/ef_on_secondary_container"
-                    android:textSize="12sp"
-                    android:alpha="0.8"
-                    android:lineSpacingExtra="2dp" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:id="@+id/correctionExplain"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:maxWidth="260dp"
+                android:textColor="@color/ef_text_secondary"
+                android:textSize="12.5sp"
+                android:alpha="0.85"
+                android:lineSpacingExtra="4dp" />
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

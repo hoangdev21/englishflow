@@ -6,7 +6,7 @@ public class ChatItem {
     public static final int ROLE_TYPING = 2;
 
     private final int role;
-    private final String message;
+    private String message;
     private final String correction;
     private final String explanation;
 
@@ -23,6 +23,10 @@ public class ChatItem {
 
     public String getMessage() {
         return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public String getCorrection() {

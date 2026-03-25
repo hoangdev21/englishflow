@@ -5,6 +5,7 @@ import java.util.List;
 
 public class DictionaryResult {
     private String word;
+    private String translatedWord;
     private String ipa;
     private String audioUrl;
     private List<Definition> definitions;
@@ -15,12 +16,17 @@ public class DictionaryResult {
         this.synonyms = new ArrayList<>();
     }
 
-    public DictionaryResult(String word, String ipa, String audioUrl, List<Definition> definitions, List<String> synonyms) {
+    public DictionaryResult(String word, String translatedWord, String ipa, String audioUrl, List<Definition> definitions, List<String> synonyms) {
         this.word = word;
+        this.translatedWord = translatedWord;
         this.ipa = ipa;
         this.audioUrl = audioUrl;
         this.definitions = definitions != null ? definitions : new ArrayList<>();
         this.synonyms = synonyms != null ? synonyms : new ArrayList<>();
+    }
+
+    public DictionaryResult(String word, String ipa, String audioUrl, List<Definition> definitions, List<String> synonyms) {
+        this(word, "", ipa, audioUrl, definitions, synonyms);
     }
 
     public String getWord() {
@@ -29,6 +35,14 @@ public class DictionaryResult {
 
     public void setWord(String word) {
         this.word = word;
+    }
+
+    public String getTranslatedWord() {
+        return translatedWord;
+    }
+
+    public void setTranslatedWord(String translatedWord) {
+        this.translatedWord = translatedWord;
     }
 
     public String getIpa() {
@@ -66,7 +80,9 @@ public class DictionaryResult {
     public static class Definition {
         private String partOfSpeech;
         private String meaning;
+        private String translatedMeaning;
         private String example;
+        private String usageNote;
 
         public Definition() {
         }
@@ -75,6 +91,14 @@ public class DictionaryResult {
             this.partOfSpeech = partOfSpeech;
             this.meaning = meaning;
             this.example = example;
+        }
+
+        public Definition(String partOfSpeech, String meaning, String translatedMeaning, String example, String usageNote) {
+            this.partOfSpeech = partOfSpeech;
+            this.meaning = meaning;
+            this.translatedMeaning = translatedMeaning;
+            this.example = example;
+            this.usageNote = usageNote;
         }
 
         public String getPartOfSpeech() {
@@ -93,12 +117,28 @@ public class DictionaryResult {
             this.meaning = meaning;
         }
 
+        public String getTranslatedMeaning() {
+            return translatedMeaning;
+        }
+
+        public void setTranslatedMeaning(String translatedMeaning) {
+            this.translatedMeaning = translatedMeaning;
+        }
+
         public String getExample() {
             return example;
         }
 
         public void setExample(String example) {
             this.example = example;
+        }
+
+        public String getUsageNote() {
+            return usageNote;
+        }
+
+        public void setUsageNote(String usageNote) {
+            this.usageNote = usageNote;
         }
     }
 }

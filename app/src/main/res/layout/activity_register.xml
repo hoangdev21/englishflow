@@ -91,27 +91,27 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Tên hiển thị"
-                    android:textColorHint="#B0FFFFFF"
-                    app:boxBackgroundColor="#14FFFFFF"
+                    android:textColorHint="#8892B0"
+                    app:boxBackgroundColor="@color/white"
                     app:boxBackgroundMode="outline"
                     app:boxCornerRadiusBottomEnd="16dp"
                     app:boxCornerRadiusBottomStart="16dp"
                     app:boxCornerRadiusTopEnd="16dp"
                     app:boxCornerRadiusTopStart="16dp"
-                    app:boxStrokeColor="#40FFFFFF"
-                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeColor="@color/ef_primary"
+                    app:boxStrokeWidth="0dp"
                     app:boxStrokeWidthFocused="2dp"
-                    app:hintTextColor="#B0FFFFFF"
+                    app:hintTextColor="@color/ef_primary"
                     app:startIconDrawable="@android:drawable/ic_menu_myplaces"
-                    app:startIconTint="#D0FFFFFF">
+                    app:startIconTint="#8892B0">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/registerNameInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textPersonName"
-                        android:textColor="@color/white"
-                        android:textColorHint="#B0FFFFFF"
+                        android:textColor="@color/ef_text_primary"
+                        android:textColorHint="#A0AABF"
                         android:textSize="15sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -121,27 +121,27 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:hint="Email"
-                    android:textColorHint="#B0FFFFFF"
-                    app:boxBackgroundColor="#14FFFFFF"
+                    android:textColorHint="#8892B0"
+                    app:boxBackgroundColor="@color/white"
                     app:boxBackgroundMode="outline"
                     app:boxCornerRadiusBottomEnd="16dp"
                     app:boxCornerRadiusBottomStart="16dp"
                     app:boxCornerRadiusTopEnd="16dp"
                     app:boxCornerRadiusTopStart="16dp"
-                    app:boxStrokeColor="#40FFFFFF"
-                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeColor="@color/ef_primary"
+                    app:boxStrokeWidth="0dp"
                     app:boxStrokeWidthFocused="2dp"
-                    app:hintTextColor="#B0FFFFFF"
+                    app:hintTextColor="@color/ef_primary"
                     app:startIconDrawable="@android:drawable/ic_dialog_email"
-                    app:startIconTint="#D0FFFFFF">
+                    app:startIconTint="#8892B0">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/registerEmailInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textEmailAddress"
-                        android:textColor="@color/white"
-                        android:textColorHint="#B0FFFFFF"
+                        android:textColor="@color/ef_text_primary"
+                        android:textColorHint="#A0AABF"
                         android:textSize="15sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -151,29 +151,29 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:hint="Mật khẩu"
-                    android:textColorHint="#B0FFFFFF"
-                    app:boxBackgroundColor="#14FFFFFF"
+                    android:textColorHint="#8892B0"
+                    app:boxBackgroundColor="@color/white"
                     app:boxBackgroundMode="outline"
                     app:boxCornerRadiusBottomEnd="16dp"
                     app:boxCornerRadiusBottomStart="16dp"
                     app:boxCornerRadiusTopEnd="16dp"
                     app:boxCornerRadiusTopStart="16dp"
-                    app:boxStrokeColor="#40FFFFFF"
-                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeColor="@color/ef_primary"
+                    app:boxStrokeWidth="0dp"
                     app:boxStrokeWidthFocused="2dp"
                     app:endIconMode="password_toggle"
-                    app:endIconTint="#D0FFFFFF"
-                    app:hintTextColor="#B0FFFFFF"
+                    app:endIconTint="#8892B0"
+                    app:hintTextColor="@color/ef_primary"
                     app:startIconDrawable="@android:drawable/ic_lock_lock"
-                    app:startIconTint="#D0FFFFFF">
+                    app:startIconTint="#8892B0">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/registerPasswordInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textPassword"
-                        android:textColor="@color/white"
-                        android:textColorHint="#B0FFFFFF"
+                        android:textColor="@color/ef_text_primary"
+                        android:textColorHint="#A0AABF"
                         android:textSize="15sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -183,44 +183,46 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:hint="Nhập lại mật khẩu"
-                    android:textColorHint="#B0FFFFFF"
-                    app:boxBackgroundColor="#14FFFFFF"
+                    android:textColorHint="#8892B0"
+                    app:boxBackgroundColor="@color/white"
                     app:boxBackgroundMode="outline"
                     app:boxCornerRadiusBottomEnd="16dp"
                     app:boxCornerRadiusBottomStart="16dp"
                     app:boxCornerRadiusTopEnd="16dp"
                     app:boxCornerRadiusTopStart="16dp"
-                    app:boxStrokeColor="#40FFFFFF"
-                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeColor="@color/ef_primary"
+                    app:boxStrokeWidth="0dp"
                     app:boxStrokeWidthFocused="2dp"
                     app:endIconMode="password_toggle"
-                    app:endIconTint="#D0FFFFFF"
-                    app:hintTextColor="#B0FFFFFF"
+                    app:endIconTint="#8892B0"
+                    app:hintTextColor="@color/ef_primary"
                     app:startIconDrawable="@android:drawable/ic_lock_lock"
-                    app:startIconTint="#D0FFFFFF">
+                    app:startIconTint="#8892B0">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/registerConfirmPasswordInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="textPassword"
-                        android:textColor="@color/white"
-                        android:textColorHint="#B0FFFFFF"
+                        android:textColor="@color/ef_text_primary"
+                        android:textColorHint="#A0AABF"
                         android:textSize="15sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Register Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRegister"
-                    style="@style/Widget.Material3.Button"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_marginTop="28dp"
-                    android:backgroundTint="@color/white"
+                    android:background="@drawable/bg_3d_badge_silver"
+                    app:backgroundTint="@null"
                     android:text="@string/auth_register"
-                    android:textColor="@color/ef_primary"
+                    android:textAllCaps="false"
+                    android:textColor="@color/ef_primary_dark"
                     android:textSize="16sp"
                     android:textStyle="bold"
+                    android:elevation="6dp"
                     android:letterSpacing="0.02" />
 
                 <!-- Login Link -->

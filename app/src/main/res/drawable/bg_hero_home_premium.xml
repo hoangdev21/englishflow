@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base Gradient -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="315"
+                android:centerY="0.5"
+                android:endColor="@color/ef_hero_grad_end"
+                android:startColor="@color/ef_hero_grad_start"
+                android:type="linear" />
+        </shape>
+    </item>
+
+    <!-- 3D Glow / Accent -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:centerX="0.8"
+                android:centerY="0.2"
+                android:endColor="#00000000"
+                android:gradientRadius="400dp"
+                android:startColor="#1AFFFFFF"
+                android:type="radial" />
+        </shape>
+    </item>
+
+    <!-- Bottom Darkening for Wave depth -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="90"
+                android:endColor="#00000000"
+                android:startColor="#20000000"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

@@ -19,11 +19,13 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
         void onTopicClick(TopicItem topicItem);
     }
 
-    private final List<TopicItem> topics;
+    private final List<TopicItem> originalTopics;
+    private List<TopicItem> filteredTopics;
     private final OnTopicClickListener listener;
 
     public TopicAdapter(List<TopicItem> topics, OnTopicClickListener listener) {
-        this.topics = topics;
+        this.originalTopics = new java.util.ArrayList<>(topics);
+        this.filteredTopics = new java.util.ArrayList<>(topics);
         this.listener = listener;
     }
 
@@ -36,7 +38,7 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
 
     @Override
     public void onBindViewHolder(@NonNull TopicViewHolder holder, int position) {
-        TopicItem topicItem = topics.get(position);
+        TopicItem topicItem = filteredTopics.get(position);
         holder.nameText.setText(topicItem.getTitle());
         holder.statusText.setText(topicItem.getStatus());
         holder.itemView.setOnClickListener(v -> listener.onTopicClick(topicItem));
@@ -44,7 +46,22 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
 
     @Override
     public int getItemCount() {
-        return topics.size();
+        return filteredTopics.size();
+    }
+
+    public void filter(String query) {
+        filteredTopics.clear();
+        if (query == null || query.isEmpty()) {
+            filteredTopics.addAll(originalTopics);
+        } else {
+            String q = query.toLowerCase().trim();
+            for (TopicItem item : originalTopics) {
+                if (item.getTitle().toLowerCase().contains(q)) {
+                    filteredTopics.add(item);
+                }
+            }
+        }
+        notifyDataSetChanged();
     }
 
     static class TopicViewHolder extends RecyclerView.ViewHolder {

@@ -3,363 +3,473 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:background="@color/ef_background"
+    android:fillViewport="true"
+    android:overScrollMode="never">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="16dp"
-        android:paddingTop="8dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="24dp">
+        android:paddingBottom="32dp">
 
         <!-- ═══════════════════════════════════════════ -->
-        <!-- PREMIUM HEADER CARD                         -->
+        <!-- PREMIUM HERO HEADER                         -->
         <!-- ═══════════════════════════════════════════ -->
-        <com.google.android.material.card.MaterialCardView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="6dp"
-            android:backgroundTint="@color/ef_primary"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="6dp"
-            app:strokeWidth="0dp">
+            android:background="@drawable/bg_hero_home_premium"
+            android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="22dp">
+                android:paddingStart="24dp"
+                android:paddingTop="20dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="55dp">
 
-                <!-- Top Row: Time & Day -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="14dp">
+            <!-- Top Bar: Time + Day -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_3d_badge_silver"
+                    android:elevation="2dp">
 
                     <TextView
                         android:id="@+id/greetingEmoji"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🌙"
-                        android:textSize="28sp" />
+                        android:layout_gravity="center"
+                        android:text="🌅"
+                        android:textSize="18sp" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/currentTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:alpha="0.85"
+                    android:text="08:30"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/dayOfWeek"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:alpha="1"
+                    android:background="@drawable/bg_3d_badge_silver"
+                    android:elevation="2dp"
+                    android:paddingStart="14dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="8dp"
+                    android:text="Thứ ba"
+                    android:textColor="@color/ef_text_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Main Greeting -->
+            <TextView
+                android:id="@+id/txtGreeting"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:letterSpacing="-0.03"
+                android:lineSpacingExtra="4dp"
+                android:text="Chào buổi sáng, An!"
+                android:textColor="@color/ef_hero_text_white"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:alpha="0.75"
+                android:text="Sẵn sàng nâng trình tiếng Anh mỗi ngày 🚀"
+                android:textColor="@color/ef_hero_text_white"
+                android:textSize="14sp" />
+
+            <!-- Streak + XP Mini Badges -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal">
+
+                <!-- Streak Badge -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="12dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_3d_badge_silver"
+                    android:elevation="4dp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="16dp">
 
                     <TextView
-                        android:id="@+id/currentTime"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="10dp"
-                        android:text="20:45"
-                        android:textColor="@color/ef_on_primary"
-                        android:textSize="13sp"
-                        android:alpha="0.8" />
-
-                    <TextView
-                        android:id="@+id/dayOfWeek"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Chủ nhật"
-                        android:textColor="@color/ef_on_primary"
-                        android:textSize="12sp"
-                        android:alpha="0.75" />
+                        android:text="🔥"
+                        android:textSize="18sp" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/txtCurrentStreak"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textColor="@color/ef_text_primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:alpha="0.75"
+                            android:text="ngày liên tiếp"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
                 </LinearLayout>
 
-                <!-- Greeting -->
-                <TextView
-                    android:id="@+id/txtGreeting"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/ef_on_primary"
-                    android:textSize="26sp"
-                    android:textStyle="bold"
-                    android:lineSpacingExtra="2dp"
-                    android:letterSpacing="-0.02" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Sẵn sàng nâng trình tiếng Anh mỗi ngày"
-                    android:textColor="@color/ef_on_primary"
-                    android:textSize="13sp"
-                    android:alpha="0.8" />
-
-                <!-- Mini Stats Row -->
+                <!-- XP Badge -->
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:orientation="horizontal">
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_3d_badge_silver"
+                    android:elevation="4dp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="16dp">
 
-                    <!-- Streak Badge -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="0dp"
+                    <TextView
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="8dp"
-                        app:cardBackgroundColor="#20FFFFFF"
-                        app:cardCornerRadius="14dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="0dp">
+                        android:text="⚡"
+                        android:textSize="18sp" />
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:paddingStart="12dp"
-                            android:paddingEnd="12dp"
-                            android:paddingTop="10dp"
-                            android:paddingBottom="10dp">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="12"
-                                android:textColor="@color/white"
-                                android:textSize="18sp"
-                                android:textStyle="bold"
-                                android:layout_marginEnd="6dp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="ngày liên tiếp"
-                                android:textColor="@color/white"
-                                android:textSize="11sp"
-                                android:alpha="0.85" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- XP Badge -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="0dp"
+                    <LinearLayout
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        app:cardBackgroundColor="#20FFFFFF"
-                        app:cardCornerRadius="14dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="0dp">
+                        android:layout_marginStart="8dp"
+                        android:orientation="vertical">
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
+                        <TextView
+                            android:id="@+id/txtHeaderXp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:paddingStart="12dp"
-                            android:paddingEnd="12dp"
-                            android:paddingTop="10dp"
-                            android:paddingBottom="10dp">
+                            android:text="0"
+                            android:textColor="@color/ef_text_primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="78"
-                                android:textColor="@color/white"
-                                android:textSize="18sp"
-                                android:textStyle="bold"
-                                android:layout_marginEnd="6dp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="XP hôm nay"
-                                android:textColor="@color/white"
-                                android:textSize="11sp"
-                                android:alpha="0.85" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:alpha="0.75"
+                            android:text="XP hôm nay"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+    </LinearLayout>
 
-        <!-- ═══════════════════════════════════════════ -->
-        <!-- QUICK STATS (2x2 Grid)                      -->
-        <!-- ═══════════════════════════════════════════ -->
+    <!-- Wave Cutout -->
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_marginTop="-45dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/bg_wave_bottom" />
+
+        <!-- Content Container -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
 
-            <!-- Learned Words -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- QUICK STATS (2×2 Premium Grid)              -->
+            <!-- ═══════════════════════════════════════════ -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                app:cardBackgroundColor="@color/ef_primary_container"
-                app:cardCornerRadius="18dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal">
 
+                <!-- Learned Words Card -->
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_stats_premium_card"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:paddingStart="18dp"
+                    android:paddingTop="18dp"
+                    android:paddingEnd="18dp"
+                    android:paddingBottom="22dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Từ đã học"
-                        android:textColor="@color/ef_on_primary_container"
-                        android:textSize="11sp"
-                        android:alpha="0.8" />
+                    <FrameLayout
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_icon_circle_emerald">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="📚"
+                            android:textSize="22sp" />
+                    </FrameLayout>
 
                     <TextView
                         android:id="@+id/txtLearnedCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="86"
-                        android:textColor="@color/ef_on_primary_container"
-                        android:textSize="24sp"
+                        android:layout_marginTop="15dp"
+                        android:text="0"
+                        android:textColor="@color/ef_text_primary"
+                        android:textSize="28sp"
                         android:textStyle="bold" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
-            <!-- Best Streak -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                app:cardBackgroundColor="@color/ef_tertiary_container"
-                app:cardCornerRadius="18dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <TextView
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/home_best_streak"
-                        android:textColor="@color/ef_on_tertiary_container"
-                        android:textSize="11sp"
-                        android:alpha="0.8" />
+                        android:layout_marginTop="2dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="4dp"
+                            android:background="@color/ef_primary"
+                            android:layout_marginEnd="6dp" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Từ đã học"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Best Streak Card -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_stats_premium_card"
+                    android:orientation="vertical"
+                    android:paddingStart="18dp"
+                    android:paddingTop="18dp"
+                    android:paddingEnd="18dp"
+                    android:paddingBottom="22dp">
+
+                    <FrameLayout
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_icon_circle_amber">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="🏆"
+                            android:textSize="22sp" />
+                    </FrameLayout>
 
                     <TextView
                         android:id="@+id/txtBestStreakCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="19"
-                        android:textColor="@color/ef_on_tertiary_container"
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
-
-            <!-- Current Streak -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                app:cardBackgroundColor="@color/ef_secondary_container"
-                app:cardCornerRadius="18dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/home_current_streak"
-                        android:textColor="@color/ef_on_secondary_container"
-                        android:textSize="11sp"
-                        android:alpha="0.8" />
-
-                    <TextView
-                        android:id="@+id/txtCurrentStreak"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="12"
-                        android:textColor="@color/ef_on_secondary_container"
-                        android:textSize="24sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Scanned -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                app:cardBackgroundColor="@color/ef_surface"
-                app:cardCornerRadius="18dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/ef_outline_light"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/home_scanned"
-                        android:textColor="@color/ef_text_secondary"
-                        android:textSize="11sp"
-                        android:alpha="0.8" />
-
-                    <TextView
-                        android:id="@+id/txtScannedCount"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="14"
+                        android:layout_marginTop="15dp"
+                        android:text="0"
                         android:textColor="@color/ef_text_primary"
-                        android:textSize="24sp"
+                        android:textSize="28sp"
                         android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="4dp"
+                            android:background="@color/ef_card_amber_text"
+                            android:layout_marginEnd="6dp" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/home_best_streak"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-        </LinearLayout>
+            </LinearLayout>
 
-        <!-- ═══════════════════════════════════════════ -->
-        <!-- TODAY'S XP PROGRESS                         -->
-        <!-- ═══════════════════════════════════════════ -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/ef_surface"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/ef_outline_light"
-            app:strokeWidth="1dp">
-
+            <!-- Row 2: Current Streak + Scanned -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <!-- Current Streak Card -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_stats_premium_card"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="14dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="18dp">
+
+                    <FrameLayout
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_icon_circle_blue">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="🔥"
+                            android:textSize="20sp" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/txtCurrentStreakCard"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textColor="@color/ef_text_primary"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/home_current_streak"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Scanned Card -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_stats_premium_card"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="14dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="18dp">
+
+                    <FrameLayout
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_icon_circle_rose">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="📷"
+                            android:textSize="20sp" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/txtScannedCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textColor="@color/ef_text_primary"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/home_scanned"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- TODAY'S XP PROGRESS                         -->
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- TODAY'S XP PROGRESS (3D REFINED)            -->
+            <!-- ═══════════════════════════════════════════ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:background="@drawable/bg_stats_premium_card"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:paddingStart="20dp"
+                android:paddingTop="20dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="24dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -367,229 +477,361 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <LinearLayout
-                        android:layout_width="0dp"
+                    <FrameLayout
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/bg_3d_badge_silver">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="⭐"
+                            android:textSize="14sp" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:layout_marginStart="12dp"
+                        android:text="Mục tiêu XP hôm nay"
+                        android:textColor="@color/ef_section_header"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/home_xp_today"
-                            android:textColor="@color/ef_text_secondary"
-                            android:textSize="12sp" />
-
-                        <TextView
-                            android:id="@+id/txtXp"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:textColor="@color/ef_text_primary"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
 
                     <TextView
                         android:id="@+id/txtXpPercentage"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:text="65%"
-                        android:textColor="@color/ef_primary"
-                        android:textSize="16sp"
+                        android:background="@drawable/bg_3d_badge_silver"
+                        android:paddingStart="12dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp"
+                        android:text="0%"
+                        android:textColor="@color/ef_primary_dark"
+                        android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
+
+                <TextView
+                    android:id="@+id/txtXp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:text="XP hôm nay: 0/120"
+                    android:textColor="@color/ef_text_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
 
                 <com.google.android.material.progressindicator.LinearProgressIndicator
                     android:id="@+id/xpProgress"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="16dp"
                     android:max="100"
                     app:indicatorColor="@color/ef_primary"
-                    app:trackColor="@color/ef_surface_variant"
-                    app:trackCornerRadius="4dp"
-                    app:trackThickness="6dp" />
+                    app:trackColor="@color/ef_xp_track"
+                    app:trackCornerRadius="6dp"
+                    app:trackThickness="12dp" />
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- ═══════════════════════════════════════════ -->
-        <!-- QUICK ACTION SHORTCUTS                      -->
-        <!-- ═══════════════════════════════════════════ -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnQuickLearn"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:text="Học"
-                android:textSize="13sp"
-                android:gravity="center"
-                android:paddingStart="4dp"
-                android:paddingEnd="4dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnQuickScan"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:text="Scan"
-                android:textSize="13sp"
-                android:gravity="center"
-                android:paddingStart="4dp"
-                android:paddingEnd="4dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnQuickChat"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:text="Chat"
-                android:textSize="13sp"
-                android:gravity="center"
-                android:paddingStart="4dp"
-                android:paddingEnd="4dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnQuickDictionary"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:text="Từ lưu"
-                android:textSize="13sp"
-                android:gravity="center"
-                android:paddingStart="4dp"
-                android:paddingEnd="4dp" />
         </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="-15dp"
+        android:orientation="vertical"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:layout_marginBottom="32dp">
+
         <!-- ═══════════════════════════════════════════ -->
-        <!-- DICTIONARY QUICK ACCESS                     -->
+        <!-- QUICK ACTION SHORTCUTS (Action Cards)       -->
         <!-- ═══════════════════════════════════════════ -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/ef_surface"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/ef_outline_light"
-            app:strokeWidth="1dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_3d_badge_silver">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="⚡"
+                        android:textSize="14sp" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="Truy cập nhanh"
+                    android:textColor="@color/ef_section_header"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <!-- Learn -->
+                <LinearLayout
+                    android:id="@+id/btnQuickLearn"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_premium_card_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📖"
+                        android:textSize="22sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Học"
+                        android:textColor="@color/ef_text_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Scan -->
+                <LinearLayout
+                    android:id="@+id/btnQuickScan"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_premium_card_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📷"
+                        android:textSize="22sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Scan"
+                        android:textColor="@color/ef_text_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Chat -->
+                <LinearLayout
+                    android:id="@+id/btnQuickChat"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_premium_card_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💬"
+                        android:textSize="22sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Chat"
+                        android:textColor="@color/ef_text_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Saved -->
+                <LinearLayout
+                    android:id="@+id/btnQuickDictionary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_premium_card_ripple"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💾"
+                        android:textSize="22sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Từ lưu"
+                        android:textColor="@color/ef_text_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- DICTIONARY QUICK ACCESS (3D Premium)        -->
+            <!-- ═══════════════════════════════════════════ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/bg_stats_premium_card"
                 android:orientation="vertical">
 
                 <!-- Header -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@color/ef_primary_container"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:paddingStart="18dp"
+                    android:paddingTop="18dp"
+                    android:paddingEnd="18dp"
+                    android:paddingBottom="12dp">
+
+                    <FrameLayout
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_icon_circle_emerald">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="📖"
+                            android:textSize="22sp" />
+                    </FrameLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
                         android:orientation="vertical">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Tra từ điển"
-                            android:textColor="@color/ef_on_primary_container"
-                            android:textSize="11sp"
-                            android:alpha="0.8"
-                            android:textAllCaps="true"
-                            android:letterSpacing="0.08" />
+                            android:text="Tra từ điển Anh ↔ Việt"
+                            android:textColor="@color/ef_text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Anh - Việt nhanh"
-                            android:textColor="@color/ef_on_primary_container"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:alpha="0.75"
+                            android:text="IPA • Nghĩa • Ví dụ • Đồng nghĩa"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="11sp" />
                     </LinearLayout>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnOpenDictionarySheet"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:minWidth="40dp"
-                        android:minHeight="40dp"
-                        android:padding="0dp"
-                        app:icon="@drawable/ic_search"
-                        app:iconGravity="textStart"
-                        app:iconSize="20dp"
-                        app:iconTint="@color/ef_primary" />
                 </LinearLayout>
 
-                <!-- Search Content -->
+                <!-- Divider Line -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="18dp"
+                    android:layout_marginEnd="18dp"
+                    android:background="@color/ef_divider" />
+
+                <!-- Search Input Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="18dp">
+
+                    <EditText
+                        android:id="@+id/homeDictInput"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dict_search_input"
+                        android:hint="🔍  Nhập từ Anh hoặc Việt..."
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:singleLine="true"
+                        android:textColor="@color/ef_text_primary"
+                        android:textColorHint="@color/ef_text_tertiary"
+                        android:textSize="14sp" />
+
+                    <Space
+                        android:layout_width="8dp"
+                        android:layout_height="1dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnHomeDictSearch"
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:background="@drawable/bg_button_premium_primary"
+                        android:minWidth="52dp"
+                        android:minHeight="52dp"
+                        android:padding="0dp"
+                        app:backgroundTint="@null"
+                        app:icon="@drawable/ic_search"
+                        app:iconGravity="textStart"
+                        app:iconSize="22dp"
+                        app:iconTint="@color/white" />
+                </LinearLayout>
+
+                <!-- Loading / Error / Results Area -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="18dp">
+                    android:paddingStart="18dp"
+                    android:paddingEnd="18dp"
+                    android:paddingBottom="22dp">
 
-                    <!-- Search Bar -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <EditText
-                            android:id="@+id/homeDictInput"
-                            android:layout_width="0dp"
-                            android:layout_height="46dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_search_input"
-                            android:hint="Nhập từ Anh hoặc Việt"
-                            android:imeOptions="actionSearch"
-                            android:inputType="text"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp"
-                            android:singleLine="true"
-                            android:textColor="@color/ef_text_primary"
-                            android:textColorHint="@color/ef_text_tertiary"
-                            android:textSize="14sp" />
-
-                        <Space
-                            android:layout_width="8dp"
-                            android:layout_height="1dp" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnHomeDictSearch"
-                            style="@style/Widget.Material3.Button"
-                            android:layout_width="46dp"
-                            android:layout_height="46dp"
-                            android:minWidth="46dp"
-                            android:minHeight="46dp"
-                            android:padding="0dp"
-                            app:icon="@drawable/ic_search"
-                            app:iconGravity="textStart"
-                            app:iconSize="20dp"
-                            app:iconTint="@color/white" />
-                    </LinearLayout>
-
+                    <!-- Loading -->
                     <ProgressBar
                         android:id="@+id/homeDictLoading"
                         android:layout_width="wrap_content"
@@ -598,6 +840,7 @@
                         android:layout_marginTop="10dp"
                         android:visibility="gone" />
 
+                    <!-- Error -->
                     <TextView
                         android:id="@+id/homeDictError"
                         android:layout_width="match_parent"
@@ -607,21 +850,20 @@
                         android:textSize="13sp"
                         android:visibility="gone" />
 
-                    <!-- Info Card -->
-                    <com.google.android.material.card.MaterialCardView
+                    <!-- Result Card (Embedded Glass Style) -->
+                    <LinearLayout
+                        android:id="@+id/dictResultContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        app:cardBackgroundColor="@color/ef_primary_container"
-                        app:cardCornerRadius="16dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="0dp">
+                        android:background="@drawable/bg_dict_result_card"
+                        android:orientation="vertical"
+                        android:padding="18dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="14dp">
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
                             <TextView
                                 android:id="@+id/txtDictionaryTitle"
@@ -633,113 +875,209 @@
                                 android:textStyle="bold" />
 
                             <TextView
-                                android:id="@+id/txtDictionaryHint"
-                                android:layout_width="match_parent"
+                                android:id="@+id/txtDictIpa"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="Nhập từ tiếng Anh hoặc tiếng Việt để tra IPA, nghĩa, ví dụ và từ đồng nghĩa."
-                                android:textColor="@color/ef_text_primary"
-                                android:textSize="13sp"
-                                android:alpha="0.8"
-                                android:lineSpacingExtra="2dp" />
+                                android:layout_marginStart="8dp"
+                                android:textColor="@color/ef_dict_ipa"
+                                android:textSize="14sp"
+                                android:textStyle="italic"
+                                android:visibility="gone" />
                         </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- Tip -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/txtDictPartOfSpeech"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="MẸO"
-                            android:textColor="@color/ef_text_tertiary"
-                            android:textSize="10sp"
+                            android:layout_marginTop="8dp"
+                            android:background="@drawable/bg_3d_badge_silver"
+                            android:paddingStart="10dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="4dp"
+                            android:textColor="@color/ef_primary_dark"
+                            android:textSize="11sp"
                             android:textStyle="bold"
-                            android:letterSpacing="0.08" />
+                            android:visibility="gone" />
 
-                        <com.google.android.material.card.MaterialCardView
+                        <TextView
+                            android:id="@+id/txtDictionaryHint"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            app:cardBackgroundColor="@color/ef_surface_variant"
-                            app:cardCornerRadius="14dp"
-                            app:cardElevation="0dp"
-                            app:strokeWidth="0dp">
+                            android:layout_marginTop="12dp"
+                            android:lineSpacingExtra="3dp"
+                            android:text="Nhập từ tiếng Anh hoặc tiếng Việt để tra IPA, nghĩa, ví dụ và từ đồng nghĩa."
+                            android:textColor="@color/ef_text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
 
+                        <LinearLayout
+                            android:id="@+id/dictUsageContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:background="@color/transparent"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:visibility="gone">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="💬"
+                                android:textSize="12sp" />
+                            <TextView
+                                android:id="@+id/txtDictUsageNote"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:textColor="@color/ef_text_secondary"
+                                android:textSize="12sp"
+                                android:textStyle="italic" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/dictExampleContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:background="@drawable/bg_tag_emerald"
+                            android:alpha="0.9"
+                            android:padding="14dp"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="💡"
+                                android:textSize="14sp" />
                             <TextView
                                 android:id="@+id/txtDictionaryExample"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:layout_weight="1"
+                                android:lineSpacingExtra="2dp"
+                                android:text="Bạn có thể bấm vào từ đồng nghĩa để tra tiếp ngay lập tức."
+                                android:textColor="@color/ef_primary_dark"
+                                android:textSize="13sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/dictSynonymsContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="14dp"
+                            android:orientation="vertical"
+                            android:visibility="gone">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="TỪ ĐỒNG NGHĨA"
+                                android:textColor="@color/ef_text_tertiary"
+                                android:textSize="10sp"
+                                android:letterSpacing="0.08"
+                                android:textStyle="bold" />
+                            <TextView
+                                android:id="@+id/txtDictSynonyms"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Bạn có thể bấm vào từ đồng nghĩa trong kết quả để tra tiếp ngay lập tức."
+                                android:layout_marginTop="4dp"
+                                android:textColor="@color/ef_primary"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Final Action Row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="18dp"
+                            android:gravity="center_vertical|end"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnOpenDictionarySheet"
+                                android:layout_width="wrap_content"
+                                android:layout_height="44dp"
+                                android:layout_marginEnd="10dp"
+                                android:background="@drawable/bg_button_premium_outlined"
+                                android:minHeight="44dp"
+                                app:backgroundTint="@null"
+                                android:paddingStart="16dp"
+                                android:paddingEnd="16dp"
+                                android:text="Từ điển đầy đủ"
                                 android:textColor="@color/ef_text_primary"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnOpenDictionaryText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_button_premium_primary"
+                                android:minHeight="44dp"
+                                app:backgroundTint="@null"
+                                android:paddingStart="22dp"
+                                android:paddingEnd="22dp"
+                                android:text="Tra từ"
+                                android:textColor="@color/white"
                                 android:textSize="13sp"
-                                android:padding="12dp"
-                                android:lineSpacingExtra="2dp" />
-                        </com.google.android.material.card.MaterialCardView>
-                    </LinearLayout>
-
-                    <!-- Action Button -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="end"
-                        android:layout_marginTop="14dp">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnOpenDictionaryText"
-                            style="@style/Widget.Material3.Button"
-                            android:layout_width="wrap_content"
-                            android:layout_height="44dp"
-                            android:minHeight="44dp"
-                            android:paddingStart="24dp"
-                            android:paddingEnd="24dp"
-                            android:text="Tra từ"
-                            android:textSize="14sp" />
+                                android:textStyle="bold" />
+                        </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
 
-        <!-- ═══════════════════════════════════════════ -->
-        <!-- CONTINUE LEARNING                           -->
-        <!-- ═══════════════════════════════════════════ -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/ef_surface"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/ef_outline_light"
-            app:strokeWidth="1dp">
-
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- CONTINUE LEARNING                           -->
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- CONTINUE LEARNING (3D REFINED)              -->
+            <!-- ═══════════════════════════════════════════ -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:background="@drawable/bg_stats_premium_card"
                 android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/home_continue"
-                    android:textColor="@color/ef_text_secondary"
-                    android:textSize="11sp"
-                    android:textAllCaps="true"
-                    android:letterSpacing="0.06" />
+                android:padding="20dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
+                    <FrameLayout
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_3d_badge_silver">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="🎯"
+                            android:textSize="16sp" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="@string/home_continue"
+                        android:textColor="@color/ef_section_header"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <!-- Topic info -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -752,7 +1090,7 @@
                             android:layout_height="wrap_content"
                             android:text="Du lịch giao tiếp"
                             android:textColor="@color/ef_text_primary"
-                            android:textSize="16sp"
+                            android:textSize="18sp"
                             android:textStyle="bold" />
 
                         <TextView
@@ -767,437 +1105,504 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnContinue"
-                        style="@style/Widget.Material3.Button"
                         android:layout_width="wrap_content"
-                        android:layout_height="40dp"
-                        android:minHeight="40dp"
-                        android:text="Tiếp tục"
-                        android:textSize="13sp" />
+                        android:layout_height="46dp"
+                        android:background="@drawable/bg_button_premium_primary"
+                        android:minHeight="46dp"
+                        app:backgroundTint="@null"
+                        android:paddingStart="22dp"
+                        android:paddingEnd="22dp"
+                        android:text="Tiếp tục →"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
 
-        <!-- ═══════════════════════════════════════════ -->
-        <!-- STUDY REMINDER                              -->
-        <!-- ═══════════════════════════════════════════ -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            app:cardBackgroundColor="@color/ef_surface"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/ef_outline_light"
-            app:strokeWidth="1dp">
-
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- STUDY REMINDER                              -->
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- STUDY REMINDER (3D REFINED)                 -->
+            <!-- ═══════════════════════════════════════════ -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_stats_premium_card"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="16dp">
+                android:padding="20dp">
+
+                <FrameLayout
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_3d_badge_silver">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="⏰"
+                        android:textSize="22sp" />
+                </FrameLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/home_reminder"
-                        android:textColor="@color/ef_text_secondary"
-                        android:textSize="11sp"
-                        android:textAllCaps="true"
-                        android:letterSpacing="0.06" />
+                        android:text="Nhắc nhở học tập"
+                        android:textColor="@color/ef_section_header"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/txtReminder"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:textColor="@color/ef_text_primary"
-                        android:textSize="16sp"
+                        android:layout_marginTop="4dp"
+                        android:text="20:00"
+                        android:textColor="@color/ef_primary"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSetReminder"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="40dp"
+                    android:background="@drawable/bg_button_premium_outlined"
                     android:minHeight="40dp"
+                    app:backgroundTint="@null"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
                     android:text="Đổi giờ"
-                    android:textSize="13sp" />
+                    android:textColor="@color/ef_text_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
 
-        <!-- ═══════════════════════════════════════════ -->
-        <!-- WEEKLY STATISTICS HEADER                    -->
-        <!-- ═══════════════════════════════════════════ -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="8dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="2dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Thống kê tuần này"
-                android:textColor="@color/ef_text_primary"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/txtWeeklyTotal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="256 phút"
-                android:textColor="@color/ef_primary"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- Weekly Study Chart -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            app:cardBackgroundColor="@color/ef_surface"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/ef_outline_light"
-            app:strokeWidth="1dp">
-
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- WEEKLY STATISTICS                           -->
+            <!-- ═══════════════════════════════════════════ -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical|end"
-                android:alignmentMode="alignBounds"
-                android:padding="14dp">
-
-                <!-- Day 1 (Mon) -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal">
-
-                    <com.google.android.material.progressindicator.LinearProgressIndicator
-                        android:layout_width="match_parent"
-                        android:layout_height="4dp"
-                        android:progress="18"
-                        android:max="60"
-                        app:indicatorColor="@color/ef_primary"
-                        app:trackColor="@color/ef_surface_variant"
-                        android:rotation="270"
-                        android:transformPivotX="2dp"
-                        android:transformPivotY="2dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="18'"
-                        android:textColor="@color/ef_text_secondary"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <!-- Day 2 (Tue) -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal">
-
-                    <ProgressBar
-                        android:layout_width="20dp"
-                        android:layout_height="80dp"
-                        android:progress="40"
-                        android:max="60"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:progressDrawable="@drawable/progress_vertical"
-                        android:indeterminate="false" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Tu"
-                        android:textColor="@color/ef_text_tertiary"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="24'"
-                        android:textColor="@color/ef_text_secondary"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <!-- Day 3 (Wed) -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal">
-
-                    <ProgressBar
-                        android:layout_width="20dp"
-                        android:layout_height="80dp"
-                        android:progress="58"
-                        android:max="60"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:progressDrawable="@drawable/progress_vertical"
-                        android:indeterminate="false" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="We"
-                        android:textColor="@color/ef_text_tertiary"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="35'"
-                        android:textColor="@color/ef_text_secondary"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <!-- Day 4 (Thu) -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal">
-
-                    <ProgressBar
-                        android:layout_width="20dp"
-                        android:layout_height="80dp"
-                        android:progress="33"
-                        android:max="60"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:progressDrawable="@drawable/progress_vertical"
-                        android:indeterminate="false" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Th"
-                        android:textColor="@color/ef_text_tertiary"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="20'"
-                        android:textColor="@color/ef_text_secondary"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <!-- Day 5 (Fri) -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal">
-
-                    <ProgressBar
-                        android:layout_width="20dp"
-                        android:layout_height="80dp"
-                        android:progress="58"
-                        android:max="60"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:progressDrawable="@drawable/progress_vertical"
-                        android:indeterminate="false" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Fr"
-                        android:textColor="@color/ef_text_tertiary"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="42'"
-                        android:textColor="@color/ef_text_secondary"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <!-- Day 6 (Sat) -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal">
-
-                    <ProgressBar
-                        android:layout_width="20dp"
-                        android:layout_height="80dp"
-                        android:progress="62"
-                        android:max="60"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:progressDrawable="@drawable/progress_vertical"
-                        android:indeterminate="false" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Sa"
-                        android:textColor="@color/ef_text_tertiary"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="37'"
-                        android:textColor="@color/ef_text_secondary"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <!-- Day 7 (Sun) -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center_horizontal">
-
-                    <ProgressBar
-                        android:layout_width="20dp"
-                        android:layout_height="80dp"
-                        android:progress="83"
-                        android:max="60"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:progressDrawable="@drawable/progress_vertical"
-                        android:indeterminate="false" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Su"
-                        android:textColor="@color/ef_text_tertiary"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="50'"
-                        android:textColor="@color/ef_text_secondary"
-                        android:textSize="10sp" />
-                </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- ═══════════════════════════════════════════ -->
-        <!-- UNLEARNED WORDS + CEFR                      -->
-        <!-- ═══════════════════════════════════════════ -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="8dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="2dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Từ chưa học"
-                android:textColor="@color/ef_text_primary"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/txtUnlearnedCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="247 từ"
-                android:textColor="@color/ef_tertiary"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- CEFR Level Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            app:cardBackgroundColor="@color/ef_secondary_container"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="8dp"
                 android:gravity="center_vertical"
-                android:padding="16dp">
+                android:orientation="horizontal">
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
+                <FrameLayout
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_3d_badge_silver">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="TRÌNH ĐỘ CEFR"
-                        android:textColor="@color/ef_on_secondary_container"
-                        android:textSize="10sp"
-                        android:letterSpacing="0.06"
-                        android:alpha="0.7" />
-
-                    <TextView
-                        android:id="@+id/txtCefrLevel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="B1 - Trung cấp"
-                        android:textColor="@color/ef_on_secondary_container"
-                        android:textSize="17sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                        android:layout_gravity="center"
+                        android:text="📊"
+                        android:textSize="14sp" />
+                </FrameLayout>
 
                 <TextView
-                    android:id="@+id/txtProgressToNext"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:text="Thống kê tuần này"
+                    android:textColor="@color/ef_section_header"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txtWeeklyTotal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="end"
-                    android:text="Còn 174 từ\nđến B2"
-                    android:textColor="@color/ef_on_secondary_container"
+                    android:background="@drawable/bg_3d_badge_silver"
+                    android:paddingStart="12dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="0 phút"
+                    android:textColor="@color/ef_primary_dark"
                     android:textSize="12sp"
-                    android:alpha="0.8"
-                    android:lineSpacingExtra="2dp" />
+                    android:textStyle="bold" />
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
 
+            <!-- Weekly Chart Card (3D REFINED) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_stats_premium_card"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="bottom"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <!-- Mon -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <ProgressBar
+                            android:id="@+id/chartMon"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="22dp"
+                            android:layout_height="80dp"
+                            android:indeterminate="false"
+                            android:max="60"
+                            android:progress="0"
+                            android:progressDrawable="@drawable/progress_vertical_v2" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="T2"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chartMonVal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0'"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- Tue -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <ProgressBar
+                            android:id="@+id/chartTue"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="22dp"
+                            android:layout_height="80dp"
+                            android:indeterminate="false"
+                            android:max="60"
+                            android:progress="0"
+                            android:progressDrawable="@drawable/progress_vertical_v2" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="T3"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chartTueVal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0'"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- Wed -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <ProgressBar
+                            android:id="@+id/chartWed"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="22dp"
+                            android:layout_height="80dp"
+                            android:indeterminate="false"
+                            android:max="60"
+                            android:progress="0"
+                            android:progressDrawable="@drawable/progress_vertical_v2" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="T4"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chartWedVal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0'"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- Thu -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <ProgressBar
+                            android:id="@+id/chartThu"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="22dp"
+                            android:layout_height="80dp"
+                            android:indeterminate="false"
+                            android:max="60"
+                            android:progress="0"
+                            android:progressDrawable="@drawable/progress_vertical_v2" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="T5"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chartThuVal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0'"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- Fri -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <ProgressBar
+                            android:id="@+id/chartFri"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="22dp"
+                            android:layout_height="80dp"
+                            android:indeterminate="false"
+                            android:max="60"
+                            android:progress="0"
+                            android:progressDrawable="@drawable/progress_vertical_v2" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="T6"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chartFriVal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0'"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- Sat -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <ProgressBar
+                            android:id="@+id/chartSat"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="22dp"
+                            android:layout_height="80dp"
+                            android:indeterminate="false"
+                            android:max="60"
+                            android:progress="0"
+                            android:progressDrawable="@drawable/progress_vertical_v2" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="T7"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chartSatVal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0'"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- Sun -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <ProgressBar
+                            android:id="@+id/chartSun"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="22dp"
+                            android:layout_height="80dp"
+                            android:indeterminate="false"
+                            android:max="60"
+                            android:progress="0"
+                            android:progressDrawable="@drawable/progress_vertical_v2" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="CN"
+                            android:textColor="@color/ef_text_tertiary"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chartSunVal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0'"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- UNLEARNED + CEFR                            -->
+            <!-- ═══════════════════════════════════════════ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <!-- Unlearned Words Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="@color/ef_card_indigo"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📝"
+                            android:textSize="20sp" />
+
+                        <TextView
+                            android:id="@+id/txtUnlearnedCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="3000 từ"
+                            android:textColor="@color/ef_card_indigo_text"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:alpha="0.7"
+                            android:text="Từ chưa học"
+                            android:textColor="@color/ef_card_indigo_text"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- CEFR Level Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:cardBackgroundColor="@color/ef_secondary_container"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🎓"
+                            android:textSize="20sp" />
+
+                        <TextView
+                            android:id="@+id/txtCefrLevel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="A1 - Sơ cấp"
+                            android:textColor="@color/ef_on_secondary_container"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/txtProgressToNext"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:alpha="0.7"
+                            android:text="Trình độ CEFR"
+                            android:textColor="@color/ef_on_secondary_container"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+        </LinearLayout>
     </LinearLayout>
-
 </ScrollView>

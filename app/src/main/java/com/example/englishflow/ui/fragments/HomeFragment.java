@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,7 +25,6 @@ import com.example.englishflow.data.DictionaryResult;
 import com.example.englishflow.data.FreeDictionaryService;
 import com.example.englishflow.data.MyMemoryService;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import java.util.Calendar;
@@ -54,7 +54,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        
+
         // Initialize repository safely
         try {
             repository = AppRepository.getInstance(requireContext());
@@ -67,12 +67,9 @@ public class HomeFragment extends Fragment {
             Toast.makeText(requireContext(), "Lỗi khởi tạo ứng dụng", Toast.LENGTH_SHORT).show();
             return;
         }
-        
+
         try {
-            // Set up all views with safe defaults first
             setupBasicViews(view);
-            
-            // Load data in background thread
             loadDataAsync(view);
         } catch (Exception e) {
             e.printStackTrace();
@@ -82,22 +79,22 @@ public class HomeFragment extends Fragment {
 
     private void setupBasicViews(View view) {
         try {
-            // Premium header - always works
+            // Premium header defaults
             TextView greetingText = view.findViewById(R.id.txtGreeting);
             TextView greetingEmoji = view.findViewById(R.id.greetingEmoji);
             TextView currentTimeText = view.findViewById(R.id.currentTime);
             TextView dayOfWeekText = view.findViewById(R.id.dayOfWeek);
-            
+
             if (greetingText != null) greetingText.setText("Xin chào");
             if (greetingEmoji != null) greetingEmoji.setText("👋");
             if (currentTimeText != null) currentTimeText.setText("00:00");
             if (dayOfWeekText != null) dayOfWeekText.setText("Hôm nay");
-            
+
             // Default stats
             setDefaultStats(view);
             resetDictionaryCard(view);
-            
-            // Set up quick action buttons
+
+            // Set up all interactive buttons
             setupQuickActionButtons(view);
         } catch (Exception e) {
             e.printStackTrace();
@@ -106,28 +103,33 @@ public class HomeFragment extends Fragment {
 
     private void setupQuickActionButtons(View view) {
         try {
-            MaterialButton quickLearnBtn = view.findViewById(R.id.btnQuickLearn);
-            MaterialButton quickScanBtn = view.findViewById(R.id.btnQuickScan);
-            MaterialButton quickChatBtn = view.findViewById(R.id.btnQuickChat);
-            MaterialButton quickDictionaryBtn = view.findViewById(R.id.btnQuickDictionary);
-            
+            // Quick action navigation buttons (Now using custom card views)
+            View quickLearnBtn = view.findViewById(R.id.btnQuickLearn);
+            View quickScanBtn = view.findViewById(R.id.btnQuickScan);
+            View quickChatBtn = view.findViewById(R.id.btnQuickChat);
+            View quickDictionaryBtn = view.findViewById(R.id.btnQuickDictionary);
+
             if (quickLearnBtn != null) quickLearnBtn.setOnClickListener(v -> navigateToTab(1));
             if (quickScanBtn != null) quickScanBtn.setOnClickListener(v -> navigateToTab(2));
             if (quickChatBtn != null) quickChatBtn.setOnClickListener(v -> navigateToTab(3));
             if (quickDictionaryBtn != null) quickDictionaryBtn.setOnClickListener(v -> navigateToTab(4));
-            
+
             // Continue Learning button
             MaterialButton continueBtn = view.findViewById(R.id.btnContinue);
             if (continueBtn != null) continueBtn.setOnClickListener(v -> navigateToTab(1));
-            
+
+            // Dictionary buttons
             MaterialButton openDictionaryIconBtn = view.findViewById(R.id.btnOpenDictionarySheet);
             MaterialButton openDictionaryTextBtn = view.findViewById(R.id.btnOpenDictionaryText);
             MaterialButton homeDictSearchBtn = view.findViewById(R.id.btnHomeDictSearch);
             EditText homeDictInput = view.findViewById(R.id.homeDictInput);
+
             View.OnClickListener searchDictionaryAction = v -> performHomeDictionarySearch(view);
 
-            if (openDictionaryIconBtn != null) openDictionaryIconBtn.setOnClickListener(searchDictionaryAction);
-            if (openDictionaryTextBtn != null) openDictionaryTextBtn.setOnClickListener(searchDictionaryAction);
+            if (openDictionaryIconBtn != null)
+                openDictionaryIconBtn.setOnClickListener(searchDictionaryAction);
+            if (openDictionaryTextBtn != null)
+                openDictionaryTextBtn.setOnClickListener(searchDictionaryAction);
             if (homeDictSearchBtn != null) homeDictSearchBtn.setOnClickListener(searchDictionaryAction);
 
             if (homeDictInput != null) {
@@ -139,7 +141,7 @@ public class HomeFragment extends Fragment {
                     return false;
                 });
             }
-            
+
             // Set Reminder button
             reminderText = view.findViewById(R.id.txtReminder);
             MaterialButton setReminderBtn = view.findViewById(R.id.btnSetReminder);
@@ -147,10 +149,11 @@ public class HomeFragment extends Fragment {
                 setReminderBtn.setOnClickListener(v -> {
                     int currentHour = repository.getReminderHour();
                     int currentMinute = repository.getReminderMinute();
-                    TimePickerDialog dialog = new TimePickerDialog(requireContext(), (timePicker, selectedHour, selectedMinute) -> {
-                        repository.setReminderTime(selectedHour, selectedMinute);
-                        renderReminderText();
-                    }, currentHour, currentMinute, true);
+                    TimePickerDialog dialog = new TimePickerDialog(requireContext(),
+                            (timePicker, selectedHour, selectedMinute) -> {
+                                repository.setReminderTime(selectedHour, selectedMinute);
+                                renderReminderText();
+                            }, currentHour, currentMinute, true);
                     dialog.show();
                 });
             }
@@ -158,6 +161,10 @@ public class HomeFragment extends Fragment {
             e.printStackTrace();
         }
     }
+
+    // ─────────────────────────────────────────────────────────
+    // DICTIONARY SEARCH — FIXED LOGIC
+    // ─────────────────────────────────────────────────────────
 
     private void performHomeDictionarySearch(View rootView) {
         if (dictionaryRepository == null || !isAdded()) {
@@ -188,7 +195,7 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        resetDictionaryCard(rootView);
+        // Show loading and hide old results/errors
         if (homeDictError != null) homeDictError.setVisibility(View.GONE);
         if (homeDictLoading != null) homeDictLoading.setVisibility(View.VISIBLE);
 
@@ -232,48 +239,126 @@ public class HomeFragment extends Fragment {
     }
 
     private void bindHomeDictionaryResult(View rootView, DictionaryResult result) {
+        if (result == null) return;
+
         TextView dictTitle = rootView.findViewById(R.id.txtDictionaryTitle);
+        TextView dictIpa = rootView.findViewById(R.id.txtDictIpa);
+        TextView dictPartOfSpeech = rootView.findViewById(R.id.txtDictPartOfSpeech);
         TextView dictHint = rootView.findViewById(R.id.txtDictionaryHint);
         TextView dictExample = rootView.findViewById(R.id.txtDictionaryExample);
+        LinearLayout dictExampleContainer = rootView.findViewById(R.id.dictExampleContainer);
+        LinearLayout dictSynonymsContainer = rootView.findViewById(R.id.dictSynonymsContainer);
+        TextView dictSynonyms = rootView.findViewById(R.id.txtDictSynonyms);
 
+        // Word + Translation
         if (dictTitle != null) {
-            dictTitle.setText(safeText(result.getWord(), "Không rõ từ"));
+            String word = safeText(result.getWord(), "Không rõ từ");
+            String translation = safeText(result.getTranslatedWord(), "");
+            
+            String displayWord = capitalize(word);
+            if (!translation.isEmpty()) {
+                dictTitle.setText(displayWord + " (" + translation + ")");
+            } else {
+                dictTitle.setText(displayWord);
+            }
         }
 
+        // IPA
+        String ipa = safeText(result.getIpa(), "");
+        if (dictIpa != null) {
+            if (!ipa.isEmpty()) {
+                dictIpa.setText(ipa);
+                dictIpa.setVisibility(View.VISIBLE);
+            } else {
+                dictIpa.setVisibility(View.GONE);
+            }
+        }
+
+        // First definition
         DictionaryResult.Definition firstDefinition = null;
         if (result.getDefinitions() != null && !result.getDefinitions().isEmpty()) {
             firstDefinition = result.getDefinitions().get(0);
         }
 
-        String ipa = safeText(result.getIpa(), "");
         String meaning = firstDefinition != null ? safeText(firstDefinition.getMeaning(), "") : "";
         String partOfSpeech = firstDefinition != null ? safeText(firstDefinition.getPartOfSpeech(), "") : "";
         String example = firstDefinition != null ? safeText(firstDefinition.getExample(), "") : "";
 
-        if (dictHint != null) {
-            StringBuilder hint = new StringBuilder();
-            if (!ipa.isEmpty()) {
-                hint.append(ipa).append("  ");
-            }
+        // Part of speech tag
+        if (dictPartOfSpeech != null) {
             if (!partOfSpeech.isEmpty()) {
-                hint.append("[").append(partOfSpeech).append("] ");
+                dictPartOfSpeech.setText(partOfSpeech);
+                dictPartOfSpeech.setVisibility(View.VISIBLE);
+            } else {
+                dictPartOfSpeech.setVisibility(View.GONE);
             }
-            if (!meaning.isEmpty()) {
-                hint.append(meaning);
-            }
-            if (hint.length() == 0) {
-                hint.append("Đã tra xong, nhưng chưa có định nghĩa phù hợp.");
-            }
-            dictHint.setText(hint.toString());
         }
 
-        if (dictExample != null) {
+        // Meaning
+        if (dictHint != null) {
+            String primaryMeaning = firstDefinition != null ? safeText(firstDefinition.getTranslatedMeaning(), "") : "";
+            if (primaryMeaning.isEmpty() && firstDefinition != null) {
+                primaryMeaning = safeText(firstDefinition.getMeaning(), "");
+            }
+            
+            if (!primaryMeaning.isEmpty()) {
+                dictHint.setText(primaryMeaning);
+            } else {
+                dictHint.setText("Đã tra xong, nhưng chưa có định nghĩa phù hợp.");
+            }
+        }
+
+        // Usage Note
+        TextView dictUsageNote = rootView.findViewById(R.id.txtDictUsageNote);
+        LinearLayout dictUsageContainer = rootView.findViewById(R.id.dictUsageContainer);
+        if (dictUsageNote != null && dictUsageContainer != null) {
+            String usage = firstDefinition != null ? safeText(firstDefinition.getUsageNote(), "") : "";
+            if (!usage.isEmpty()) {
+                dictUsageNote.setText(usage);
+                dictUsageContainer.setVisibility(View.VISIBLE);
+            } else {
+                dictUsageContainer.setVisibility(View.GONE);
+            }
+        }
+
+        // Example
+        if (dictExample != null && dictExampleContainer != null) {
             if (!example.isEmpty()) {
                 dictExample.setText(example);
+                dictExampleContainer.setVisibility(View.VISIBLE);
             } else if (!meaning.isEmpty()) {
                 dictExample.setText(meaning);
+                dictExampleContainer.setVisibility(View.VISIBLE);
             } else {
+                dictExampleContainer.setVisibility(View.VISIBLE);
                 dictExample.setText("Chưa có ví dụ cho từ này.");
+            }
+        }
+
+        // Synonyms
+        List<String> synonyms = result.getSynonyms();
+        if (dictSynonymsContainer != null && dictSynonyms != null) {
+            if (synonyms != null && !synonyms.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < synonyms.size(); i++) {
+                    if (i > 0) sb.append(" • ");
+                    sb.append(synonyms.get(i));
+                }
+                dictSynonyms.setText(sb.toString());
+                dictSynonymsContainer.setVisibility(View.VISIBLE);
+
+                // Make synonyms clickable — tap to search
+                dictSynonyms.setOnClickListener(v -> {
+                    if (synonyms.size() > 0) {
+                        EditText homeDictInput = rootView.findViewById(R.id.homeDictInput);
+                        if (homeDictInput != null) {
+                            homeDictInput.setText(synonyms.get(0));
+                            performHomeDictionarySearch(rootView);
+                        }
+                    }
+                });
+            } else {
+                dictSynonymsContainer.setVisibility(View.GONE);
             }
         }
     }
@@ -284,14 +369,19 @@ public class HomeFragment extends Fragment {
         return trimmed.isEmpty() ? fallback : trimmed;
     }
 
+    private String capitalize(String word) {
+        if (word == null || word.isEmpty()) return "";
+        return word.substring(0, 1).toUpperCase(Locale.US) + word.substring(1);
+    }
+
     private String getLookupValidationError(String query) {
         if (query == null) {
             return "Từ không hợp lệ.";
         }
 
         String normalized = query.trim();
-        if (normalized.length() < 2 || normalized.length() > 40) {
-            return "Từ cần có độ dài từ 2 đến 40 ký tự.";
+        if (normalized.length() < 1 || normalized.length() > 60) {
+            return "Từ cần có độ dài từ 1 đến 60 ký tự.";
         }
 
         // Allow letters from any language (including Vietnamese), spaces, apostrophes and hyphens.
@@ -304,45 +394,55 @@ public class HomeFragment extends Fragment {
             return "Từ không hợp lệ.";
         }
 
-        // Extra heuristic for English-only token to reduce obvious random consonant strings.
-        String compact = normalized.replaceAll("[\\s'-]", "");
-        if (compact.matches("[A-Za-z]{4,}")) {
-            if (!compact.toLowerCase(Locale.US).matches(".*[aeiouy].*")) {
-                return "Từ tiếng Anh có vẻ chưa hợp lệ (không có nguyên âm).";
-            }
-        }
-
         return null;
     }
 
     private void resetDictionaryCard(View rootView) {
         TextView dictTitle = rootView.findViewById(R.id.txtDictionaryTitle);
+        TextView dictIpa = rootView.findViewById(R.id.txtDictIpa);
+        TextView dictPartOfSpeech = rootView.findViewById(R.id.txtDictPartOfSpeech);
         TextView dictHint = rootView.findViewById(R.id.txtDictionaryHint);
         TextView dictExample = rootView.findViewById(R.id.txtDictionaryExample);
+        LinearLayout dictExampleContainer = rootView.findViewById(R.id.dictExampleContainer);
+        LinearLayout dictSynonymsContainer = rootView.findViewById(R.id.dictSynonymsContainer);
+        LinearLayout dictUsageContainer = rootView.findViewById(R.id.dictUsageContainer);
 
         if (dictTitle != null) dictTitle.setText(DEFAULT_DICT_TITLE);
+        if (dictIpa != null) dictIpa.setVisibility(View.GONE);
+        if (dictPartOfSpeech != null) dictPartOfSpeech.setVisibility(View.GONE);
         if (dictHint != null) dictHint.setText(DEFAULT_DICT_HINT);
         if (dictExample != null) dictExample.setText(DEFAULT_DICT_EXAMPLE);
+        if (dictExampleContainer != null) dictExampleContainer.setVisibility(View.VISIBLE);
+        if (dictSynonymsContainer != null) dictSynonymsContainer.setVisibility(View.GONE);
+        if (dictUsageContainer != null) dictUsageContainer.setVisibility(View.GONE);
     }
+
+    // ─────────────────────────────────────────────────────────
+    // DEFAULT STATS
+    // ─────────────────────────────────────────────────────────
 
     private void setDefaultStats(View view) {
         try {
             TextView learnedCountText = view.findViewById(R.id.txtLearnedCount);
             TextView bestStreakText = view.findViewById(R.id.txtBestStreakCount);
             TextView currentStreakText = view.findViewById(R.id.txtCurrentStreak);
+            TextView currentStreakCardText = view.findViewById(R.id.txtCurrentStreakCard);
             TextView scannedCountText = view.findViewById(R.id.txtScannedCount);
             TextView xpText = view.findViewById(R.id.txtXp);
             TextView xpPercentageText = view.findViewById(R.id.txtXpPercentage);
+            TextView headerXpText = view.findViewById(R.id.txtHeaderXp);
             TextView weeklyTotalText = view.findViewById(R.id.txtWeeklyTotal);
             TextView unlearnedCountText = view.findViewById(R.id.txtUnlearnedCount);
             TextView cefrLevelText = view.findViewById(R.id.txtCefrLevel);
-            
+
             if (learnedCountText != null) learnedCountText.setText("0");
             if (bestStreakText != null) bestStreakText.setText("0");
             if (currentStreakText != null) currentStreakText.setText("0");
+            if (currentStreakCardText != null) currentStreakCardText.setText("0");
             if (scannedCountText != null) scannedCountText.setText("0");
             if (xpText != null) xpText.setText("XP hôm nay: 0/120");
             if (xpPercentageText != null) xpPercentageText.setText("0%");
+            if (headerXpText != null) headerXpText.setText("0");
             if (weeklyTotalText != null) weeklyTotalText.setText("0 phút");
             if (unlearnedCountText != null) unlearnedCountText.setText("3000 từ");
             if (cefrLevelText != null) cefrLevelText.setText("A1 - Sơ cấp");
@@ -351,8 +451,11 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    // ─────────────────────────────────────────────────────────
+    // ASYNC DATA LOADING
+    // ─────────────────────────────────────────────────────────
+
     private void loadDataAsync(View view) {
-        // Load data in background to prevent main thread blocking
         new Thread(() -> {
             try {
                 loadRealData(view);
@@ -365,15 +468,14 @@ public class HomeFragment extends Fragment {
     private void loadRealData(View view) {
         try {
             if (!isAdded()) return;
-            
-            // Get all data from repository
+
             Calendar calendar = Calendar.getInstance();
             int hour = calendar.get(Calendar.HOUR_OF_DAY);
             int minute = calendar.get(Calendar.MINUTE);
-            
+
             String emoji = getTimeEmoji(hour);
             String greeting = buildGreeting(repository.getUserName());
-            
+
             int learnedWords = repository.getLearnedWords();
             int streak = repository.getStreakDays();
             int bestStreak = repository.getBestStreak();
@@ -381,13 +483,15 @@ public class HomeFragment extends Fragment {
             int xpToday = repository.getXpToday();
             int xpGoal = repository.getXpGoal();
             List<Integer> weeklyMinutes = repository.getWeeklyStudyMinutes();
-            int weeklyTotal = weeklyMinutes != null ? weeklyMinutes.stream().mapToInt(Integer::intValue).sum() : 0;
+            int weeklyTotal = weeklyMinutes != null
+                    ? weeklyMinutes.stream().mapToInt(Integer::intValue).sum() : 0;
             String cefrLevel = repository.getCefrLevel();
-            
-            // Update UI on main thread
+            int unlearnedCount = repository.getUnlearnedWordsCount();
+
             if (isAdded()) {
-                requireActivity().runOnUiThread(() -> updateUIWithData(view, emoji, greeting, hour, minute, 
-                    learnedWords, streak, bestStreak, scanned, xpToday, xpGoal, weeklyTotal, cefrLevel));
+                requireActivity().runOnUiThread(() -> updateUIWithData(view, emoji, greeting,
+                        hour, minute, learnedWords, streak, bestStreak, scanned, xpToday, xpGoal,
+                        weeklyTotal, weeklyMinutes, cefrLevel, unlearnedCount));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -396,45 +500,106 @@ public class HomeFragment extends Fragment {
 
     private void updateUIWithData(View view, String emoji, String greeting, int hour, int minute,
                                    int learnedWords, int streak, int bestStreak, int scanned,
-                                   int xpToday, int xpGoal, int weeklyTotal, String cefrLevel) {
+                                   int xpToday, int xpGoal, int weeklyTotal,
+                                   List<Integer> weeklyMinutes, String cefrLevel, int unlearnedCount) {
         try {
+            // Header
             TextView greetingText = view.findViewById(R.id.txtGreeting);
             TextView greetingEmoji = view.findViewById(R.id.greetingEmoji);
             TextView currentTimeText = view.findViewById(R.id.currentTime);
             TextView dayOfWeekText = view.findViewById(R.id.dayOfWeek);
+
+            if (greetingText != null) greetingText.setText(greeting);
+            if (greetingEmoji != null) greetingEmoji.setText(emoji);
+            if (currentTimeText != null)
+                currentTimeText.setText(String.format(Locale.getDefault(), "%02d:%02d", hour, minute));
+
+            String[] dayNames = {"Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"};
+            if (dayOfWeekText != null)
+                dayOfWeekText.setText(dayNames[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1]);
+
+            // Stat Cards
             TextView learnedCountText = view.findViewById(R.id.txtLearnedCount);
             TextView bestStreakText = view.findViewById(R.id.txtBestStreakCount);
             TextView currentStreakText = view.findViewById(R.id.txtCurrentStreak);
+            TextView currentStreakCardText = view.findViewById(R.id.txtCurrentStreakCard);
             TextView scannedCountText = view.findViewById(R.id.txtScannedCount);
-            TextView xpText = view.findViewById(R.id.txtXp);
-            TextView xpPercentageText = view.findViewById(R.id.txtXpPercentage);
-            LinearProgressIndicator xpProgress = view.findViewById(R.id.xpProgress);
-            TextView weeklyTotalText = view.findViewById(R.id.txtWeeklyTotal);
-            TextView cefrLevelText = view.findViewById(R.id.txtCefrLevel);
-            
-            if (greetingText != null) greetingText.setText(greeting);
-            if (greetingEmoji != null) greetingEmoji.setText(emoji);
-            if (currentTimeText != null) currentTimeText.setText(String.format(Locale.getDefault(), "%02d:%02d", hour, minute));
-            
-            String[] dayNames = {"Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"};
-            if (dayOfWeekText != null) dayOfWeekText.setText(dayNames[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1]);
-            
+
             if (learnedCountText != null) learnedCountText.setText(String.valueOf(learnedWords));
             if (bestStreakText != null) bestStreakText.setText(String.valueOf(bestStreak));
             if (currentStreakText != null) currentStreakText.setText(String.valueOf(streak));
+            if (currentStreakCardText != null) currentStreakCardText.setText(String.valueOf(streak));
             if (scannedCountText != null) scannedCountText.setText(String.valueOf(scanned));
-            
+
+            // XP Progress
+            TextView xpText = view.findViewById(R.id.txtXp);
+            TextView xpPercentageText = view.findViewById(R.id.txtXpPercentage);
+            TextView headerXpText = view.findViewById(R.id.txtHeaderXp);
+            LinearProgressIndicator xpProgress = view.findViewById(R.id.xpProgress);
+
             if (xpText != null) xpText.setText("XP hôm nay: " + xpToday + "/" + xpGoal);
-            int xpPercent = (int) (((float) xpToday / (float) xpGoal) * 100f);
+            int xpPercent = xpGoal > 0 ? (int) (((float) xpToday / (float) xpGoal) * 100f) : 0;
             if (xpPercentageText != null) xpPercentageText.setText(Math.min(xpPercent, 100) + "%");
+            if (headerXpText != null) headerXpText.setText(String.valueOf(xpToday));
             if (xpProgress != null) xpProgress.setProgressCompat(Math.min(xpPercent, 100), true);
-            
+
+            // Weekly Total
+            TextView weeklyTotalText = view.findViewById(R.id.txtWeeklyTotal);
             if (weeklyTotalText != null) weeklyTotalText.setText(weeklyTotal + " phút");
-            if (cefrLevelText != null) cefrLevelText.setText(cefrLevel + " - " + cefrLevelToFullName(cefrLevel));
+
+            // Weekly Chart — update each day's bar dynamically
+            updateWeeklyChart(view, weeklyMinutes);
+
+            // CEFR Level
+            TextView cefrLevelText = view.findViewById(R.id.txtCefrLevel);
+            if (cefrLevelText != null)
+                cefrLevelText.setText(cefrLevel + " - " + cefrLevelToFullName(cefrLevel));
+
+            // Progress to next level
+            TextView progressToNext = view.findViewById(R.id.txtProgressToNext);
+            if (progressToNext != null) {
+                int wordsToNext = calculateProgressToNextLevel(cefrLevel, learnedWords);
+                String nextLevel = getNextLevel(cefrLevel);
+                if (wordsToNext > 0) {
+                    progressToNext.setText("Còn " + wordsToNext + " từ → " + nextLevel);
+                } else {
+                    progressToNext.setText("Trình độ CEFR");
+                }
+            }
+
+            // Unlearned count
+            TextView unlearnedCountText = view.findViewById(R.id.txtUnlearnedCount);
+            if (unlearnedCountText != null) unlearnedCountText.setText(unlearnedCount + " từ");
+
+            // Reminder
+            renderReminderText();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    private void updateWeeklyChart(View view, List<Integer> weeklyMinutes) {
+        if (weeklyMinutes == null || weeklyMinutes.size() < 7) return;
+
+        int[] chartBarIds = {R.id.chartMon, R.id.chartTue, R.id.chartWed,
+                R.id.chartThu, R.id.chartFri, R.id.chartSat, R.id.chartSun};
+        int[] chartValIds = {R.id.chartMonVal, R.id.chartTueVal, R.id.chartWedVal,
+                R.id.chartThuVal, R.id.chartFriVal, R.id.chartSatVal, R.id.chartSunVal};
+
+        for (int i = 0; i < 7; i++) {
+            ProgressBar bar = view.findViewById(chartBarIds[i]);
+            TextView valText = view.findViewById(chartValIds[i]);
+            int minutes = weeklyMinutes.get(i);
+
+            if (bar != null) bar.setProgress(Math.min(minutes, 60));
+            if (valText != null) valText.setText(minutes + "'");
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────────────────
 
     private String buildGreeting(String name) {
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
@@ -450,17 +615,17 @@ public class HomeFragment extends Fragment {
     }
 
     private String getTimeEmoji(int hour) {
-        if (hour < 6) return "🌙"; // Midnight
-        if (hour < 12) return "🌅"; // Morning
-        if (hour < 18) return "☀️"; // Afternoon
-        return "🌙"; // Evening
+        if (hour < 6) return "🌙";
+        if (hour < 12) return "🌅";
+        if (hour < 18) return "☀️";
+        return "🌙";
     }
 
     private void renderReminderText() {
         try {
             if (reminderText != null) {
-                reminderText.setText(String.format(Locale.getDefault(), "%02d:%02d", 
-                    repository.getReminderHour(), repository.getReminderMinute()));
+                reminderText.setText(String.format(Locale.getDefault(), "%02d:%02d",
+                        repository.getReminderHour(), repository.getReminderMinute()));
             }
         } catch (Exception e) {
             e.printStackTrace();

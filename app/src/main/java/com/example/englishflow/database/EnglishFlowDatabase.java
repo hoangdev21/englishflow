@@ -9,6 +9,7 @@ import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.englishflow.database.dao.ChatMessageDao;
+import com.example.englishflow.database.dao.ChatSessionDao;
 import com.example.englishflow.database.dao.CustomVocabularyDao;
 import com.example.englishflow.database.dao.FailedLabelLogDao;
 import com.example.englishflow.database.dao.LearnedWordDao;
@@ -17,6 +18,7 @@ import com.example.englishflow.database.dao.SeedPackageStateDao;
 import com.example.englishflow.database.dao.StudySessionDao;
 import com.example.englishflow.database.dao.UserStatsDao;
 import com.example.englishflow.database.entity.ChatMessageEntity;
+import com.example.englishflow.database.entity.ChatSessionEntity;
 import com.example.englishflow.database.entity.CustomVocabularyEntity;
 import com.example.englishflow.database.entity.FailedLabelLogEntity;
 import com.example.englishflow.database.entity.LearnedWordEntity;
@@ -31,12 +33,13 @@ import com.example.englishflow.database.entity.UserStatsEntity;
         StudySessionEntity.class,
         UserStatsEntity.class,
         ChatMessageEntity.class,
+        ChatSessionEntity.class,
         CustomVocabularyEntity.class,
         FailedLabelLogEntity.class,
         SeedPackageStateEntity.class,
         LocalUserEntity.class
     },
-    version = 5,
+    version = 7,
     exportSchema = false
 )
 public abstract class EnglishFlowDatabase extends RoomDatabase {
@@ -45,6 +48,7 @@ public abstract class EnglishFlowDatabase extends RoomDatabase {
     public abstract StudySessionDao studySessionDao();
     public abstract UserStatsDao userStatsDao();
     public abstract ChatMessageDao chatMessageDao();
+    public abstract ChatSessionDao chatSessionDao();
     public abstract CustomVocabularyDao customVocabularyDao();
     public abstract FailedLabelLogDao failedLabelLogDao();
     public abstract SeedPackageStateDao seedPackageStateDao();
@@ -95,11 +99,23 @@ public abstract class EnglishFlowDatabase extends RoomDatabase {
                         "englishflow_db"
                     )
                     .allowMainThreadQueries()
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .fallbackToDestructiveMigration()
                     .build();
                 }
             }
         }
         return INSTANCE;
     }
+
+    static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE IF NOT EXISTS chat_sessions (sessionId TEXT NOT NULL, title TEXT, startTime INTEGER NOT NULL, lastMessage TEXT, topic TEXT, PRIMARY KEY(sessionId))");
+            // Add columns to existing chat_messages table
+            database.execSQL("ALTER TABLE chat_messages ADD COLUMN sessionId TEXT");
+            database.execSQL("ALTER TABLE chat_messages ADD COLUMN correction TEXT");
+            database.execSQL("ALTER TABLE chat_messages ADD COLUMN explanation TEXT");
+        }
+    };
 }

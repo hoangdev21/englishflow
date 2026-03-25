@@ -197,7 +197,9 @@ public final class ScanAnalyzer {
                         "bottle",
                         "/ˈbɒt.əl/",
                         "chai, lọ",
+                        "noun",
                         "Please recycle this plastic bottle.",
+                        "Làm ơn hãy tái chế chiếc chai nhựa này.",
                         "Nhà cửa",
                         "The word 'bottle' comes from Medieval Latin 'butticula'.",
                         Arrays.asList("glass", "container", "liquid")
@@ -207,7 +209,9 @@ public final class ScanAnalyzer {
                         "book",
                         "/bʊk/",
                         "sách",
+                        "noun",
                         "I read a new English book every month.",
+                        "Tôi đọc một cuốn sách tiếng Anh mới mỗi tháng.",
                         "Học tập",
                         "A good book can improve your vocabulary quickly.",
                         Arrays.asList("page", "library", "reading")
@@ -217,7 +221,9 @@ public final class ScanAnalyzer {
                         "phone",
                         "/fəʊn/",
                         "điện thoại",
+                        "noun",
                         "I use my phone to practice listening every day.",
+                        "Tôi sử dụng điện thoại để luyện nghe mỗi ngày.",
                         "Công nghệ",
                         "You can switch your phone language to English for daily practice.",
                         Arrays.asList("call", "screen", "message")
@@ -227,7 +233,9 @@ public final class ScanAnalyzer {
                         "laptop",
                         "/ˈlæp.tɒp/",
                         "máy tính xách tay",
+                        "noun",
                         "She studies online with her laptop.",
+                        "Cô ấy học trực tuyến với chiếc máy tính xách tay của mình.",
                         "Công nghệ",
                         "Laptop combines 'lap' and 'top', meaning a computer for your lap.",
                         Arrays.asList("keyboard", "screen", "computer")
@@ -237,7 +245,9 @@ public final class ScanAnalyzer {
                         "cup",
                         "/kʌp/",
                         "cái cốc",
+                        "noun",
                         "Would you like a cup of tea?",
+                        "Bạn có muốn một tách trà không?",
                         "Đồ dùng",
                         "Cup is one of the most common words in daily English conversations.",
                         Arrays.asList("mug", "drink", "tea")
@@ -247,7 +257,9 @@ public final class ScanAnalyzer {
                         "chair",
                         "/tʃeər/",
                         "cái ghế",
+                        "noun",
                         "Please sit on this chair.",
+                        "Làm ơn hãy ngồi lên chiếc ghế này.",
                         "Nội thất",
                         "The silent letters in English are easier when you learn by object.",
                         Arrays.asList("seat", "table", "furniture")
@@ -257,7 +269,9 @@ public final class ScanAnalyzer {
                         "table",
                         "/ˈteɪ.bəl/",
                         "cái bàn",
+                        "noun",
                         "The notebook is on the table.",
+                        "Cuốn sổ tay ở trên bàn.",
                         "Nội thất",
                         "Many beginners first learn 'table' and 'chair' as a pair.",
                         Arrays.asList("desk", "furniture", "surface")
@@ -267,7 +281,9 @@ public final class ScanAnalyzer {
                         "object",
                         "/ˈɒb.dʒɪkt/",
                         "vật thể",
+                        "noun",
                         "This object appears in your photo.",
+                        "Vật thể này xuất hiện trong ảnh của bạn.",
                         "Tổng quát",
                         "Try taking a clearer photo or include printed text for better recognition.",
                         Arrays.asList("item", "thing", "shape")
@@ -277,8 +293,10 @@ public final class ScanAnalyzer {
                         "room",
                         "/ruːm/",
                         "phong",
+                        "noun",
                         "This room is very quiet for studying English.",
-                        "Noi that",
+                        "Căn phòng này rất yên tĩnh để học tiếng Anh.",
+                        "Nội thất",
                         "You can learn many daily words by describing objects in your room.",
                         Arrays.asList("house", "bedroom", "living room")
                     );
@@ -287,8 +305,10 @@ public final class ScanAnalyzer {
                         "television",
                         "/ˈtel.ɪ.vɪʒ.ən/",
                         "tivi",
+                        "noun",
                         "We watched an English movie on television.",
-                        "Cong nghe",
+                        "Chúng tôi đã xem một bộ phim tiếng Anh trên tivi.",
+                        "Công nghệ",
                         "Try watching cartoons with English subtitles for better listening.",
                         Arrays.asList("tv", "screen", "remote")
                     );
@@ -296,9 +316,11 @@ public final class ScanAnalyzer {
                     return create(
                         "person",
                         "/ˈpɜː.sən/",
-                        "nguoi",
+                        "nguời",
+                        "noun",
                         "That person is speaking English clearly.",
-                        "Tong quat",
+                        "Người đó đang nói tiếng Anh rất rõ ràng.",
+                        "Tổng quát",
                         "Use 'person' for singular and 'people' for plural.",
                         Arrays.asList("people", "human", "friend")
                     );
@@ -306,9 +328,11 @@ public final class ScanAnalyzer {
                     return create(
                         "dog",
                         "/dɒɡ/",
-                        "cho",
+                        "chó",
+                        "noun",
                         "The dog is running in the yard.",
-                        "Dong vat",
+                        "Con chó đang chạy trong sân.",
+                        "Động vật",
                         "Dogs are common vocabulary words for beginners.",
                         Arrays.asList("pet", "animal", "puppy")
                     );
@@ -316,9 +340,11 @@ public final class ScanAnalyzer {
                     return create(
                         "cat",
                         "/kæt/",
-                        "meo",
+                        "mèo",
+                        "noun",
                         "The cat is sleeping on the chair.",
-                        "Dong vat",
+                        "Con mèo đang ngủ trên ghế.",
+                        "Động vật",
                         "Cats and dogs are useful starter vocabulary.",
                         Arrays.asList("pet", "animal", "kitten")
                     );
@@ -326,9 +352,11 @@ public final class ScanAnalyzer {
                     return create(
                         "sofa",
                         "/ˈsəʊ.fə/",
-                        "ghe sofa",
+                        "ghế sofa",
+                        "noun",
                         "The sofa is near the window.",
-                        "Noi that",
+                        "Cái ghế sofa ở gần cửa sổ.",
+                        "Nội thất",
                         "Sofa and couch are often used with the same meaning.",
                         Arrays.asList("couch", "living room", "seat")
                     );
@@ -336,9 +364,11 @@ public final class ScanAnalyzer {
                     return create(
                         "bed",
                         "/bed/",
-                        "giuong",
+                        "giường",
+                        "noun",
                         "I make my bed every morning.",
-                        "Noi that",
+                        "Tôi dọn giường mỗi sáng.",
+                        "Nội thất",
                         "Bedroom vocabulary helps in daily conversation.",
                         Arrays.asList("pillow", "blanket", "bedroom")
                     );
@@ -346,9 +376,11 @@ public final class ScanAnalyzer {
                     return create(
                         "door",
                         "/dɔːr/",
-                        "cua",
+                        "cửa",
+                        "noun",
                         "Please close the door quietly.",
-                        "Nha cua",
+                        "Làm ơn đóng cửa lại một cách nhẹ nhàng.",
+                        "Nhà cửa",
                         "Door is one of the first home words for beginners.",
                         Arrays.asList("window", "room", "handle")
                     );
@@ -356,9 +388,11 @@ public final class ScanAnalyzer {
                     return create(
                         "window",
                         "/ˈwɪn.dəʊ/",
-                        "cua so",
+                        "cửa sổ",
+                        "noun",
                         "Open the window for fresh air.",
-                        "Nha cua",
+                        "Mở cửa sổ ra để đón không khí trong lành.",
+                        "Nhà cửa",
                         "Window pairs naturally with curtain and glass.",
                         Arrays.asList("glass", "curtain", "light")
                     );
@@ -366,9 +400,11 @@ public final class ScanAnalyzer {
                     return create(
                         "clock",
                         "/klɒk/",
-                        "dong ho",
+                        "đồng hồ",
+                        "noun",
                         "The clock on the wall is slow.",
-                        "Do dung",
+                        "Cái đồng hồ trên tường bị chậm.",
+                        "Đồ dùng",
                         "Clock and watch are different in English.",
                         Arrays.asList("time", "watch", "wall")
                     );
@@ -376,9 +412,11 @@ public final class ScanAnalyzer {
                     return create(
                         "keyboard",
                         "/ˈkiː.bɔːd/",
-                        "ban phim",
+                        "bàn phím",
+                        "noun",
                         "I type quickly on my keyboard.",
-                        "Cong nghe",
+                        "Tôi gõ rất nhanh trên bàn phím của mình.",
+                        "Công nghệ",
                         "Practice typing in English to improve spelling.",
                         Arrays.asList("computer", "mouse", "keys")
                     );
@@ -386,9 +424,11 @@ public final class ScanAnalyzer {
                     return create(
                         "mouse",
                         "/maʊs/",
-                        "chuot may tinh",
+                        "chuột máy tính",
+                        "noun",
                         "Click the icon with the mouse.",
-                        "Cong nghe",
+                        "Nhấp vào biểu tượng bằng chuột.",
+                        "Công nghệ",
                         "A computer mouse is different from the animal mouse.",
                         Arrays.asList("keyboard", "click", "cursor")
                     );
@@ -396,9 +436,11 @@ public final class ScanAnalyzer {
                     return create(
                         "car",
                         "/kɑːr/",
-                        "xe hoi",
+                        "xe hơi",
+                        "noun",
                         "Their car is parked outside.",
-                        "Giao thong",
+                        "Xe của họ đang đỗ bên ngoài.",
+                        "Giao thông",
                         "Car vocabulary is common in travel and daily life.",
                         Arrays.asList("road", "driver", "wheel")
                     );
@@ -406,9 +448,11 @@ public final class ScanAnalyzer {
                     return create(
                         "bicycle",
                         "/ˈbaɪ.sɪ.kəl/",
-                        "xe dap",
+                        "xe đạp",
+                        "noun",
                         "He rides a bicycle to school.",
-                        "Giao thong",
+                        "Anh ấy đạp xe đi học.",
+                        "Giao thông",
                         "Bike is the short and common form of bicycle.",
                         Arrays.asList("bike", "helmet", "pedal")
                     );
@@ -416,17 +460,19 @@ public final class ScanAnalyzer {
                 return create(
                         normalized.isEmpty() ? "object" : normalized,
                     "-",
-                    "chua co trong tu dien",
+                    "chưa có trong từ điển",
+                    "noun",
                     "This label has not been mapped yet.",
-                    "Can bo sung",
-                    "Nhan dang dung nhan, nhung chua co du lieu nghia. Ban co the bo sung mapping moi.",
+                    "Nhãn này chưa được ánh xạ.",
+                    "Cần bổ sung",
+                    "Nhận dạng đúng nhãn, nhưng chưa có dữ liệu nghĩa. Bạn có thể bổ sung mapping mới.",
                     Arrays.asList("unknown", "label", "mapping")
                 );
         }
     }
 
-    private static ScanResult create(String word, String ipa, String meaning, String example,
-                                     String category, String funFact, List<String> relatedWords) {
-        return new ScanResult(word, ipa, meaning, example, category, funFact, relatedWords);
+    private static ScanResult create(String word, String ipa, String meaning, String wordType, String example,
+                                     String exampleVi, String category, String funFact, List<String> relatedWords) {
+        return new ScanResult(word, ipa, meaning, wordType, example, exampleVi, category, funFact, relatedWords);
     }
 }

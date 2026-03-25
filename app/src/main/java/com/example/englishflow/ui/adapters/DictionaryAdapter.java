@@ -3,7 +3,6 @@ package com.example.englishflow.ui.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -11,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.WordEntry;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.List;
 
@@ -53,8 +53,8 @@ public class DictionaryAdapter extends RecyclerView.Adapter<DictionaryAdapter.Di
     static class DictionaryViewHolder extends RecyclerView.ViewHolder {
         final TextView wordText;
         final TextView meaningText;
-        final ImageButton pronounceButton;
-        final ImageButton deleteButton;
+        final MaterialButton pronounceButton;
+        final MaterialButton deleteButton;
 
         DictionaryViewHolder(@NonNull View itemView) {
             super(itemView);

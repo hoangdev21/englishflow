@@ -60,6 +60,10 @@ public class AppRepository {
         return instance;
     }
 
+    public EnglishFlowDatabase getDatabase() {
+        return database;
+    }
+
     public String getUserName() {
         return preferences.getString(KEY_NAME, "An");
     }
@@ -238,24 +242,121 @@ public class AppRepository {
         int scanned = getScannedImages();
         int chat = getChatSessions();
         
-        list.add(new AchievementItem("7 ngày bền bỉ", "Giữ streak 7 ngày", streak >= 7));
-        list.add(new AchievementItem("Tân binh scan", "Scan 10 vật thể", scanned >= 10));
-        list.add(new AchievementItem("100 từ đầu tiên", "Học 100 từ", learned >= 100));
-        list.add(new AchievementItem("Chat pro", "20 cuộc chat", chat >= 20));
-        list.add(new AchievementItem("Ngày bền bỉ", "Vào học mỗi ngày 30 ngày", streak >= 30));
-        list.add(new AchievementItem("Hacker từ vựng", "Học 250 từ", learned >= 250));
+        list.add(new AchievementItem("7 ngày bền bỉ", "Giữ streak 7 ngày", "🔥", streak >= 7));
+        list.add(new AchievementItem("Tân binh scan", "Scan 10 vật thể", "📷", scanned >= 10));
+        list.add(new AchievementItem("100 từ đầu tiên", "Học 100 từ", "📚", learned >= 100));
+        list.add(new AchievementItem("Chat pro", "20 cuộc chat", "💬", chat >= 20));
+        list.add(new AchievementItem("Ngày bền bỉ", "Vào học mỗi ngày 30 ngày", "⏱️", streak >= 30));
+        list.add(new AchievementItem("Hacker từ vựng", "Học 250 từ", "🧠", learned >= 250));
         return list;
+    }
+
+    // New internal storage for topic progress (mocking for now since we don't have this table yet)
+    // In a real app, this should be a Room table like 'topic_progress'
+    private static final java.util.Map<String, String> TOPIC_PROGRESS = new java.util.HashMap<>();
+
+    public void updateTopicStatus(String topic, String status) {
+        TOPIC_PROGRESS.put(topic, status);
+        // In real app: database.topicProgressDao().upsert(new TopicProgressEntity(topic, status))
+    }
+
+    public String getTopicStatus(String topic) {
+        return TOPIC_PROGRESS.getOrDefault(topic, TopicItem.STATUS_NOT_STARTED);
     }
 
     public List<DomainItem> getDomains() {
         List<DomainItem> list = new ArrayList<>();
-        list.add(new DomainItem("🍜", "Ẩm thực", getWordCountByDomain("Ẩm thực"), "#1A7A5E", "#2AAE84", sampleTopics("Ẩm thực")));
-        list.add(new DomainItem("✈️", "Du lịch", getWordCountByDomain("Du lịch"), "#207A9F", "#3AB6E6", sampleTopics("Du lịch")));
-        list.add(new DomainItem("💼", "Công việc", getWordCountByDomain("Công việc"), "#5A759A", "#7A96BC", sampleTopics("Công việc")));
-        list.add(new DomainItem("🏥", "Sức khoẻ", getWordCountByDomain("Sức khoẻ"), "#2E8F6C", "#66B88F", sampleTopics("Sức khoẻ")));
-        list.add(new DomainItem("🎓", "Học tập", getWordCountByDomain("Học tập"), "#8F6A2E", "#C8944A", sampleTopics("Học tập")));
-        list.add(new DomainItem("🏠", "Nhà cửa", getWordCountByDomain("Nhà cửa"), "#557B63", "#7FA28B", sampleTopics("Nhà cửa")));
+        try {
+            List<String> domains = database.customVocabularyDao().getUniqueDomains();
+            for (String domain : domains) {
+                if (domain.equalsIgnoreCase("general") || domain.isEmpty()) continue;
+                
+                String emoji = getEmojiForDomain(domain);
+                String start = getGradientStartForDomain(domain);
+                String end = getGradientEndForDomain(domain);
+                int progress = getDomainProgress(domain);
+                
+                list.add(new DomainItem(
+                    emoji,
+                    domain,
+                    progress,
+                    start,
+                    end,
+                    sampleTopics(domain)
+                ));
+            }
+            
+            // If empty, add some defaults as fallback (though seed should handle it)
+            if (list.isEmpty()) {
+                list.add(new DomainItem("🍜", "Ẩm thực", 0, "#1A7A5E", "#2AAE84", sampleTopics("Ẩm thực")));
+                list.add(new DomainItem("✈️", "Du lịch", 0, "#207A9F", "#3AB6E6", sampleTopics("Du lịch")));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
+    }
+
+    private String getEmojiForDomain(String domain) {
+        String d = domain.toLowerCase();
+        if (d.contains("ẩm thực") || d.contains("am thuc")) return "🍜";
+        if (d.contains("du lịch") || d.contains("du lich")) return "✈️";
+        if (d.contains("công việc") || d.contains("cong viec")) return "💼";
+        if (d.contains("sức khoẻ") || d.contains("suc khoe")) return "🏥";
+        if (d.contains("học tập") || d.contains("hoc tap")) return "🎓";
+        if (d.contains("nhà cửa") || d.contains("nha cua")) return "🏠";
+        if (d.contains("công nghệ") || d.contains("cong nghe")) return "💻";
+        if (d.contains("kinh doanh")) return "📈";
+        if (d.contains("môi trường") || d.contains("moi truong")) return "🌿";
+        if (d.contains("nghệ thuật") || d.contains("nghe thuat")) return "🎨";
+        if (d.contains("thể thao") || d.contains("the thao")) return "⚽";
+        if (d.contains("pháp luật") || d.contains("phap luat")) return "⚖️";
+        if (d.contains("khoa học") || d.contains("khoa hoc")) return "🧪";
+        if (d.contains("tài chính") || d.contains("tai chinh")) return "💰";
+        if (d.contains("gia đình") || d.contains("gia dinh")) return "👨‍👩‍👧‍👦";
+        if (d.contains("văn hoá") || d.contains("van hoa")) return "🏛️";
+        return "📚";
+    }
+
+    private String getGradientStartForDomain(String domain) {
+        String d = domain.toLowerCase();
+        if (d.contains("ẩm thực") || d.contains("am thuc")) return "#FF7043"; // Orange
+        if (d.contains("du lịch") || d.contains("du lich")) return "#26A69A"; // Teal
+        if (d.contains("công việc") || d.contains("cong viec")) return "#5C6BC0"; // Indigo
+        if (d.contains("sức khoẻ") || d.contains("suc khoe")) return "#66BB6A"; // Green
+        if (d.contains("nhà cửa") || d.contains("nha cua")) return "#78909C"; // Blue Grey
+        if (d.contains("công nghệ") || d.contains("cong nghe")) return "#42A5F5"; // Blue
+        if (d.contains("kinh doanh")) return "#EC407A"; // Pink
+        if (d.contains("môi trường") || d.contains("moi truong")) return "#9CCC65"; // Light Green
+        if (d.contains("khoa học") || d.contains("khoa hoc")) return "#AB47BC"; // Purple
+        if (d.contains("tài chính") || d.contains("tai chinh")) return "#FFCA28"; // Amber
+        if (d.contains("văn hoá") || d.contains("van hoa")) return "#8D6E63"; // Brown
+        if (d.contains("thể thao") || d.contains("the thao")) return "#FFA726"; // Orange 
+        return "#7E57C2"; // Deep Purple
+    }
+
+    private String getGradientEndForDomain(String domain) {
+        String d = domain.toLowerCase();
+        if (d.contains("ẩm thực") || d.contains("am thuc")) return "#FFAB91";
+        if (d.contains("du lịch") || d.contains("du lich")) return "#80CBC4";
+        if (d.contains("công việc") || d.contains("cong viec")) return "#9FA8DA";
+        if (d.contains("sức khoẻ") || d.contains("suc khoe")) return "#A5D6A7";
+        if (d.contains("nhà cửa") || d.contains("nha cua")) return "#B0BEC5";
+        if (d.contains("công nghệ") || d.contains("cong nghe")) return "#90CAF9";
+        if (d.contains("kinh doanh")) return "#F48FB1";
+        if (d.contains("môi trường") || d.contains("moi truong")) return "#C5E1A5";
+        if (d.contains("khoa học") || d.contains("khoa hoc")) return "#CE93D8";
+        if (d.contains("tài chính") || d.contains("tai chinh")) return "#FFE082";
+        if (d.contains("văn hoá") || d.contains("van hoa")) return "#BCAAA4";
+        if (d.contains("thể thao") || d.contains("the thao")) return "#FFCC80";
+        return "#B39DDB";
+    }
+
+    private int getDomainProgress(String domain) {
+        // Mock progress for now based on words learned in this domain
+        int total = 15; // Assume 15 per domain
+        int learned = getWordCountByDomain(domain);
+        return Math.min(100, (learned * 100) / total);
     }
 
     private int getWordCountByDomain(String domain) {
@@ -269,11 +370,54 @@ public class AppRepository {
     }
 
     public List<FlashcardItem> getFlashcardsForTopic(String topic) {
+        String domain = topic;
+        int startIndex = 0;
+        
+        if (topic.contains(" cơ bản")) {
+            domain = topic.replace(" cơ bản", "");
+            startIndex = 0;
+        } else if (topic.contains(" giao tiếp")) {
+            domain = topic.replace(" giao tiếp", "");
+            startIndex = 5;
+        } else if (topic.contains(" nâng cao")) {
+            domain = topic.replace(" nâng cao", "");
+            startIndex = 10;
+        } else if (topic.contains(" thực chiến")) {
+            domain = topic.replace(" thực chiến", "");
+            startIndex = 0; // Re-use/Loop for now
+        }
+
         List<FlashcardItem> cards = new ArrayList<>();
-        cards.add(new FlashcardItem("🍽️", "menu", "/ˈmen.juː/", "thực đơn", "Could I see the menu, please?"));
-        cards.add(new FlashcardItem("🥗", "healthy", "/ˈhel.θi/", "lành mạnh", "I try to eat healthy meals every day."));
-        cards.add(new FlashcardItem("☕", "beverage", "/ˈbev.ər.ɪdʒ/", "đồ uống", "Tea is my favorite beverage."));
-        cards.add(new FlashcardItem("🍲", "broth", "/brɒθ/", "nước dùng", "This broth smells delicious."));
+        try {
+            List<CustomVocabularyEntity> entities = database.customVocabularyDao().getByDomain(domain);
+            
+            // Aim for 10 cards per sub-topic
+            int targetSize = 10;
+            if (!entities.isEmpty()) {
+                for (int i = 0; i < targetSize; i++) {
+                    int index = (startIndex + i) % entities.size();
+                    CustomVocabularyEntity entity = entities.get(index);
+                    cards.add(new FlashcardItem(
+                        getEmojiForDomain(domain),
+                        entity.word,
+                        entity.ipa,
+                        entity.meaning,
+                        entity.example
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        if (cards.isEmpty()) {
+            // High-quality mock fallback for UI testing
+            cards.add(new FlashcardItem("🍽️", "menu", "/ˈmen.juː/", "thực đơn", "Could I see the menu, please?"));
+            cards.add(new FlashcardItem("🥗", "healthy", "/ˈhel.θi/", "lành mạnh", "I try to eat healthy meals every day."));
+            cards.add(new FlashcardItem("🍳", "fry", "/fraɪ/", "chiên, rán", "Fry the eggs in a little oil."));
+            cards.add(new FlashcardItem("🥖", "bread", "/bred/", "bánh mì", "He bought a loaf of fresh bread."));
+            cards.add(new FlashcardItem("🍶", "sauce", "/sɔːs/", "nước sốt", "Add some more soy sauce to the stir-fry."));
+        }
         return cards;
     }
 
@@ -287,7 +431,9 @@ public class AppRepository {
                 "bottle",
                 "/ˈbɒt.əl/",
                 "chai, lọ",
+                "noun",
                 "Please recycle this plastic bottle.",
+                "Vui lòng tái chế chai nhựa này.",
                 "Nhà cửa",
                 "The word 'bottle' comes from Medieval Latin 'butticula'.",
                 relatedWords
@@ -300,7 +446,16 @@ public class AppRepository {
             List<LearnedWordEntity> entities = database.learnedWordDao().getAllWords();
             if (entities != null) {
                 for (LearnedWordEntity entity : entities) {
-                    words.add(new WordEntry(entity.word, entity.ipa, entity.meaning, entity.example, entity.domain));
+                    words.add(new WordEntry(
+                        entity.word, 
+                        entity.ipa, 
+                        entity.meaning, 
+                        entity.wordType != null ? entity.wordType : "noun",
+                        entity.example, 
+                        entity.exampleVi != null ? entity.exampleVi : "",
+                        entity.domain,
+                        entity.note != null ? entity.note : ""
+                    ));
                 }
             }
         } catch (Exception e) {
@@ -322,7 +477,10 @@ public class AppRepository {
                     wordEntry.getWord(),
                     wordEntry.getIpa(),
                     wordEntry.getMeaning(),
+                    wordEntry.getWordType(),
                     wordEntry.getExample(),
+                    wordEntry.getExampleVi(),
+                    wordEntry.getNote(),
                     wordEntry.getCategory(),
                     ""
                 );
@@ -595,6 +753,24 @@ public class AppRepository {
         void onResult(String suggestion);
     }
 
+    public interface DataCallback<T> {
+        void onResult(T result);
+    }
+
+    public void getAllCustomVocabularyAsync(DataCallback<List<CustomVocabularyEntity>> callback) {
+        executorService.execute(() -> {
+            List<CustomVocabularyEntity> result = database.customVocabularyDao().getAll();
+            mainHandler.post(() -> callback.onResult(result));
+        });
+    }
+
+    public void getTopFailedLabelsAsync(int limit, DataCallback<List<FailedLabelLogEntity>> callback) {
+        executorService.execute(() -> {
+            List<FailedLabelLogEntity> result = database.failedLabelLogDao().getTopFailed(limit);
+            mainHandler.post(() -> callback.onResult(result));
+        });
+    }
+
     public void removeWord(WordEntry wordEntry) {
         // Note: You might want to add a delete method to the DAO if needed
     }
@@ -686,10 +862,10 @@ public class AppRepository {
 
     private List<TopicItem> sampleTopics(String domain) {
         List<TopicItem> topics = new ArrayList<>();
-        topics.add(new TopicItem(domain + " cơ bản", TopicItem.STATUS_COMPLETED));
-        topics.add(new TopicItem(domain + " giao tiếp", TopicItem.STATUS_LEARNING));
-        topics.add(new TopicItem(domain + " nâng cao", TopicItem.STATUS_NOT_STARTED));
-        topics.add(new TopicItem(domain + " thực chiến", TopicItem.STATUS_NOT_STARTED));
+        topics.add(new TopicItem(domain + " cơ bản", getTopicStatus(domain + " cơ bản")));
+        topics.add(new TopicItem(domain + " giao tiếp", getTopicStatus(domain + " giao tiếp")));
+        topics.add(new TopicItem(domain + " nâng cao", getTopicStatus(domain + " nâng cao")));
+        topics.add(new TopicItem(domain + " thực chiến", getTopicStatus(domain + " thực chiến")));
         return topics;
     }
 

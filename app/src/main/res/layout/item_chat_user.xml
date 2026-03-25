@@ -5,31 +5,52 @@
     android:layout_height="wrap_content"
     android:gravity="end"
     android:orientation="horizontal"
-    android:paddingStart="64dp"
+    android:paddingStart="48dp"
     android:paddingEnd="12dp"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp">
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
 
-    <!-- User Bubble -->
-    <com.google.android.material.card.MaterialCardView
+    <!-- User Bubble (3D Premium) -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="@color/ef_primary"
-        app:cardCornerRadius="18dp"
-        app:cardElevation="0dp"
-        app:strokeWidth="0dp">
+        android:background="@drawable/bg_bubble_user_premium"
+        android:elevation="3dp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp">
 
         <TextView
             android:id="@+id/chatUserMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingStart="14dp"
-            android:paddingTop="10dp"
-            android:paddingEnd="14dp"
-            android:paddingBottom="10dp"
-            android:textColor="@color/ef_on_primary"
-            android:textSize="14sp"
-            android:lineSpacingExtra="2dp" />
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:lineSpacingExtra="4dp"
+            android:letterSpacing="0.01" />
+    </LinearLayout>
+
+    <!-- User Avatar (3D Silver) -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="12dp"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_3d_badge_silver"
+            android:padding="2dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/user_avatar"
+                android:scaleType="centerCrop"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+        </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
 </LinearLayout>

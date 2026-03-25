@@ -33,8 +33,23 @@ public class AchievementAdapter extends RecyclerView.Adapter<AchievementAdapter.
         AchievementItem item = achievements.get(position);
         holder.titleText.setText(item.getTitle());
         holder.descText.setText(item.getDescription());
-        holder.stateText.setText(item.isUnlocked() ? "Đã mở khoá" : "Chưa mở");
-        holder.stateText.setAlpha(item.isUnlocked() ? 1f : 0.5f);
+        holder.iconText.setText(item.getIcon());
+        
+        holder.stateText.setText(item.isUnlocked() ? "ĐÃ MỞ" : "CHƯA MỞ");
+        
+        if (item.isUnlocked()) {
+            holder.container.setAlpha(1.0f);
+            holder.stateText.setTextColor(holder.itemView.getContext().getColor(R.color.ef_primary_dark));
+            holder.titleText.setTextColor(holder.itemView.getContext().getColor(R.color.ef_primary_dark));
+            holder.iconFrame.setAlpha(1.0f);
+            holder.iconText.setAlpha(1.0f);
+        } else {
+            holder.container.setAlpha(0.6f);
+            holder.stateText.setTextColor(0xFF8892B0); // Subdued blue-grey
+            holder.titleText.setTextColor(0xFF8892B0);
+            holder.iconFrame.setAlpha(0.4f);
+            holder.iconText.setAlpha(0.4f);
+        }
     }
 
     @Override
@@ -46,12 +61,18 @@ public class AchievementAdapter extends RecyclerView.Adapter<AchievementAdapter.
         final TextView titleText;
         final TextView descText;
         final TextView stateText;
+        final TextView iconText;
+        final View iconFrame;
+        final View container;
 
         AchievementViewHolder(@NonNull View itemView) {
             super(itemView);
             titleText = itemView.findViewById(R.id.achievementTitle);
             descText = itemView.findViewById(R.id.achievementDesc);
             stateText = itemView.findViewById(R.id.achievementState);
+            iconText = itemView.findViewById(R.id.achievementIcon);
+            iconFrame = itemView.findViewById(R.id.iconFrame);
+            container = itemView.findViewById(R.id.achievementContainer);
         }
     }
 }

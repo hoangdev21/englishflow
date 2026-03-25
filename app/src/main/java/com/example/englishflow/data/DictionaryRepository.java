@@ -55,15 +55,68 @@ public class DictionaryRepository {
             return;
         }
 
+        // 1. First, translate the word itself (word-to-word translation)
+        myMemoryService.translateEnToVi(lookupQuery, new MyMemoryService.RawTranslationCallback() {
+            @Override
+            public void onSuccess(String translatedWord) {
+                // Now lookup the dictionary for IPA, Synonyms, and English definitions
+                performFinalLookup(lookupQuery, translatedWord, callback);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                // If word translation fails, proceed with empty translated word
+                performFinalLookup(lookupQuery, "", callback);
+            }
+        });
+    }
+
+    private void performFinalLookup(String lookupQuery, String translatedWord, SearchCallback callback) {
         freeDictionaryService.lookupWord(lookupQuery, new FreeDictionaryService.LookupCallback() {
             @Override
             public void onSuccess(DictionaryResult result) {
-                callback.onSuccess(result);
+                result.setTranslatedWord(translatedWord);
+                
+                // If there are definitions, translate the first one's meaning for the explanation
+                if (result.getDefinitions() != null && !result.getDefinitions().isEmpty()) {
+                    DictionaryResult.Definition def = result.getDefinitions().get(0);
+                    String englishMeaning = def.getMeaning();
+                    
+                    myMemoryService.translateEnToVi(englishMeaning, new MyMemoryService.RawTranslationCallback() {
+                        @Override
+                        public void onSuccess(String translatedMeaning) {
+                            def.setTranslatedMeaning(translatedMeaning);
+                            def.setUsageNote(generateUsageNote(def.getPartOfSpeech(), lookupQuery));
+                            callback.onSuccess(result);
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            // Even if meaning translation fails, we have word translation and English result
+                            def.setUsageNote(generateUsageNote(def.getPartOfSpeech(), lookupQuery));
+                            callback.onSuccess(result);
+                        }
+                    });
+                } else {
+                    callback.onSuccess(result);
+                }
             }
 
             @Override
             public void onNotFound() {
-                callback.onNotFound(lookupQuery);
+                // If dictionary not found, but we translated the word, we can still show something!
+                if (translatedWord != null && !translatedWord.isEmpty()) {
+                    DictionaryResult result = new DictionaryResult();
+                    result.setWord(lookupQuery);
+                    result.setTranslatedWord(translatedWord);
+                    result.setIpa("");
+                    ArrayList<DictionaryResult.Definition> definitions = new ArrayList<>();
+                    definitions.add(new DictionaryResult.Definition("translation", translatedWord, "Dùng trong giao tiếp hàng ngày."));
+                    result.setDefinitions(definitions);
+                    callback.onSuccess(result);
+                } else {
+                    callback.onNotFound(lookupQuery);
+                }
             }
 
             @Override
@@ -165,6 +218,19 @@ public class DictionaryRepository {
             lower = lower.substring(0, firstSpace);
         }
         return lower.replaceAll("[^a-z'-]", "");
+    }
+
+    private String generateUsageNote(String pos, String word) {
+        if (pos == null || pos.trim().isEmpty()) return "Dùng để diễn đạt ý của bạn trong giao tiếp.";
+        String lowerPos = pos.toLowerCase(Locale.US);
+        if (lowerPos.contains("noun")) return "Dùng như một danh từ chỉ sự vật, hiện tượng.";
+        if (lowerPos.contains("verb")) return "Dùng để chỉ hành động hoặc trạng thái.";
+        if (lowerPos.contains("adjective")) return "Dùng để bổ nghĩa cho danh từ, miêu tả tính chất.";
+        if (lowerPos.contains("adverb")) return "Dùng để bổ nghĩa cho động từ hoặc tính từ.";
+        if (lowerPos.contains("preposition")) return "Dùng để chỉ vị trí, thời gian hoặc quan hệ.";
+        if (lowerPos.contains("pronoun")) return "Dùng để thay thế cho danh từ.";
+        if (lowerPos.contains("interjection")) return "Dùng để biểu thị cảm xúc thốt lên.";
+        return "Từ này được sử dụng trong ngữ cảnh " + pos + ".";
     }
 
     private String safeMessage(Exception exception) {

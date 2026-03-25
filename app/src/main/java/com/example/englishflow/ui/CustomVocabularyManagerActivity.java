@@ -65,6 +65,9 @@ public class CustomVocabularyManagerActivity extends AppCompatActivity {
         failedRecycler.setLayoutManager(new LinearLayoutManager(this));
         failedRecycler.setAdapter(failedLabelAdapter);
 
+        // Back button
+        findViewById(R.id.btnBackAction).setOnClickListener(v -> onBackPressed());
+
         loadData();
     }
 
@@ -75,8 +78,13 @@ public class CustomVocabularyManagerActivity extends AppCompatActivity {
     }
 
     private void loadData() {
-        customAdapter.submitList(repository.getAllCustomVocabulary());
-        failedLabelAdapter.submitList(repository.getTopFailedLabels(20));
+        repository.getAllCustomVocabularyAsync(customList -> {
+            if (customAdapter != null) customAdapter.submitList(customList);
+        });
+        
+        repository.getTopFailedLabelsAsync(20, failedList -> {
+            if (failedLabelAdapter != null) failedLabelAdapter.submitList(failedList);
+        });
     }
 
     private void showEditMeaningDialog(@NonNull CustomVocabularyEntity item) {

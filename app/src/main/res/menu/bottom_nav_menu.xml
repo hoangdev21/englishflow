@@ -2,22 +2,23 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_home"
-        android:icon="@android:drawable/ic_menu_view"
-        android:title="@string/nav_home" />
+        android:icon="@drawable/ic_nav_home"
+        android:title="Trang chủ" />
     <item
         android:id="@+id/nav_learn"
-        android:icon="@android:drawable/ic_menu_agenda"
-        android:title="@string/nav_learn" />
+        android:icon="@drawable/ic_nav_learn"
+        android:title="Học" />
+    <!-- Empty item for FAB gap -->
     <item
-        android:id="@+id/nav_scan"
-        android:icon="@android:drawable/ic_menu_camera"
-        android:title="@string/nav_scan" />
+        android:id="@+id/nav_placeholder"
+        android:enabled="false"
+        android:title="" />
     <item
         android:id="@+id/nav_chat"
-        android:icon="@android:drawable/ic_menu_send"
-        android:title="@string/nav_chat" />
+        android:icon="@drawable/ic_nav_chat"
+        android:title="Chat" />
     <item
         android:id="@+id/nav_profile"
-        android:icon="@android:drawable/ic_menu_myplaces"
-        android:title="@string/nav_profile" />
+        android:icon="@drawable/ic_nav_profile"
+        android:title="Hồ sơ" />
 </menu>

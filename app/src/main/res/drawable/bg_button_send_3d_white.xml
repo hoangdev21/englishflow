@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Deep Shadow (Offset for 3D look) -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="26dp" />
+            <solid android:color="#35000000" />
+        </shape>
+    </item>
+
+    <!-- Side Shadow for depth -->
+    <item android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="26dp" />
+            <solid android:color="#20000000" />
+        </shape>
+    </item>
+
+    <!-- Main White Body (Embossed look) -->
+    <item android:bottom="5dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="26dp" />
+            <stroke android:width="1.5dp" android:color="#E2E8F0" />
+            <gradient
+                android:angle="270"
+                android:centerY="0.2"
+                android:endColor="#F8FAFC"
+                android:startColor="#FFFFFF"
+                android:type="linear" />
+        </shape>
+    </item>
+
+    <!-- Top Glow / Highlight for convex feel -->
+    <item android:bottom="7dp" android:left="4dp" android:right="4dp" android:top="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="24dp" />
+            <gradient
+                android:angle="90"
+                android:endColor="#10000000"
+                android:startColor="@android:color/transparent"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

@@ -2,6 +2,7 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00000000</color>
 
     <!-- Premium Emerald Palette -->
     <color name="ef_primary">#0D9373</color>
@@ -65,4 +66,25 @@
     <color name="ef_card_amber_text">#B8860B</color>
     <color name="ef_card_rose">#FFF1F2</color>
     <color name="ef_card_rose_text">#E11D48</color>
+
+    <!-- Home Redesign -->
+    <!-- Home Redesign Premium - Blue Dark Mode -->
+    <color name="ef_hero_grad_start">#1A237E</color>
+    <color name="ef_hero_grad_mid">#1E293B</color>
+    <color name="ef_hero_grad_end">#0F172A</color>
+    <color name="ef_white_silver">#F8FAFC</color>
+    <color name="ef_silver_border">#CBD5E1</color>
+    <color name="ef_silver_shadow">#94A3B8</color>
+    <color name="ef_hero_text_white">#F1F5F9</color>
+    <color name="ef_hero_text_secondary">#94A3B8</color>
+
+    <color name="ef_card_indigo">#EEF0FF</color>
+    <color name="ef_card_indigo_text">#4338CA</color>
+    <color name="ef_section_header">#3D5A4F</color>
+    <color name="ef_divider">#E8EEEB</color>
+    <color name="ef_badge_success">#DCFCE7</color>
+    <color name="ef_badge_success_text">#166534</color>
+    <color name="ef_xp_track">#E5ECE8</color>
+    <color name="ef_dict_ipa">#4A6572</color>
+    <color name="ef_dict_example_bg">#F8FAFB</color>
 </resources>

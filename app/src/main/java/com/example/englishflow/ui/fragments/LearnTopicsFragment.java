@@ -47,17 +47,34 @@ public class LearnTopicsFragment extends Fragment {
             domainItem = new DomainItem("📚", domainName, 0, "#1A7A5E", "#2AAE84", java.util.Collections.emptyList());
         }
 
+        view.findViewById(R.id.btnBackTopics).setOnClickListener(v -> {
+            getParentFragmentManager().popBackStack();
+        });
+
         TextView title = view.findViewById(R.id.topicTitle);
-        title.setText(domainItem.getName() + " • " + getString(R.string.learn_topics));
+        title.setText(domainItem.getName());
+        
+        TextView emoji = view.findViewById(R.id.topicDomainEmoji);
+        emoji.setText(domainItem.getEmoji());
 
         RecyclerView recyclerView = view.findViewById(R.id.topicRecycler);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        TopicAdapter adapter = new TopicAdapter(domainItem.getTopics(), topicItem -> {
+        
+        final TopicAdapter adapter = new TopicAdapter(domainItem.getTopics(), topicItem -> {
             Fragment parent = getParentFragment();
             if (parent instanceof LearnFlowNavigator) {
                 ((LearnFlowNavigator) parent).openFlashcards(domainItem, topicItem);
             }
         });
         recyclerView.setAdapter(adapter);
+
+        android.widget.EditText search = view.findViewById(R.id.topicSearch);
+        search.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                adapter.filter(s.toString());
+            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
     }
 }

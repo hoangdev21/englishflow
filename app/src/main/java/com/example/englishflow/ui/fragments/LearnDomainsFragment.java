@@ -1,14 +1,20 @@
 package com.example.englishflow.ui.fragments;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.PopupMenu;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
@@ -20,6 +26,10 @@ import java.util.List;
 
 public class LearnDomainsFragment extends Fragment {
 
+    private DomainAdapter adapter;
+    private RecyclerView recyclerView;
+    private boolean isAscending = true;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -30,16 +40,80 @@ public class LearnDomainsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        RecyclerView recyclerView = view.findViewById(R.id.domainRecycler);
+        recyclerView = view.findViewById(R.id.domainRecycler);
         recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 2));
 
         List<DomainItem> domains = AppRepository.getInstance(requireContext()).getDomains();
-        DomainAdapter adapter = new DomainAdapter(domains, domainItem -> {
+        adapter = new DomainAdapter(domains, domainItem -> {
             Fragment parent = getParentFragment();
             if (parent instanceof LearnFlowNavigator) {
                 ((LearnFlowNavigator) parent).openTopics(domainItem);
             }
         });
         recyclerView.setAdapter(adapter);
+
+        // Search logic
+        EditText searchInput = view.findViewById(R.id.domainSearchInput);
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                adapter.filter(s.toString());
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // Sort logic
+        ImageButton btnSort = view.findViewById(R.id.btnSort);
+        btnSort.setOnClickListener(v -> {
+            PopupMenu popup = new PopupMenu(requireContext(), btnSort);
+            popup.getMenu().add("Tên (A-Z)");
+            popup.getMenu().add("Tên (Z-A)");
+            popup.getMenu().add("Tiến độ thấp nhất");
+            popup.getMenu().add("Tiến độ cao nhất");
+            
+            popup.setOnMenuItemClickListener(item -> {
+                String title = item.getTitle().toString();
+                if (title.equals("Tên (A-Z)")) adapter.sort(true);
+                else if (title.equals("Tên (Z-A)")) adapter.sort(false);
+                else if (title.equals("Tiến độ thấp nhất")) adapter.sortByProgress(true);
+                else if (title.equals("Tiến độ cao nhất")) adapter.sortByProgress(false);
+                return true;
+            });
+            popup.show();
+        });
+
+        // View toggle logic
+        ImageButton btnToggleView = view.findViewById(R.id.btnToggleView);
+        btnToggleView.setOnClickListener(v -> {
+            if (adapter.getViewType() == DomainAdapter.VIEW_TYPE_GRID) {
+                adapter.setViewType(DomainAdapter.VIEW_TYPE_LIST);
+                recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+                btnToggleView.setImageResource(R.drawable.ic_list); // Assuming ic_list exists, or swap icons
+                btnToggleView.setImageResource(R.drawable.ic_grid); // Oops, I'll just change the icon to the *next* view type
+                btnToggleView.setImageResource(android.R.drawable.ic_dialog_dialer); // Placeholder for grid icon
+            } else {
+                adapter.setViewType(DomainAdapter.VIEW_TYPE_GRID);
+                recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 2));
+                btnToggleView.setImageResource(android.R.drawable.ic_menu_sort_by_size); // Placeholder for list icon
+            }
+            // Realistically, swap between ic_grid and ic_list
+            updateToggleIcon(btnToggleView);
+        });
+        updateToggleIcon(btnToggleView);
+    }
+
+    private void updateToggleIcon(ImageButton btn) {
+        if (adapter.getViewType() == DomainAdapter.VIEW_TYPE_GRID) {
+            btn.setImageResource(R.drawable.ic_grid); // Grid icon means "I am in grid" OR "switch to grid"? 
+            // Usually, icon shows current state or available action. Let's make it show the action.
+            // If in grid, show list icon.
+            btn.setImageResource(R.drawable.ic_list); 
+        } else {
+            btn.setImageResource(R.drawable.ic_grid);
+        }
     }
 }
+

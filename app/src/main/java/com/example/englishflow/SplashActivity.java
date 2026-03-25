@@ -3,11 +3,15 @@ package com.example.englishflow;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
+import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -17,7 +21,6 @@ public class SplashActivity extends AppCompatActivity {
 
     private static final String PREFS = "englishflow_prefs";
     private static final String KEY_FIRST_LAUNCH = "first_launch";
-    private static final long SPLASH_DURATION = 2500; // 2.5 seconds
     private LocalAuthStore localAuthStore;
 
     @Override
@@ -27,60 +30,94 @@ public class SplashActivity extends AppCompatActivity {
         localAuthStore = new LocalAuthStore(getApplicationContext());
 
         try {
-            // Get logo view
-            View logoView = findViewById(R.id.splashLogo);
+            ImageView logoView = findViewById(R.id.splashLogo);
             View titleView = findViewById(R.id.splashTitle);
             View subtitleView = findViewById(R.id.splashSubtitle);
+            ImageView waveBack = findViewById(R.id.waveBack);
+            ImageView waveFront = findViewById(R.id.waveFront);
 
             if (logoView == null || titleView == null || subtitleView == null) {
                 navigateToNextScreen();
                 return;
             }
 
-            // Fade in animation
+            // Initial states
             logoView.setAlpha(0f);
+            logoView.setTranslationY(100f);
             titleView.setAlpha(0f);
+            titleView.setScaleX(0.9f);
+            titleView.setScaleY(0.9f);
             subtitleView.setAlpha(0f);
 
-            // Animate logo fade in and scale
-            ObjectAnimator logoFadeIn = ObjectAnimator.ofFloat(logoView, "alpha", 0f, 1f);
-            logoFadeIn.setDuration(800);
-            logoFadeIn.setInterpolator(new DecelerateInterpolator());
+            // Animate waves
+            animateWave(waveBack, 3000, -200f);
+            animateWave(waveFront, 2000, -400f);
 
-            ObjectAnimator logoScale = ObjectAnimator.ofFloat(logoView, "scaleX", 0.8f, 1f);
-            ObjectAnimator logoScaleY = ObjectAnimator.ofFloat(logoView, "scaleY", 0.8f, 1f);
-            logoScale.setDuration(800);
-            logoScaleY.setDuration(800);
-            logoScale.setInterpolator(new DecelerateInterpolator());
-            logoScaleY.setInterpolator(new DecelerateInterpolator());
+            // Dolphin Jump Animation
+            logoView.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .scaleX(1.1f)
+                    .scaleY(1.1f)
+                    .setDuration(1200)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            // Subtle breathing effect for the dolphin
+                            ObjectAnimator breather = ObjectAnimator.ofFloat(logoView, "scaleX", 1.1f, 1.05f);
+                            breather.setDuration(1000);
+                            breather.setRepeatMode(ValueAnimator.REVERSE);
+                            breather.setRepeatCount(ValueAnimator.INFINITE);
+                            breather.start();
+                        }
+                    })
+                    .start();
 
-            // Animate text fade in
-            ObjectAnimator titleFadeIn = ObjectAnimator.ofFloat(titleView, "alpha", 0f, 1f);
-            titleFadeIn.setDuration(600);
-            titleFadeIn.setStartDelay(400);
-            titleFadeIn.setInterpolator(new DecelerateInterpolator());
+            // Text Animations
+            titleView.animate()
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setStartDelay(500)
+                    .setDuration(800)
+                    .setInterpolator(new AccelerateDecelerateInterpolator())
+                    .start();
 
-            ObjectAnimator subtitleFadeIn = ObjectAnimator.ofFloat(subtitleView, "alpha", 0f, 1f);
-            subtitleFadeIn.setDuration(600);
-            subtitleFadeIn.setStartDelay(600);
-            subtitleFadeIn.setInterpolator(new DecelerateInterpolator());
+            subtitleView.animate()
+                    .alpha(1f)
+                    .setStartDelay(800)
+                    .setDuration(800)
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            // Stay on splash for a bit then navigate
+                            subtitleView.postDelayed(() -> navigateToNextScreen(), 1200);
+                        }
+                    })
+                    .start();
 
-            // Start animations
-            logoFadeIn.start();
-            logoScale.start();
-            logoScaleY.start();
-            titleFadeIn.start();
-            subtitleFadeIn.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    navigateToNextScreen();
-                }
-            });
-            subtitleFadeIn.start();
         } catch (Exception e) {
             e.printStackTrace();
             navigateToNextScreen();
         }
+    }
+
+    private void animateWave(ImageView wave, int duration, float translationX) {
+        ObjectAnimator animator = ObjectAnimator.ofFloat(wave, "translationX", 0f, translationX);
+        animator.setDuration(duration);
+        animator.setInterpolator(new LinearInterpolator());
+        animator.setRepeatCount(ValueAnimator.INFINITE);
+        animator.setRepeatMode(ValueAnimator.REVERSE);
+        animator.start();
+        
+        // Add vertical floating to wave
+        ObjectAnimator floater = ObjectAnimator.ofFloat(wave, "translationY", 0f, 20f);
+        floater.setDuration(duration / 2);
+        floater.setInterpolator(new AccelerateDecelerateInterpolator());
+        floater.setRepeatCount(ValueAnimator.INFINITE);
+        floater.setRepeatMode(ValueAnimator.REVERSE);
+        floater.start();
     }
 
     private void navigateToNextScreen() {
@@ -89,7 +126,6 @@ public class SplashActivity extends AppCompatActivity {
 
         Intent intent;
         if (isFirstLaunch) {
-            // First time: show onboarding
             intent = new Intent(this, OnboardingActivity.class);
             prefs.edit().putBoolean(KEY_FIRST_LAUNCH, false).apply();
         } else if (localAuthStore.hasActiveSession()) {

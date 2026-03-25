@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base Color (Soft Light Blue/Green) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="45"
+                android:startColor="#E1F5FE"
+                android:endColor="#F1F8E9"
+                android:type="linear" />
+        </shape>
+    </item>
+
+    <!-- Darker Green Glow (Upper Right) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:centerX="0.8"
+                android:centerY="0.2"
+                android:gradientRadius="400dp"
+                android:startColor="#12C8E6C9"
+                android:endColor="#00000000"
+                android:type="radial" />
+        </shape>
+    </item>
+
+    <!-- Darker Blue Glow (Lower Left) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:centerX="0.2"
+                android:centerY="0.8"
+                android:gradientRadius="400dp"
+                android:startColor="#12B3E5FC"
+                android:endColor="#00000000"
+                android:type="radial" />
+        </shape>
+    </item>
+</layer-list>
