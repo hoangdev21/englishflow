@@ -463,7 +463,7 @@ public class ScanFragment extends Fragment {
                     "A manually saved word.",
                     "Một từ vựng được lưu thủ công.",
                     "Custom",
-                    "This word was learned from real world scanning.",
+                    "Từ vựng này được học thông qua tính năng trợ lý thị giác.",
                     java.util.Arrays.asList("learn", "vocabulary", "custom")
             );
             android.util.Log.d("ScanFragment", "Custom scan result built successfully");

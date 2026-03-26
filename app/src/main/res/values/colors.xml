@@ -69,9 +69,9 @@
 
     <!-- Home Redesign -->
     <!-- Home Redesign Premium - Blue Dark Mode -->
-    <color name="ef_hero_grad_start">#1A237E</color>
-    <color name="ef_hero_grad_mid">#1E293B</color>
-    <color name="ef_hero_grad_end">#0F172A</color>
+    <color name="ef_hero_grad_start">#007ED6</color>
+    <color name="ef_hero_grad_mid">#005CBF</color>
+    <color name="ef_hero_grad_end">#003366</color>
     <color name="ef_white_silver">#F8FAFC</color>
     <color name="ef_silver_border">#CBD5E1</color>
     <color name="ef_silver_shadow">#94A3B8</color>

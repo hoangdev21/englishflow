@@ -277,10 +277,23 @@ public class AppRepository {
         List<Integer> weeklyMinutes = new ArrayList<>();
         try {
             Calendar now = Calendar.getInstance();
-            // Get minutes for each day of the past 7 days (including today)
-            for (int i = 6; i >= 0; i--) {
-                Calendar cal = (Calendar) now.clone();
-                cal.add(Calendar.DAY_OF_MONTH, -i);
+            int currentDayOfWeek = now.get(Calendar.DAY_OF_WEEK);
+            // Convert to 0-indexed where Monday is 0, Sunday is 6
+            int daysSinceMonday = (currentDayOfWeek + 5) % 7; 
+            
+            // Go back to Monday of this week
+            Calendar monday = (Calendar) now.clone();
+            monday.add(Calendar.DAY_OF_MONTH, -daysSinceMonday);
+            
+            for (int i = 0; i < 7; i++) {
+                // If the queried day is in the future relative to today, just return 0
+                if (i > daysSinceMonday) {
+                    weeklyMinutes.add(0);
+                    continue;
+                }
+
+                Calendar cal = (Calendar) monday.clone();
+                cal.add(Calendar.DAY_OF_MONTH, i);
                 
                 long startOfDay = getStartOfDay(cal.getTimeInMillis());
                 long endOfDay = getEndOfDay(cal.getTimeInMillis());
@@ -887,12 +900,12 @@ public class AppRepository {
             try {
                 // Ensure daily XP is for today
                 String email = getCurrentEmail();
-                getOrCreateUserStats(); 
+                UserStatsEntity stats = getOrCreateUserStats(); 
                 
                 // Specific updates to avoid overwriting
                 database.userStatsDao().addTotalXp(email, xp);
                 database.userStatsDao().addDailyXp(email, xp);
-                database.userStatsDao().updateLastStudyDate(email, System.currentTimeMillis());
+                updateStreakForNewActivity(email, stats, System.currentTimeMillis());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -915,7 +928,7 @@ public class AppRepository {
                 database.studySessionDao().insert(entity);
                 
                 // Ensure daily context
-                getOrCreateUserStats();
+                UserStatsEntity stats = getOrCreateUserStats();
                 
                 // Use robust specialized updates
                 database.userStatsDao().addStudyMinutes(email, (int) entity.getDurationMinutes());
@@ -923,7 +936,7 @@ public class AppRepository {
                     database.userStatsDao().addTotalXp(email, session.getXpEarned());
                     database.userStatsDao().addDailyXp(email, session.getXpEarned());
                 }
-                database.userStatsDao().updateLastStudyDate(email, System.currentTimeMillis());
+                updateStreakForNewActivity(email, stats, System.currentTimeMillis());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -972,6 +985,17 @@ public class AppRepository {
         topics.add(new TopicItem(domain + " giao tiếp", getTopicStatus(domain + " giao tiếp")));
         topics.add(new TopicItem(domain + " nâng cao", getTopicStatus(domain + " nâng cao")));
         topics.add(new TopicItem(domain + " thực chiến", getTopicStatus(domain + " thực chiến")));
+        topics.add(new TopicItem(domain + " chuyên sâu", getTopicStatus(domain + " chuyên sâu")));
+        topics.add(new TopicItem(domain + " chuyên ngành", getTopicStatus(domain + " chuyên ngành")));
+        topics.add(new TopicItem(domain + " thuật ngữ", getTopicStatus(domain + " thuật ngữ")));
+        topics.add(new TopicItem(domain + " tình huống", getTopicStatus(domain + " tình huống")));
+        topics.add(new TopicItem(domain + " tiếng lóng", getTopicStatus(domain + " tiếng lóng")));
+        topics.add(new TopicItem(domain + " thành ngữ", getTopicStatus(domain + " thành ngữ")));
+        topics.add(new TopicItem(domain + " mở rộng", getTopicStatus(domain + " mở rộng")));
+        topics.add(new TopicItem(domain + " ứng dụng", getTopicStatus(domain + " ứng dụng")));
+        topics.add(new TopicItem(domain + " nâng tầm", getTopicStatus(domain + " nâng tầm")));
+        topics.add(new TopicItem(domain + " học thuật", getTopicStatus(domain + " học thuật")));
+        topics.add(new TopicItem(domain + " chuyên gia", getTopicStatus(domain + " chuyên gia")));
         return topics;
     }
 
@@ -1006,21 +1030,51 @@ public class AppRepository {
             // Robust New Day Reset check
             long lastStudyTime = stats.lastStudyDate;
             if (lastStudyTime > 0) {
-                Calendar lastCal = Calendar.getInstance();
-                lastCal.setTimeInMillis(lastStudyTime);
-                Calendar currentCal = Calendar.getInstance();
+                long now = System.currentTimeMillis();
+                long startToday = getStartOfDay(now);
+                long startLast = getStartOfDay(lastStudyTime);
+                long diffDays = (startToday - startLast) / (24 * 60 * 60 * 1000);
                 
-                boolean isNewDay = lastCal.get(Calendar.DAY_OF_YEAR) != currentCal.get(Calendar.DAY_OF_YEAR) ||
-                                 lastCal.get(Calendar.YEAR) != currentCal.get(Calendar.YEAR);
+                boolean isNewDay = diffDays > 0;
                 
                 if (isNewDay) {
                     database.userStatsDao().resetDailyXp(email);
                     stats.xpTodayEarned = 0;
-                    // Note: update lastStudyDate only when they actually earn new XP to avoid continuous resets if they just open the app
+                }
+                
+                if (diffDays > 1 && stats.currentStreak > 0) {
+                    stats.currentStreak = 0;
+                    database.userStatsDao().updateStreakAndDate(email, stats.currentStreak, stats.bestStreak, lastStudyTime);
                 }
             }
         }
         return stats;
+    }
+
+    private void updateStreakForNewActivity(String email, UserStatsEntity stats, long now) {
+        long lastStudyTime = stats.lastStudyDate;
+        if (lastStudyTime > 0) {
+            long startToday = getStartOfDay(now);
+            long startLast = getStartOfDay(lastStudyTime);
+            long diffDays = (startToday - startLast) / (24 * 60 * 60 * 1000);
+            
+            if (diffDays == 1) {
+                stats.currentStreak++;
+            } else if (diffDays > 1) {
+                stats.currentStreak = 1;
+            } else if (diffDays == 0 && stats.currentStreak == 0) {
+                stats.currentStreak = 1;
+            }
+        } else {
+            stats.currentStreak = 1;
+        }
+        
+        if (stats.currentStreak > stats.bestStreak) {
+            stats.bestStreak = stats.currentStreak;
+        }
+        
+        stats.lastStudyDate = now;
+        database.userStatsDao().updateStreakAndDate(email, stats.currentStreak, stats.bestStreak, now);
     }
 
     public void markTopicWordLearned(String topic, String word) {
@@ -1131,31 +1185,37 @@ public class AppRepository {
         if (topic == null) {
             return "";
         }
-        if (topic.contains(" cơ bản")) {
-            return topic.replace(" cơ bản", "");
-        }
-        if (topic.contains(" giao tiếp")) {
-            return topic.replace(" giao tiếp", "");
-        }
-        if (topic.contains(" nâng cao")) {
-            return topic.replace(" nâng cao", "");
-        }
-        if (topic.contains(" thực chiến")) {
-            return topic.replace(" thực chiến", "");
+        String[] suffixes = {
+            " cơ bản", " giao tiếp", " nâng cao", " thực chiến",
+            " chuyên sâu", " chuyên ngành", " thuật ngữ", " tình huống",
+            " tiếng lóng", " thành ngữ", " mở rộng", " ứng dụng",
+            " nâng tầm", " học thuật", " chuyên gia"
+        };
+        for (String suffix : suffixes) {
+            if (topic.endsWith(suffix)) {
+                return topic.replace(suffix, "");
+            }
         }
         return topic;
     }
 
     private int getStartIndexForTopic(String topic) {
-        if (topic == null) {
-            return 0;
-        }
-        if (topic.contains(" giao tiếp")) {
-            return 5;
-        }
-        if (topic.contains(" nâng cao")) {
-            return 10;
-        }
+        if (topic == null) return 0;
+        if (topic.endsWith(" cơ bản")) return 0;
+        if (topic.endsWith(" giao tiếp")) return 10;
+        if (topic.endsWith(" nâng cao")) return 20;
+        if (topic.endsWith(" thực chiến")) return 30;
+        if (topic.endsWith(" chuyên sâu")) return 40;
+        if (topic.endsWith(" chuyên ngành")) return 50;
+        if (topic.endsWith(" thuật ngữ")) return 60;
+        if (topic.endsWith(" tình huống")) return 70;
+        if (topic.endsWith(" tiếng lóng")) return 80;
+        if (topic.endsWith(" thành ngữ")) return 90;
+        if (topic.endsWith(" mở rộng")) return 100;
+        if (topic.endsWith(" ứng dụng")) return 110;
+        if (topic.endsWith(" nâng tầm")) return 120;
+        if (topic.endsWith(" học thuật")) return 130;
+        if (topic.endsWith(" chuyên gia")) return 140;
         return 0;
     }
 
@@ -1208,6 +1268,18 @@ public class AppRepository {
         executorService.execute(() -> {
             List<WordEntry> result = getSavedWords();
             mainHandler.post(() -> callback.onResult(result));
+        });
+    }
+
+    public void getLearnedWordEntitiesAsync(DataCallback<List<LearnedWordEntity>> callback) {
+        executorService.execute(() -> {
+            try {
+                List<LearnedWordEntity> entities = database.learnedWordDao().getAllWords(getCurrentEmail());
+                mainHandler.post(() -> callback.onResult(entities != null ? entities : new ArrayList<>()));
+            } catch (Exception e) {
+                e.printStackTrace();
+                mainHandler.post(() -> callback.onResult(new ArrayList<>()));
+            }
         });
     }
 

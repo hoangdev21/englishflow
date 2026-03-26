@@ -8,26 +8,13 @@
     android:background="@color/ef_background"
     tools:context=".MainActivity">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/topAppBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="8dp"
-        android:title="@string/app_title"
-        android:titleTextAppearance="@style/TextAppearance.EnglishFlow.Title"
-        app:layout_scrollFlags="scroll|enterAlways"
-        app:menu="@menu/top_placeholder_menu" />
-
+    <!-- Removed unused MaterialToolbar (topAppBar) to fix the large white space at the top -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="68dp"
-        android:layout_marginBottom="112dp" />
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="0dp" />
 
     <com.google.android.material.bottomappbar.BottomAppBar
         android:id="@+id/bottomAppBar"
@@ -38,7 +25,8 @@
         app:fabAlignmentMode="center"
         app:fabCradleMargin="8dp"
         app:fabCradleRoundedCornerRadius="14dp"
-        app:fabCradleVerticalOffset="4dp">
+        app:fabCradleVerticalOffset="4dp"
+        app:paddingBottomSystemWindowInsets="false">
 
         <!-- Custom 3D Premium Tab Bar -->
         <androidx.constraintlayout.widget.ConstraintLayout

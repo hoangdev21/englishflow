@@ -23,7 +23,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_hero_home_premium"
                 android:orientation="vertical"
-                android:paddingTop="20dp"
+                android:paddingTop="56dp"
                 android:paddingBottom="55dp">
 
                 <TextView

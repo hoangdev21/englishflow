@@ -43,8 +43,6 @@ public class ProfileFragment extends Fragment {
     private TextView statsText;
     private TextView tvLearnedCount, tvStreakCount, tvXpCount;
     private LinearLayout chartContainer;
-    private RecyclerView dictionaryRecycler;
-    private DictionaryAdapter dictionaryAdapter;
 
     @Nullable
     @Override
@@ -66,11 +64,11 @@ public class ProfileFragment extends Fragment {
         tvStreakCount = view.findViewById(R.id.tvStreakCount);
         tvXpCount = view.findViewById(R.id.tvXpCount);
         chartContainer = view.findViewById(R.id.chartContainer);
-        dictionaryRecycler = view.findViewById(R.id.dictionaryRecycler);
 
         MaterialButton btnChangeName = view.findViewById(R.id.btnChangeName);
         MaterialButton btnReset = view.findViewById(R.id.btnResetProgress);
         MaterialButton btnLogout = view.findViewById(R.id.btnLogout);
+        MaterialButton btnViewDictionary = view.findViewById(R.id.btnViewSavedDictionary);
 
         textToSpeech = new TextToSpeech(requireContext(), status -> {
             if (status == TextToSpeech.SUCCESS) {
@@ -84,14 +82,17 @@ public class ProfileFragment extends Fragment {
         achievementRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         achievementRecycler.setAdapter(new AchievementAdapter(repository.getAchievements()));
 
-        dictionaryRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
-        bindDictionary();
         renderProfile();
+        
+        btnViewDictionary.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                startActivity(new android.content.Intent(requireContext(), com.example.englishflow.ui.LearnedWordsActivity.class));
+            }
+        });
 
         btnChangeName.setOnClickListener(v -> showChangeNameDialog());
         btnReset.setOnClickListener(v -> {
             repository.resetProgress();
-            bindDictionary();
             renderProfile();
             Toast.makeText(requireContext(), "Đã reset toàn bộ tiến độ", Toast.LENGTH_SHORT).show();
         });
@@ -171,22 +172,7 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    private void bindDictionary() {
-        List<WordEntry> words = repository.getSavedWords();
-        dictionaryAdapter = new DictionaryAdapter(words, new DictionaryAdapter.DictionaryActionListener() {
-            @Override
-            public void onPronounce(WordEntry wordEntry) {
-                textToSpeech.speak(wordEntry.getWord(), TextToSpeech.QUEUE_FLUSH, null, "dictionary-word");
-            }
 
-            @Override
-            public void onDelete(WordEntry wordEntry) {
-                repository.removeWord(wordEntry);
-                bindDictionary();
-            }
-        });
-        dictionaryRecycler.setAdapter(dictionaryAdapter);
-    }
 
     private void showChangeNameDialog() {
         EditText input = new EditText(requireContext());

@@ -22,7 +22,7 @@
                 android:background="@drawable/bg_hero_home_premium"
                 android:orientation="vertical"
                 android:paddingStart="24dp"
-                android:paddingTop="20dp"
+                android:paddingTop="28dp"
                 android:paddingEnd="24dp"
                 android:paddingBottom="55dp">
 
@@ -218,13 +218,13 @@
                 app:trackThickness="10dp"
                 android:indeterminate="true" />
 
-            <!-- Result Card -->
+            <!-- Result Card (Compact & Premium) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
+                android:layout_marginTop="20dp"
                 app:cardBackgroundColor="@android:color/transparent"
-                app:cardCornerRadius="32dp"
+                app:cardCornerRadius="28dp"
                 app:cardElevation="0dp">
 
                 <LinearLayout
@@ -238,7 +238,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="26dp">
+                        android:padding="20dp">
 
                         <RelativeLayout
                             android:layout_width="match_parent"
@@ -254,7 +254,7 @@
                                     android:layout_height="wrap_content"
                                     android:text="Ceiling"
                                     android:textColor="@color/ef_text_primary"
-                                    android:textSize="38sp"
+                                    android:textSize="32sp"
                                     android:textStyle="bold"
                                     android:letterSpacing="-0.03" />
                                 
@@ -262,20 +262,20 @@
                                     android:id="@+id/scanIpa"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginTop="2dp"
+                                    android:layout_marginTop="0dp"
                                     android:text="/ˈsiː.lɪŋ/"
                                     android:textColor="@color/ef_text_secondary"
-                                    android:textSize="16sp" />
+                                    android:textSize="14sp" />
                             </LinearLayout>
 
                             <!-- Speaker Button (3D White Background, Blue Icon) -->
                             <com.google.android.material.card.MaterialCardView
-                                android:layout_width="64dp"
-                                android:layout_height="64dp"
+                                android:layout_width="54dp"
+                                android:layout_height="54dp"
                                 android:layout_alignParentEnd="true"
                                 android:layout_centerVertical="true"
                                 app:cardElevation="0dp"
-                                app:cardCornerRadius="32dp"
+                                app:cardCornerRadius="27dp"
                                 app:cardBackgroundColor="@android:color/transparent"
                                 android:clipToPadding="false">
                                 <com.google.android.material.button.MaterialButton
@@ -290,7 +290,7 @@
                                     android:insetRight="0dp"
                                     app:icon="@drawable/ic_volume_up"
                                     app:iconTint="@color/ef_card_blue_text"
-                                    app:iconSize="32dp"
+                                    app:iconSize="28dp"
                                     app:iconGravity="textStart" />
                             </com.google.android.material.card.MaterialCardView>
                         </RelativeLayout>
@@ -299,66 +299,83 @@
                             android:id="@+id/scanMeaning"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="18dp"
+                            android:layout_marginTop="12dp"
                             android:text="Trần nhà"
                             android:textColor="@color/ef_primary"
-                            android:textSize="26sp"
+                            android:textSize="22sp"
                             android:textStyle="bold" />
 
                         <View
                             android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginVertical="24dp"
+                            android:layout_height="0.5dp"
+                            android:layout_marginVertical="18dp"
                             android:background="@color/ef_divider" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="CÔNG THỨC &amp; VÍ DỤ"
+                            android:text="USAGE &amp; EXAMPLES"
                             android:textColor="@color/ef_text_secondary"
-                            android:textSize="11sp"
+                            android:textSize="10sp"
                             android:textStyle="bold"
                             android:letterSpacing="0.1" />
-
-                        <TextView
-                            android:id="@+id/scanExample"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="14dp"
-                            android:text="The ceiling in the room is very high."
-                            android:textColor="@color/ef_text_primary"
-                            android:textSize="16sp"
-                            android:lineSpacingExtra="5dp" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="26dp"
+                            android:orientation="vertical"
+                            android:layout_marginTop="10dp"
                             android:background="@drawable/bg_stats_premium_card"
-                            android:padding="2dp">
-                            <LinearLayout
+                            android:paddingHorizontal="14dp"
+                            android:paddingVertical="12dp">
+                            
+                            <TextView
+                                android:id="@+id/scanExample"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:padding="18dp">
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="💡 HỮU ÍCH"
-                                    android:textColor="@color/ef_primary"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold"
-                                    android:letterSpacing="0.05" />
-                                <TextView
-                                    android:id="@+id/scanFunFact"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="6dp"
-                                    android:text="The ceiling is the upper interior surface of a room or building."
-                                    android:textColor="@color/ef_text_secondary"
-                                    android:textSize="13sp"
-                                    android:lineSpacingExtra="3dp" />
-                            </LinearLayout>
+                                android:text="The ceiling in the room is very high."
+                                android:textColor="@color/ef_text_primary"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:lineSpacingExtra="3dp" />
+
+                            <TextView
+                                android:id="@+id/scanExampleVi"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Trần nhà trong phòng rất cao."
+                                android:textColor="@color/ef_text_secondary"
+                                android:textSize="13sp"
+                                android:textStyle="italic"
+                                android:lineSpacingExtra="2dp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="18dp"
+                            android:orientation="vertical"
+                            android:background="@drawable/bg_bubble_ai"
+                            android:backgroundTint="#F8FCFF"
+                            android:padding="16dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="✨ QUICK TIP"
+                                android:textColor="@color/ef_card_blue_text"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:letterSpacing="0.05" />
+                            <TextView
+                                android:id="@+id/scanFunFact"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:text="The ceiling is the upper interior surface of a room or building."
+                                android:textColor="@color/ef_text_secondary"
+                                android:textSize="13sp"
+                                android:lineSpacingExtra="3dp" />
                         </LinearLayout>
 
                         <!-- Action Row (White Theme) -->
@@ -421,7 +438,6 @@
                         
                         <!-- Hidden meta-data views -->
                         <TextView android:id="@+id/scanWordType" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-                        <TextView android:id="@+id/scanExampleVi" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
                         <TextView android:id="@+id/scanConfidence" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
                         <TextView android:id="@+id/scanCategory" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
                         <TextView android:id="@+id/scanRelated" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />

@@ -128,7 +128,7 @@ public class GeminiVisionService {
                 + "  \"example\": \"Short English sentence using the word\",\n"
                 + "  \"exampleVi\": \"Vietnamese translation of the example\",\n"
                 + "  \"category\": \"Category (e.g., Food, Tech, Nature)\",\n"
-                + "  \"note\": \"One interesting fact or usage note\",\n"
+                + "  \"note\": \"One interesting fact or usage note in Vietnamese (Mẹo hay bằng tiếng Việt)\",\n"
                 + "  \"related\": [\"3-4 related english words\"]\n"
                 + "}\n"
                 + "Strictly return JSON only. No other text.";
@@ -151,7 +151,7 @@ public class GeminiVisionService {
                     data.example != null ? data.example : "Empty example",
                     data.exampleVi != null ? data.exampleVi : "VD trống",
                     data.category != null ? data.category : "General",
-                    data.note != null ? data.note : "No note",
+                    data.note != null ? data.note : "Không có mẹo học",
                     data.related != null ? data.related : java.util.Arrays.asList("thing", "item")
             );
         } catch (Exception e) {
