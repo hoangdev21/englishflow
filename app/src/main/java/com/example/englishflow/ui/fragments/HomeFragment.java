@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -55,6 +56,10 @@ public class HomeFragment extends Fragment {
     private TextView reminderText;
     private DictionaryResult currentDictionaryResult;
 
+    private TextToSpeech textToSpeech;
+    private static final float TTS_SPEECH_RATE = 0.9f;
+    private static final float TTS_PITCH = 1.0f;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -81,11 +86,32 @@ public class HomeFragment extends Fragment {
 
         try {
             setupBasicViews(view);
+            initTextToSpeech();
             refreshData();
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(requireContext(), "Lỗi tải dữ liệu trang chủ", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void initTextToSpeech() {
+        textToSpeech = new TextToSpeech(requireContext(), status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                textToSpeech.setLanguage(Locale.US);
+                textToSpeech.setSpeechRate(TTS_SPEECH_RATE);
+                textToSpeech.setPitch(TTS_PITCH);
+            }
+        });
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+            textToSpeech = null;
+        }
+        super.onDestroyView();
     }
 
     @Override
@@ -308,6 +334,16 @@ public class HomeFragment extends Fragment {
             }
         }
 
+        View btnDictPronounce = rootView.findViewById(R.id.btnDictPronounce);
+        if (btnDictPronounce != null) {
+            btnDictPronounce.setVisibility(View.VISIBLE);
+            btnDictPronounce.setOnClickListener(v -> {
+                if (result != null && textToSpeech != null) {
+                    textToSpeech.speak(result.getWord(), TextToSpeech.QUEUE_FLUSH, null, "home-word");
+                }
+            });
+        }
+
         // IPA
         String ipa = safeText(result.getIpa(), "");
         if (dictIpa != null) {
@@ -452,9 +488,11 @@ public class HomeFragment extends Fragment {
         LinearLayout dictExampleContainer = rootView.findViewById(R.id.dictExampleContainer);
         LinearLayout dictSynonymsContainer = rootView.findViewById(R.id.dictSynonymsContainer);
         LinearLayout dictUsageContainer = rootView.findViewById(R.id.dictUsageContainer);
+        View btnDictPronounce = rootView.findViewById(R.id.btnDictPronounce);
 
         if (dictTitle != null) dictTitle.setText(DEFAULT_DICT_TITLE);
         if (dictIpa != null) dictIpa.setVisibility(View.GONE);
+        if (btnDictPronounce != null) btnDictPronounce.setVisibility(View.GONE);
         if (dictPartOfSpeech != null) dictPartOfSpeech.setVisibility(View.GONE);
         if (dictHint != null) dictHint.setText(DEFAULT_DICT_HINT);
         if (dictExample != null) dictExample.setText(DEFAULT_DICT_EXAMPLE);

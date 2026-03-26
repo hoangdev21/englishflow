@@ -10,6 +10,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 
+import android.content.ContentResolver;
+import android.media.AudioAttributes;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
@@ -33,11 +37,16 @@ public class StudyReminderReceiver extends BroadcastReceiver {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        Uri soundUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.nhac_chuong);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, StudyReminderScheduler.CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_app_logo)
+                .setSmallIcon(R.drawable.ic_notification_small)
+                .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.drawable.english_flow))
                 .setContentTitle("Đến giờ học rồi! 🚀")
                 .setContentText("Mở EnglishFlow ngay để chinh phục mục tiêu hôm nay!")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSound(soundUri)
+                .setDefaults(NotificationCompat.DEFAULT_VIBRATE)
                 .setAutoCancel(true)
                 .setColor(ContextCompat.getColor(context, R.color.ef_primary))
                 .setContentIntent(openAppPendingIntent);
@@ -60,17 +69,21 @@ public class StudyReminderReceiver extends BroadcastReceiver {
             return;
         }
 
-        NotificationChannel channel = notificationManager.getNotificationChannel(StudyReminderScheduler.CHANNEL_ID);
-        if (channel != null) {
-            return;
-        }
+        Uri soundUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.nhac_chuong);
+        
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .build();
 
         NotificationChannel newChannel = new NotificationChannel(
                 StudyReminderScheduler.CHANNEL_ID,
                 StudyReminderScheduler.CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_HIGH
         );
-        newChannel.setDescription("Thong bao den gio hoc tap");
+        newChannel.setDescription("Thong bao den gio hoc tap voi nhac chuong");
+        newChannel.setSound(soundUri, audioAttributes);
+        newChannel.enableVibration(true);
         notificationManager.createNotificationChannel(newChannel);
     }
 }

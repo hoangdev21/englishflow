@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
-import com.example.englishflow.data.WordEntry;
+import com.example.englishflow.database.entity.LearnedWordEntity;
 
 import java.util.List;
 
@@ -18,10 +18,17 @@ public class LearnedWordsAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private static final int TYPE_HEADER = 0;
     private static final int TYPE_ITEM = 1;
 
-    private List<Object> items;
+    public interface DictionaryActionListener {
+        void onPronounce(LearnedWordEntity word);
+        void onDelete(LearnedWordEntity word);
+    }
 
-    public LearnedWordsAdapter(List<Object> items) {
+    private List<Object> items;
+    private DictionaryActionListener listener;
+
+    public LearnedWordsAdapter(List<Object> items, DictionaryActionListener listener) {
         this.items = items;
+        this.listener = listener;
     }
 
     public void updateData(List<Object> newItems) {
@@ -44,7 +51,8 @@ public class LearnedWordsAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_learned_header, parent, false);
             return new HeaderViewHolder(v);
         } else {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_learned_word, parent, false);
+            // Use the dictionary layout which has pronounce and delete icons
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_dictionary_word, parent, false);
             return new ItemViewHolder(v);
         }
     }
@@ -52,15 +60,28 @@ public class LearnedWordsAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof HeaderViewHolder) {
-            String domain = (String) items.get(position);
-            ((HeaderViewHolder) holder).txtHeader.setText(domain);
+            String dateLabel = (String) items.get(position);
+            ((HeaderViewHolder) holder).txtHeader.setText(dateLabel);
         } else if (holder instanceof ItemViewHolder) {
-            WordEntry word = (WordEntry) items.get(position);
+            LearnedWordEntity word = (LearnedWordEntity) items.get(position);
             ItemViewHolder itemHolder = (ItemViewHolder) holder;
-            itemHolder.txtWord.setText(word.getWord());
-            itemHolder.txtIpa.setText(word.getIpa());
-            itemHolder.txtMeaning.setText(word.getMeaning());
-            itemHolder.txtExample.setText(word.getExample());
+            
+            // Format word with IPA
+            String ipa = (word.ipa != null && !word.ipa.isEmpty()) ? " " + word.ipa : "";
+            itemHolder.txtWord.setText(word.word + ipa);
+            
+            // Subtitle: meaning + domain
+            String domain = (word.domain != null && !word.domain.isEmpty()) ? word.domain : "Khác";
+            String meaning = (word.meaning != null) ? word.meaning : "";
+            itemHolder.txtMeaning.setText(meaning + " • " + domain);
+
+            itemHolder.btnPronounce.setOnClickListener(v -> {
+                if (listener != null) listener.onPronounce(word);
+            });
+
+            itemHolder.btnDelete.setOnClickListener(v -> {
+                if (listener != null) listener.onDelete(word);
+            });
         }
     }
 
@@ -79,14 +100,15 @@ public class LearnedWordsAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
     static class ItemViewHolder extends RecyclerView.ViewHolder {
-        TextView txtWord, txtIpa, txtMeaning, txtExample;
+        TextView txtWord, txtMeaning;
+        View btnPronounce, btnDelete;
 
         ItemViewHolder(View itemView) {
             super(itemView);
-            txtWord = itemView.findViewById(R.id.txtWord);
-            txtIpa = itemView.findViewById(R.id.txtIpa);
-            txtMeaning = itemView.findViewById(R.id.txtMeaning);
-            txtExample = itemView.findViewById(R.id.txtExample);
+            txtWord = itemView.findViewById(R.id.dictionaryWord);
+            txtMeaning = itemView.findViewById(R.id.dictionaryMeaning);
+            btnPronounce = itemView.findViewById(R.id.btnPronounceDictionary);
+            btnDelete = itemView.findViewById(R.id.btnDeleteDictionary);
         }
     }
 }

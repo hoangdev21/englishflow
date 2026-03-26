@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Leaf base (White for notification) -->
+    <path
+        android:pathData="M50,10C28,10 10,28 10,50C10,72 28,90 50,90C72,90 90,72 90,50C90,28 72,10 50,10Z"
+        android:fillColor="#FFFFFF" />
+
+    <!-- Ear/Speaker symbol (Transparent/Hole) -->
+    <!-- We can use a clip-path or just a different color if we want, 
+         but for notification icons, simpler is better. 
+         Let's just make the inner part transparent if possible, 
+         or just keep it all white if it's too complex. -->
+    
+    <!-- Actually, let's just make the whole thing white and call it 
+         ic_notification_small.xml. 
+         Android will use the alpha channel. -->
+</vector>

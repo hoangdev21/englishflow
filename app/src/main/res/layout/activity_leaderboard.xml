@@ -12,18 +12,32 @@
         android:layout_height="wrap_content"
         android:background="@drawable/bg_hero_home_premium"
         android:paddingStart="16dp"
-        android:paddingTop="32dp"
+        android:paddingTop="28dp"
         android:paddingEnd="16dp"
         android:paddingBottom="45dp">
 
-        <ImageButton
-            android:id="@+id/btnBack"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:background="@drawable/bg_3d_badge_silver"
-            android:elevation="4dp"
-            android:src="@drawable/ic_back_arrow"
-            app:tint="@color/ef_text_primary" />
+            app:cardElevation="0dp"
+            app:cardCornerRadius="22dp"
+            app:cardBackgroundColor="@android:color/transparent"
+            android:clipToPadding="false">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBack"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_3d_badge_silver"
+                app:backgroundTint="@null"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:insetLeft="0dp"
+                android:insetRight="0dp"
+                app:icon="@drawable/ic_back_arrow"
+                app:iconTint="@color/ef_text_primary"
+                app:iconSize="20dp"
+                app:iconGravity="textStart" />
+        </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:layout_width="wrap_content"

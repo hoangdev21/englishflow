@@ -29,7 +29,7 @@
         android:layout_height="match_parent"
         android:fillViewport="true"
         android:paddingStart="24dp"
-        android:paddingTop="48dp"
+        android:paddingTop="28dp"
         android:paddingEnd="24dp"
         android:paddingBottom="24dp">
 

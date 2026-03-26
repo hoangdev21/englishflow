@@ -90,11 +90,21 @@ public class MainActivity extends AppCompatActivity {
                 if (navBar.getVisibility() == android.view.View.VISIBLE) {
                     navBar.setVisibility(android.view.View.GONE);
                     fab.setVisibility(android.view.View.GONE);
+                    if (viewPager != null && viewPager.getLayoutParams() instanceof android.view.ViewGroup.MarginLayoutParams) {
+                        android.view.ViewGroup.MarginLayoutParams params = (android.view.ViewGroup.MarginLayoutParams) viewPager.getLayoutParams();
+                        params.bottomMargin = 0;
+                        viewPager.requestLayout();
+                    }
                 }
             } else {
                 if (navBar.getVisibility() == android.view.View.GONE) {
                     navBar.setVisibility(android.view.View.VISIBLE);
                     fab.setVisibility(android.view.View.VISIBLE);
+                    if (viewPager != null && viewPager.getLayoutParams() instanceof android.view.ViewGroup.MarginLayoutParams) {
+                        android.view.ViewGroup.MarginLayoutParams params = (android.view.ViewGroup.MarginLayoutParams) viewPager.getLayoutParams();
+                        params.bottomMargin = 0;
+                        viewPager.requestLayout();
+                    }
                 }
             }
         });

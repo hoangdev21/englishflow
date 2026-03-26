@@ -11,7 +11,7 @@ import java.util.Calendar;
 
 public final class StudyReminderScheduler {
 
-    public static final String CHANNEL_ID = "study_reminder_channel";
+    public static final String CHANNEL_ID = "study_reminder_channel_v3";
     public static final String CHANNEL_NAME = "Nhac nho hoc tap";
     public static final int NOTIFICATION_ID = 1001;
     private static final int REQUEST_CODE_REMINDER = 5001;

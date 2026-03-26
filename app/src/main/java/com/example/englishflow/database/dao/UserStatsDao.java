@@ -41,4 +41,7 @@ public interface UserStatsDao {
     
     @Query("UPDATE user_stats SET lastStudyDate = :date WHERE userEmail = :userEmail")
     void updateLastStudyDate(String userEmail, long date);
+    
+    @Query("UPDATE user_stats SET currentStreak = :streak, bestStreak = :bestStreak, lastStudyDate = :date WHERE userEmail = :userEmail")
+    void updateStreakAndDate(String userEmail, int streak, int bestStreak, long date);
 }
