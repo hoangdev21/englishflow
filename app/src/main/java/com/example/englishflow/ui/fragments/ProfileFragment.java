@@ -40,7 +40,7 @@ public class ProfileFragment extends Fragment {
 
     private TextView nameText;
     private TextView levelText;
-    private TextView statsText;
+    private TextView tvDetailLearned, tvDetailScanned, tvDetailChats, tvDetailBestStreak;
     private TextView tvLearnedCount, tvStreakCount, tvXpCount;
     private LinearLayout chartContainer;
 
@@ -59,7 +59,12 @@ public class ProfileFragment extends Fragment {
 
         nameText = view.findViewById(R.id.profileName);
         levelText = view.findViewById(R.id.profileLevel);
-        statsText = view.findViewById(R.id.profileStats);
+        
+        tvDetailLearned = view.findViewById(R.id.tvDetailLearned);
+        tvDetailScanned = view.findViewById(R.id.tvDetailScanned);
+        tvDetailChats = view.findViewById(R.id.tvDetailChats);
+        tvDetailBestStreak = view.findViewById(R.id.tvDetailBestStreak);
+        
         tvLearnedCount = view.findViewById(R.id.tvLearnedCount);
         tvStreakCount = view.findViewById(R.id.tvStreakCount);
         tvXpCount = view.findViewById(R.id.tvXpCount);
@@ -123,12 +128,12 @@ public class ProfileFragment extends Fragment {
         tvStreakCount.setText(String.valueOf(repository.getStreakDays()));
         tvXpCount.setText(String.valueOf(repository.getXpToday()));
 
-        statsText.setText(
-                "Từ đã học: " + repository.getLearnedWords() + "\n"
-                        + "Ảnh đã scan: " + repository.getScannedImages() + "\n"
-                        + "Số cuộc chat: " + repository.getChatSessions() + "\n"
-                        + "Streak dài nhất: " + repository.getBestStreak()
-        );
+        // Detailed Stats
+        tvDetailLearned.setText(String.valueOf(repository.getLearnedWords()));
+        tvDetailScanned.setText(String.valueOf(repository.getScannedImages()));
+        tvDetailChats.setText(String.valueOf(repository.getChatSessions()));
+        tvDetailBestStreak.setText(String.valueOf(repository.getBestStreak()));
+        
         renderWeeklyChart(repository.getWeeklyStudyMinutes());
     }
 
