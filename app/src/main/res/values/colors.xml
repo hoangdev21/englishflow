@@ -68,10 +68,10 @@
     <color name="ef_card_rose_text">#E11D48</color>
 
     <!-- Home Redesign -->
-    <!-- Home Redesign Premium - Blue Dark Mode -->
-    <color name="ef_hero_grad_start">#007ED6</color>
-    <color name="ef_hero_grad_mid">#005CBF</color>
-    <color name="ef_hero_grad_end">#003366</color>
+    <!-- Home Redesign Premium - Teal Greenish Mode -->
+    <color name="ef_hero_grad_start">#0D9488</color>
+    <color name="ef_hero_grad_mid">#0F766E</color>
+    <color name="ef_hero_grad_end">#115E59</color>
     <color name="ef_white_silver">#F8FAFC</color>
     <color name="ef_silver_border">#CBD5E1</color>
     <color name="ef_silver_shadow">#94A3B8</color>
@@ -87,4 +87,16 @@
     <color name="ef_xp_track">#E5ECE8</color>
     <color name="ef_dict_ipa">#4A6572</color>
     <color name="ef_dict_example_bg">#F8FAFB</color>
+
+    <!-- Learn Domains Redesign -->
+    <color name="ef_domains_bg_top">#EAF4F0</color>
+    <color name="ef_domains_bg_bottom">#F9FBFA</color>
+    <color name="ef_domains_hero_start">#0E8C7B</color>
+    <color name="ef_domains_hero_mid">#0B6E73</color>
+    <color name="ef_domains_hero_end">#0A5561</color>
+    <color name="ef_domains_hero_stroke">#2DE1D2C7</color>
+    <color name="ef_domains_card_stroke">#D7E4DF</color>
+    <color name="ef_domains_progress_track">#DFEAE5</color>
+    <color name="ef_domains_chip_text">#0E5B4F</color>
+    <color name="ef_domains_chip_bg">#DDF2EB</color>
 </resources>

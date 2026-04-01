@@ -22,10 +22,14 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
     private final List<TopicItem> originalTopics;
     private List<TopicItem> filteredTopics;
     private final OnTopicClickListener listener;
+    private final String domainEmoji;
+    private String currentQuery = "";
+    private String currentStatus = "Tất cả";
 
-    public TopicAdapter(List<TopicItem> topics, OnTopicClickListener listener) {
+    public TopicAdapter(List<TopicItem> topics, String domainEmoji, OnTopicClickListener listener) {
         this.originalTopics = new java.util.ArrayList<>(topics);
         this.filteredTopics = new java.util.ArrayList<>(topics);
+        this.domainEmoji = domainEmoji;
         this.listener = listener;
     }
 
@@ -41,6 +45,22 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
         TopicItem topicItem = filteredTopics.get(position);
         holder.nameText.setText(topicItem.getTitle());
         holder.statusText.setText(topicItem.getStatus());
+        holder.iconText.setText(domainEmoji);
+        
+        // Professional 3D-styled Badge Theme
+        String status = topicItem.getStatus();
+        if (TopicItem.STATUS_COMPLETED.equals(status)) {
+            holder.statusText.setBackgroundResource(R.drawable.bg_3d_badge_completed);
+            holder.statusText.setTextColor(holder.itemView.getContext().getResources().getColor(R.color.ef_badge_success_text));
+        } else if (TopicItem.STATUS_LEARNING.equals(status)) {
+            holder.statusText.setBackgroundResource(R.drawable.bg_3d_badge_learning);
+            holder.statusText.setTextColor(0xFF92400E); // Deep Amber
+        } else {
+            // NOT STARTED or default
+            holder.statusText.setBackgroundResource(R.drawable.bg_3d_badge_silver);
+            holder.statusText.setTextColor(holder.itemView.getContext().getResources().getColor(R.color.ef_text_secondary));
+        }
+        
         holder.itemView.setOnClickListener(v -> listener.onTopicClick(topicItem));
     }
 
@@ -57,15 +77,25 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
     }
 
     public void filter(String query) {
+        this.currentQuery = query != null ? query : "";
+        applyFilters();
+    }
+
+    public void filterStatus(String status) {
+        this.currentStatus = status != null ? status : "Tất cả";
+        applyFilters();
+    }
+
+    private void applyFilters() {
         filteredTopics.clear();
-        if (query == null || query.isEmpty()) {
-            filteredTopics.addAll(originalTopics);
-        } else {
-            String q = query.toLowerCase().trim();
-            for (TopicItem item : originalTopics) {
-                if (item.getTitle().toLowerCase().contains(q)) {
-                    filteredTopics.add(item);
-                }
+        String q = currentQuery.toLowerCase().trim();
+        
+        for (TopicItem item : originalTopics) {
+            boolean matchesQuery = q.isEmpty() || item.getTitle().toLowerCase().contains(q);
+            boolean matchesStatus = "Tất cả".equals(currentStatus) || item.getStatus().equals(currentStatus);
+            
+            if (matchesQuery && matchesStatus) {
+                filteredTopics.add(item);
             }
         }
         notifyDataSetChanged();
@@ -74,11 +104,13 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
     static class TopicViewHolder extends RecyclerView.ViewHolder {
         final TextView nameText;
         final TextView statusText;
+        final TextView iconText;
 
         TopicViewHolder(@NonNull View itemView) {
             super(itemView);
             nameText = itemView.findViewById(R.id.topicName);
             statusText = itemView.findViewById(R.id.topicStatus);
+            iconText = itemView.findViewById(R.id.topicIcon);
         }
     }
 }

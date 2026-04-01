@@ -51,6 +51,9 @@ public class LearnFlashcardFragment extends Fragment {
     private TextView ipaText;
     private TextView meaningText;
     private TextView exampleText;
+    private TextView exampleViText;
+    private TextView usageText;
+    private androidx.core.widget.NestedScrollView cardScroll;
     private MaterialButton pronounceButton;
     
     private LinearLayout srsButtons;
@@ -100,6 +103,9 @@ public class LearnFlashcardFragment extends Fragment {
         ipaText = view.findViewById(R.id.flashcardIpa);
         meaningText = view.findViewById(R.id.flashcardMeaning);
         exampleText = view.findViewById(R.id.flashcardExample);
+        exampleViText = view.findViewById(R.id.flashcardExampleVi);
+        usageText = view.findViewById(R.id.flashcardUsage);
+        cardScroll = view.findViewById(R.id.cardScroll);
         pronounceButton = view.findViewById(R.id.btnPronounceFlashcard);
         
         srsButtons = view.findViewById(R.id.srsButtons);
@@ -195,6 +201,11 @@ public class LearnFlashcardFragment extends Fragment {
         ipaText.setText(card.getIpa());
         meaningText.setText(card.getMeaning());
         exampleText.setText(card.getExample());
+        exampleViText.setText(card.getExampleVi());
+        usageText.setText(card.getUsage());
+        
+        // Reset scroll position for new card
+        if (cardScroll != null) cardScroll.scrollTo(0, 0);
         
         int progress = (int) (((float) (currentIndex + 1) / flashcards.size()) * 100);
         sessionProgress.setProgress(progress, true);
@@ -290,7 +301,8 @@ public class LearnFlashcardFragment extends Fragment {
                     card.getMeaning(),
                     "noun",
                     card.getExample(),
-                    "",
+                    card.getExampleVi(),
+                    card.getUsage(),
                     currentDomain,
                     currentTopic
             ));

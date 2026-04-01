@@ -6,13 +6,17 @@ public class FlashcardItem {
     private final String ipa;
     private final String meaning;
     private final String example;
+    private final String exampleVi;
+    private final String usage;
 
-    public FlashcardItem(String emoji, String word, String ipa, String meaning, String example) {
+    public FlashcardItem(String emoji, String word, String ipa, String meaning, String example, String exampleVi, String usage) {
         this.emoji = emoji;
         this.word = word;
         this.ipa = ipa;
         this.meaning = meaning;
         this.example = example;
+        this.exampleVi = exampleVi != null ? exampleVi : "";
+        this.usage = usage != null ? usage : "";
     }
 
     public String getEmoji() {
@@ -33,5 +37,13 @@ public class FlashcardItem {
 
     public String getExample() {
         return example;
+    }
+
+    public String getExampleVi() {
+        return exampleVi;
+    }
+
+    public String getUsage() {
+        return usage;
     }
 }

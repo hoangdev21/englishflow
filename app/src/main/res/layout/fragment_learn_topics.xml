@@ -6,12 +6,7 @@
     android:background="@color/ef_background">
 
     <!-- Responsive background image -->
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop"
-        android:src="@drawable/background_study_card"
-        android:alpha="0.6" />
+
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -26,90 +21,121 @@
             app:layout_scrollFlags="scroll">
 
             <!-- Premium Hero Header for Topics -->
-            <LinearLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_hero_home_premium"
-                android:orientation="vertical"
-                android:paddingStart="24dp"
-                android:paddingTop="56dp"
-                android:paddingEnd="24dp"
-                android:paddingBottom="55dp">
+                android:layout_height="wrap_content">
 
-                <RelativeLayout
+                <ImageView
+                    android:id="@+id/topicHeaderBg"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/bg_hero_home_premium"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    tools:src="@drawable/am_thuc" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:background="@drawable/bg_topic_card_overlay"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="24dp"
+                    android:paddingTop="56dp"
+                    android:paddingEnd="24dp"
+                    android:paddingBottom="65dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        app:cardElevation="0dp"
-                        app:cardCornerRadius="22dp"
-                        app:cardBackgroundColor="@android:color/transparent"
-                        android:clipToPadding="false">
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnBackTopics"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            app:cardElevation="0dp"
+                            app:cardCornerRadius="22dp"
+                            app:cardBackgroundColor="@android:color/transparent"
+                            android:clipToPadding="false">
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnBackTopics"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_3d_badge_silver"
+                                app:backgroundTint="@null"
+                                android:insetTop="0dp"
+                                android:insetBottom="0dp"
+                                android:insetLeft="0dp"
+                                android:insetRight="0dp"
+                                app:icon="@drawable/ic_back_arrow"
+                                app:iconTint="@color/ef_text_primary"
+                                app:iconSize="20dp"
+                                app:iconGravity="textStart" />
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <TextView
+                            android:id="@+id/topicDomainEmoji"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_alignParentEnd="true"
                             android:background="@drawable/bg_3d_badge_silver"
-                            app:backgroundTint="@null"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:icon="@drawable/ic_back_arrow"
-                            app:iconTint="@color/ef_text_primary"
-                            app:iconSize="20dp"
-                            app:iconGravity="textStart" />
-                    </com.google.android.material.card.MaterialCardView>
+                            android:elevation="2dp"
+                            android:gravity="center"
+                            android:text="📚"
+                            android:textSize="18sp" />
+                    </RelativeLayout>
 
                     <TextView
-                        android:id="@+id/topicDomainEmoji"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_alignParentEnd="true"
-                        android:background="@drawable/bg_3d_badge_silver"
-                        android:elevation="2dp"
-                        android:gravity="center"
-                        android:text="📚"
-                        android:textSize="18sp" />
-                </RelativeLayout>
+                        android:id="@+id/topicTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:letterSpacing="-0.03"
+                        android:lineSpacingExtra="4dp"
+                        android:text="Tên Lĩnh Vực"
+                        android:textColor="@color/ef_hero_text_white"
+                        android:textSize="32sp"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/topicTitle"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:alpha="0.85"
+                        android:text="Chọn một chủ đề để bắt đầu lộ trình học"
+                        android:textColor="@color/ef_hero_text_white"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <!-- Wave Effect inside ConstraintLayout -->
+                <ImageView
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:letterSpacing="-0.03"
-                    android:lineSpacingExtra="4dp"
-                    android:text="Tên Lĩnh Vực"
-                    android:textColor="@color/ef_hero_text_white"
-                    android:textSize="32sp"
-                    android:textStyle="bold" />
+                    android:layout_height="40dp"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/bg_wave_bottom"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:alpha="0.85"
-                    android:text="Chọn một chủ đề để bắt đầu lộ trình học"
-                    android:textColor="@color/ef_hero_text_white"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <!-- Wave Cutout -->
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:layout_marginTop="-40dp"
-                android:scaleType="fitXY"
-                android:src="@drawable/bg_wave_bottom" />
-
-            <!-- Search Bar -->
+            <!-- Search Bar (Now with positive margin instead of negative to blend with wave) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="-10dp"
+                android:layout_marginTop="8dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingHorizontal="16dp">
@@ -129,6 +155,83 @@
                     android:textColor="@color/black"
                     android:textColorHint="@color/black"/>
             </LinearLayout>
+
+            <!-- Status Filter Chips -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:paddingBottom="12dp"
+                android:paddingHorizontal="16dp"
+                android:scrollbars="none">
+                
+                <LinearLayout
+                    android:id="@+id/filterChipGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/filterAll"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="8dp"
+                        android:text="Tất cả"
+                        android:textSize="12sp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="@color/ef_primary"
+                        android:textColor="@color/black"
+                        android:paddingHorizontal="16dp"
+                        app:cornerRadius="19dp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/filterNotStarted"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="8dp"
+                        android:text="Chưa học"
+                        android:textSize="12sp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="@color/ef_white_silver"
+                        android:textColor="@color/ef_text_secondary"
+                        android:paddingHorizontal="16dp"
+                        app:cornerRadius="19dp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/filterLearning"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="8dp"
+                        android:text="Đang học"
+                        android:textSize="12sp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="#FEF3C7"
+                        android:textColor="#92400E"
+                        android:paddingHorizontal="16dp"
+                        app:cornerRadius="19dp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/filterCompleted"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="8dp"
+                        android:text="Hoàn thành"
+                        android:textSize="12sp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="#D1FAE5"
+                        android:textColor="#065F46"
+                        android:paddingHorizontal="16dp"
+                        app:cornerRadius="19dp"/>
+                </LinearLayout>
+            </HorizontalScrollView>
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 

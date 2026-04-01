@@ -73,6 +73,7 @@ public class ChatFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new ChatAdapter(chatItems);
         recyclerView.setAdapter(adapter);
+        adapter.initTts(requireContext());
 
         setupIconsAndActions();
         startNewConversation();
@@ -112,7 +113,7 @@ public class ChatFragment extends Fragment {
                     String userName = repository.getUserName();
                     String styledName = "[color:#2563EB]***" + userName + "***[/color]";
                     String greeting = "Xin chào " + styledName + "! Tôi là Flow, trợ lý Tiếng Anh của bạn. Hôm nay chúng ta sẽ cùng ôn tập về chủ đề **" + selectedTopic + "** nhé! 🚀";
-                    animateTypewriterResponse(greeting, null, null);
+                    animateTypewriterResponse(greeting, null, null, null, null, null, null, null);
                     saveSession("Hội thoại: " + selectedTopic);
                 }
             }
@@ -173,11 +174,13 @@ public class ChatFragment extends Fragment {
         // Call Groq AI with RAG
         chatService.getChatResponse(text, topic, new GroqChatService.ChatCallback() {
             @Override
-            public void onSuccess(String response, String correction, String explanation) {
+            public void onSuccess(String response, String correction, String explanation,
+                                  String vocabWord, String vocabIpa, String vocabMeaning,
+                                  String vocabExample, String vocabExampleVi) {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     removeTypingIndicator();
-                    // addMessage(new ChatItem(ChatItem.ROLE_AI, response, correction, explanation));
-                    animateTypewriterResponse(response, correction, explanation);
+                    animateTypewriterResponse(response, correction, explanation,
+                            vocabWord, vocabIpa, vocabMeaning, vocabExample, vocabExampleVi);
                     repository.increaseChatCount();
                 });
             }
@@ -192,8 +195,18 @@ public class ChatFragment extends Fragment {
         });
     }
 
-    private void animateTypewriterResponse(String fullText, String correction, String explanation) {
+    private void animateTypewriterResponse(String fullText, String correction, String explanation,
+                                           String vocabWord, String vocabIpa, String vocabMeaning,
+                                           String vocabExample, String vocabExampleVi) {
         ChatItem item = new ChatItem(ChatItem.ROLE_AI, "", correction, explanation);
+        // Attach vocab data if available
+        if (vocabWord != null) {
+            item.setVocabWord(vocabWord);
+            item.setVocabIpa(vocabIpa);
+            item.setVocabMeaning(vocabMeaning);
+            item.setVocabExample(vocabExample);
+            item.setVocabExampleVi(vocabExampleVi);
+        }
         chatItems.add(item);
         int position = chatItems.size() - 1;
         adapter.notifyItemInserted(position);
@@ -206,7 +219,6 @@ public class ChatFragment extends Fragment {
             @Override
             public void run() {
                 if (charIndex[0] < fullText.length()) {
-                    // Type 3-4 chars at once for better speed/feel
                     int charsToType = Math.min(8, fullText.length() - charIndex[0]);
                     displayedText.append(fullText.substring(charIndex[0], charIndex[0] + charsToType));
                     charIndex[0] += charsToType;
@@ -219,17 +231,26 @@ public class ChatFragment extends Fragment {
                         saveMessage(item);
                     }
                     
-                    handler.postDelayed(this, 1); // Significantly faster (1ms)
+                    handler.postDelayed(this, 1);
                 }
             }
         };
         handler.post(runnable);
     }
 
+
     private void addMessage(ChatItem item) {
         chatItems.add(item);
         adapter.notifyItemInserted(chatItems.size() - 1);
         recyclerView.smoothScrollToPosition(chatItems.size() - 1);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (adapter != null) {
+            adapter.shutdownTts();
+        }
     }
 
     private void setupIconsAndActions() {

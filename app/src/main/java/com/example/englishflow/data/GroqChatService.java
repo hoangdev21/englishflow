@@ -34,7 +34,6 @@ public class GroqChatService {
 
     public GroqChatService(Context context) {
         this.apiKey = BuildConfig.GROQ_API_KEY;
-        // Fix: Use a known good model. The "llama-4-scout" placeholder from build.gradle is invalid for Groq.
         this.modelName = "llama-3.3-70b-versatile"; 
         this.httpClient = new OkHttpClient();
         this.gson = new Gson();
@@ -42,7 +41,9 @@ public class GroqChatService {
     }
 
     public interface ChatCallback {
-        void onSuccess(String response, String correction, String explanation);
+        void onSuccess(String response, String correction, String explanation,
+                       String vocabWord, String vocabIpa, String vocabMeaning,
+                       String vocabExample, String vocabExampleVi);
         void onError(String error);
     }
 
@@ -59,7 +60,7 @@ public class GroqChatService {
                 JsonObject requestBody = buildChatRequest(systemPrompt, userMessage);
                 String rawResponse = callGroqApi(requestBody);
                 
-                // 4. Parse Response (Expecting a specific format for internal RAG logic)
+                // 4. Parse Response
                 parseAndCallback(rawResponse, callback);
                 
             } catch (Exception e) {
@@ -88,7 +89,8 @@ public class GroqChatService {
         sb.append("CRITICAL FORMATTING RULES:\n");
         sb.append("1. LANGUAGE: Respond in Vietnamese. Keep core English terms in English.\n");
         sb.append("2. STRUCTURE: Every piece of information MUST be on a NEW LINE. Use DOUBLE NEWLINES (\\n\\n) between sections for clinical clarity.\n");
-        sb.append("3. VOCABULARY QUERIES: If the user asks about a word, you MUST follow this EXACT multi-line template (NO PARAGRAPHS):\n\n");
+        sb.append("3. VOCABULARY QUERIES: If the user asks about a word or phrase, you MUST:\n");
+        sb.append("   a) Follow this EXACT multi-line template in the 'answer' field:\n\n");
         sb.append("✿ **Từ vựng**: [Word]\\n\\n");
         sb.append("☁ **Phiên âm (IPA)**: [Phonetic]\\n\\n");
         sb.append("☂ **Loại từ**: (Danh từ/Động từ/Tính từ/Trạng từ...)\\n\\n");
@@ -99,8 +101,9 @@ public class GroqChatService {
         sb.append(" ➠ [Example Sentence 2]\\n");
         sb.append("  ⇋ [Dịch nghĩa ví dụ 2]\\n\\n");
         sb.append("📝 **Lưu ý (nếu có)**: [Usage notes or common collocations]\\n\\n");
+        sb.append("   b) ALSO fill the vocab_* JSON fields below with the extracted data.\n\n");
         
-        sb.append("\n4. RAG CONTEXT: Use the following database information if it helps answer accurately:\n");
+        sb.append("4. RAG CONTEXT: Use the following database information if it helps answer accurately:\n");
         if (vocab != null && !vocab.isEmpty()) {
             for (CustomVocabularyEntity v : vocab) {
                 sb.append("- Word: ").append(v.word);
@@ -117,7 +120,12 @@ public class GroqChatService {
         sb.append("{\n");
         sb.append("  \"answer\": \"your structured, professional response with explicit double newlines \\n\\n between sections\",\n");
         sb.append("  \"correction\": \"only the corrected English text (null if no error)\",\n");
-        sb.append("  \"explanation\": \"short Vietnamese explanation of the fix (null if no error)\"\n");
+        sb.append("  \"explanation\": \"short Vietnamese explanation of the fix (null if no error)\",\n");
+        sb.append("  \"vocab_word\": \"the English word/phrase being queried (null if not a vocabulary query)\",\n");
+        sb.append("  \"vocab_ipa\": \"the IPA phonetic transcription (null if not a vocabulary query)\",\n");
+        sb.append("  \"vocab_meaning\": \"the Vietnamese meaning/definition (null if not a vocabulary query)\",\n");
+        sb.append("  \"vocab_example\": \"the best English example sentence (null if not a vocabulary query)\",\n");
+        sb.append("  \"vocab_example_vi\": \"Vietnamese translation of the example sentence (null if not a vocabulary query)\"\n");
         sb.append("}");
         
         return sb.toString();
@@ -127,9 +135,8 @@ public class GroqChatService {
         JsonObject request = new JsonObject();
         request.addProperty("model", modelName);
         request.addProperty("temperature", 0.5);
-        request.addProperty("max_tokens", 512);
+        request.addProperty("max_tokens", 700);
         
-        // Fix: Correct OpenAI JSON mode structure
         JsonObject responseFormat = new JsonObject();
         responseFormat.addProperty("type", "json_object");
         request.add("response_format", responseFormat);
@@ -182,7 +189,6 @@ public class GroqChatService {
     private void parseAndCallback(String rawResponse, ChatCallback callback) {
         try {
             Log.d(TAG, "Raw response: " + rawResponse);
-            // Handle cases where the LLM might wrap JSON in markdown blocks
             String sanitized = rawResponse.trim();
             if (sanitized.startsWith("```json")) {
                 sanitized = sanitized.substring(7);
@@ -193,15 +199,31 @@ public class GroqChatService {
             sanitized = sanitized.trim();
 
             JsonObject json = gson.fromJson(sanitized, JsonObject.class);
-            String answer = json.has("answer") && !json.get("answer").isJsonNull() ? json.get("answer").getAsString() : "Xin lỗi, đã có lỗi định dạng kết quả.";
-            String correction = json.has("correction") && !json.get("correction").isJsonNull() ? json.get("correction").getAsString() : null;
-            String explanation = json.has("explanation") && !json.get("explanation").isJsonNull() ? json.get("explanation").getAsString() : null;
             
-            callback.onSuccess(answer, correction, explanation);
+            String answer = getStringOrNull(json, "answer");
+            if (answer == null) answer = "Xin lỗi, đã có lỗi định dạng kết quả.";
+            
+            String correction  = getStringOrNull(json, "correction");
+            String explanation = getStringOrNull(json, "explanation");
+            String vocabWord      = getStringOrNull(json, "vocab_word");
+            String vocabIpa       = getStringOrNull(json, "vocab_ipa");
+            String vocabMeaning   = getStringOrNull(json, "vocab_meaning");
+            String vocabExample   = getStringOrNull(json, "vocab_example");
+            String vocabExampleVi = getStringOrNull(json, "vocab_example_vi");
+            
+            callback.onSuccess(answer, correction, explanation,
+                    vocabWord, vocabIpa, vocabMeaning, vocabExample, vocabExampleVi);
         } catch (Exception e) {
             Log.e(TAG, "Parsing error: " + e.getMessage());
-            // Fallback: If parsing fails, just show the raw response as the answer
-            callback.onSuccess(rawResponse, null, null);
+            callback.onSuccess(rawResponse, null, null, null, null, null, null, null);
         }
+    }
+
+    private String getStringOrNull(JsonObject json, String key) {
+        if (json.has(key) && !json.get(key).isJsonNull()) {
+            String val = json.get(key).getAsString().trim();
+            return val.isEmpty() || val.equalsIgnoreCase("null") ? null : val;
+        }
+        return null;
     }
 }

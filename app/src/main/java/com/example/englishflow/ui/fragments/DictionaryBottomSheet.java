@@ -147,6 +147,7 @@ public class DictionaryBottomSheet extends BottomSheetDialogFragment {
                     partOfSpeech,
                     example,
                     "",
+                    "",
                     category,
                     ""
             );

@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -107,19 +108,42 @@ public class DomainAdapter extends RecyclerView.Adapter<DomainAdapter.DomainView
         holder.progressIndicator.setProgress(item.getProgress());
         holder.progressPercent.setText(item.getProgress() + "%");
 
+        // Set default styles
+        holder.nameText.setTextColor(holder.itemView.getContext().getColor(R.color.ef_text_primary));
+        if (holder.progressText != null) {
+            holder.progressText.setTextColor(holder.itemView.getContext().getColor(R.color.ef_text_secondary));
+        }
+        holder.progressIndicator.setIndicatorColor(holder.itemView.getContext().getColor(R.color.ef_primary));
+        holder.progressIndicator.setTrackColor(holder.itemView.getContext().getColor(R.color.ef_xp_track));
+        holder.backgroundImage.setVisibility(View.GONE);
+        holder.overlay.setVisibility(View.GONE);
+
+        // Dynamic background handling
+        if (item.getBackgroundImageRes() != 0) {
+            holder.backgroundImage.setVisibility(View.VISIBLE);
+            holder.backgroundImage.setImageResource(item.getBackgroundImageRes());
+            holder.overlay.setVisibility(View.VISIBLE);
+            
+            // Brighten text for dark background
+            holder.nameText.setTextColor(Color.WHITE);
+            if (holder.progressText != null) {
+                holder.progressText.setTextColor(Color.parseColor("#CCCCCC"));
+            }
+            holder.progressIndicator.setIndicatorColor(Color.WHITE);
+            holder.progressIndicator.setTrackColor(Color.parseColor("#4DFFFFFF")); // 30% white
+        }
+
         // Apply color to emoji circle
         int color = Color.parseColor(item.getGradientStart());
         GradientDrawable circle = new GradientDrawable();
         circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(color);
-        // Add a subtle alpha for "glass" effect if needed, but here we want "button" feel
-        // Let's use 20% alpha of the color for the container background and 100% for something else?
-        // No, let's keep it simple: solid or 15% alpha
-        circle.setColor(adjustAlpha(color, 0.15f));
+        // If it's a special card with background, maybe keep the emoji circle but make it more translucent
+        float alpha = item.getBackgroundImageRes() != 0 ? 0.3f : 0.15f;
+        circle.setColor(adjustAlpha(color, alpha));
         holder.emojiContainer.setBackground(circle);
         
-        // Icon color
-        holder.emojiText.setTextColor(color);
+        // Icon color - if background is dark, maybe make icon colored or white
+        holder.emojiText.setTextColor(item.getBackgroundImageRes() != 0 ? Color.WHITE : color);
 
         holder.itemView.setOnClickListener(v -> listener.onDomainClick(item));
     }
@@ -145,6 +169,8 @@ public class DomainAdapter extends RecyclerView.Adapter<DomainAdapter.DomainView
         final TextView progressText;
         final TextView progressPercent;
         final LinearProgressIndicator progressIndicator;
+        final android.widget.ImageView backgroundImage;
+        final View overlay;
 
         DomainViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -154,6 +180,8 @@ public class DomainAdapter extends RecyclerView.Adapter<DomainAdapter.DomainView
             progressText = itemView.findViewById(R.id.domainProgressText);
             progressPercent = itemView.findViewById(R.id.domainProgressPercent);
             progressIndicator = itemView.findViewById(R.id.domainProgress);
+            backgroundImage = itemView.findViewById(R.id.domainBackground);
+            overlay = itemView.findViewById(R.id.domainOverlay);
         }
     }
 }
