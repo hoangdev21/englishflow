@@ -527,6 +527,7 @@ public class ScanFragment extends Fragment {
                 currentResult.getWordType(),
                 currentResult.getExample(),
                 currentResult.getExampleVi(),
+                "",
                 currentResult.getCategory(),
                 currentResult.getFunFact()
         ));

@@ -86,7 +86,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Nâng tầm tri thức mỗi ngày"
+            android:text="Học tiếng anh theo cách của bạn"
             android:textSize="14sp"
             android:letterSpacing="0.05"
             android:textColor="#CBD5E1"

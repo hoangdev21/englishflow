@@ -8,14 +8,16 @@ public class DomainItem {
     private final int progress;
     private final String gradientStart;
     private final String gradientEnd;
+    private final int backgroundImageRes;
     private final List<TopicItem> topics;
 
-    public DomainItem(String emoji, String name, int progress, String gradientStart, String gradientEnd, List<TopicItem> topics) {
+    public DomainItem(String emoji, String name, int progress, String gradientStart, String gradientEnd, int backgroundImageRes, List<TopicItem> topics) {
         this.emoji = emoji;
         this.name = name;
         this.progress = progress;
         this.gradientStart = gradientStart;
         this.gradientEnd = gradientEnd;
+        this.backgroundImageRes = backgroundImageRes;
         this.topics = topics;
     }
 
@@ -37,6 +39,10 @@ public class DomainItem {
 
     public String getGradientEnd() {
         return gradientEnd;
+    }
+
+    public int getBackgroundImageRes() {
+        return backgroundImageRes;
     }
 
     public List<TopicItem> getTopics() {

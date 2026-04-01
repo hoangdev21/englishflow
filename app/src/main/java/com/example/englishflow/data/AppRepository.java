@@ -1,6 +1,7 @@
 package com.example.englishflow.data;
 
 import android.content.Context;
+import com.example.englishflow.R;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
@@ -376,6 +377,7 @@ public class AppRepository {
                 String start = getGradientStartForDomain(domain);
                 String end = getGradientEndForDomain(domain);
                 int progress = getDomainProgress(domain);
+                int bgRes = getBackgroundImageForDomain(domain);
                 
                 list.add(new DomainItem(
                     emoji,
@@ -383,14 +385,15 @@ public class AppRepository {
                     progress,
                     start,
                     end,
+                    bgRes,
                     sampleTopics(domain)
                 ));
             }
             
             // If empty, add some defaults as fallback (though seed should handle it)
             if (list.isEmpty()) {
-                list.add(new DomainItem("🍜", "Ẩm thực", 0, "#1A7A5E", "#2AAE84", sampleTopics("Ẩm thực")));
-                list.add(new DomainItem("✈️", "Du lịch", 0, "#207A9F", "#3AB6E6", sampleTopics("Du lịch")));
+                list.add(new DomainItem("🍜", "Ẩm thực", 0, "#1A7A5E", "#2AAE84", R.drawable.am_thuc, sampleTopics("Ẩm thực")));
+                list.add(new DomainItem("✈️", "Du lịch", 0, "#207A9F", "#3AB6E6", R.drawable.du_lich, sampleTopics("Du lịch")));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -457,6 +460,27 @@ public class AppRepository {
         return "#B39DDB";
     }
 
+    private int getBackgroundImageForDomain(String domain) {
+        String d = domain.toLowerCase();
+        if (d.contains("ẩm thực") || d.contains("am thuc")) return R.drawable.am_thuc;
+        if (d.contains("du lịch") || d.contains("du lich")) return R.drawable.du_lich;
+        if (d.contains("công việc") || d.contains("cong viec")) return R.drawable.cong_viec;
+        if (d.contains("sức khoẻ") || d.contains("suc khoe")) return R.drawable.suc_khoe;
+        if (d.contains("học tập") || d.contains("hoc tap")) return R.drawable.hoc_tap;
+        if (d.contains("nhà cửa") || d.contains("nha cua")) return R.drawable.nha_cua;
+        if (d.contains("công nghệ") || d.contains("cong nghe")) return R.drawable.cong_nghe;
+        if (d.contains("kinh doanh") || d.contains("kinh doanh")) return R.drawable.kinh_doanh;
+        if (d.contains("môi trường") || d.contains("moi truong")) return R.drawable.moi_truong;
+        if (d.contains("nghệ thuật") || d.contains("nghe thuat")) return R.drawable.nghe_thuat;
+        if (d.contains("thể thao") || d.contains("the thao")) return R.drawable.the_thao;
+        if (d.contains("pháp luật") || d.contains("phap luat")) return R.drawable.phap_luat;
+        if (d.contains("khoa học") || d.contains("khoa hoc")) return R.drawable.khoa_hoc;
+        if (d.contains("tài chính") || d.contains("tai chinh")) return R.drawable.tai_chinh;
+        if (d.contains("gia đình") || d.contains("gia dinh")) return R.drawable.gia_dinh;
+        if (d.contains("văn hoá") || d.contains("van hoa")) return R.drawable.van_hoa;
+        return 0;
+    }
+
     private int getDomainProgress(String domain) {
         List<TopicItem> topics = sampleTopics(domain);
         if (topics.isEmpty()) {
@@ -493,12 +517,21 @@ public class AppRepository {
                     if (score >= 100) {
                         continue;
                     }
+                    String exampleVi = (entity.exampleVi != null && !entity.exampleVi.isEmpty()) 
+                            ? entity.exampleVi 
+                            : "Bản dịch đang được cập nhật...";
+                    String usage = (entity.usage != null && !entity.usage.isEmpty()) 
+                            ? entity.usage 
+                            : "Thông tin cách dùng đang được biên soạn cho từ này.";
+
                     cards.add(new FlashcardItem(
                             getEmojiForDomain(domain),
                             entity.word,
                             entity.ipa,
                             entity.meaning,
-                            entity.example
+                            entity.example,
+                            exampleVi,
+                            usage
                     ));
                 }
             }
@@ -514,11 +547,11 @@ public class AppRepository {
 
         if (cards.isEmpty() && getTopicVocabularyPool(topic).isEmpty()) {
             // High-quality mock fallback for UI testing
-            cards.add(new FlashcardItem("🍽️", "menu", "/ˈmen.juː/", "thực đơn", "Could I see the menu, please?"));
-            cards.add(new FlashcardItem("🥗", "healthy", "/ˈhel.θi/", "lành mạnh", "I try to eat healthy meals every day."));
-            cards.add(new FlashcardItem("🍳", "fry", "/fraɪ/", "chiên, rán", "Fry the eggs in a little oil."));
-            cards.add(new FlashcardItem("🥖", "bread", "/bred/", "bánh mì", "He bought a loaf of fresh bread."));
-            cards.add(new FlashcardItem("🍶", "sauce", "/sɔːs/", "nước sốt", "Add some more soy sauce to the stir-fry."));
+            cards.add(new FlashcardItem("🍽️", "menu", "/ˈmen.juː/", "thực đơn", "Could I see the menu, please?", "Làm ơn cho tôi xem thực đơn được không?", "Sử dụng khi yêu cầu danh sách các món ăn tại nhà hàng."));
+            cards.add(new FlashcardItem("🥗", "healthy", "/ˈhel.θi/", "lành mạnh", "I try to eat healthy meals every day.", "Tôi cố gắng ăn các bữa ăn lành mạnh mỗi ngày.", "Dùng để mô tả thói quen hoặc thực phẩm có lợi cho sức khỏe."));
+            cards.add(new FlashcardItem("🍳", "fry", "/fraɪ/", "chiên, rán", "Fry the eggs in a little oil.", "Rán trứng trong một ít dầu.", "Hành động chế biến thực phẩm bằng dầu nóng."));
+            cards.add(new FlashcardItem("🥖", "bread", "/bred/", "bánh mì", "He bought a loaf of fresh bread.", "Anh ấy đã mua một ổ bánh mì mới ra lò.", "Danh từ chỉ loại thực phẩm phổ biến làm từ bột mì."));
+            cards.add(new FlashcardItem("🍶", "sauce", "/sɔːs/", "nước sốt", "Add some more soy sauce to the stir-fry.", "Cho thêm một ít nước tương vào món xào.", "Chất lỏng dùng để tăng hương vị cho món ăn."));
         }
         return cards;
     }
@@ -555,6 +588,7 @@ public class AppRepository {
                         entity.wordType != null ? entity.wordType : "noun",
                         entity.example, 
                         entity.exampleVi != null ? entity.exampleVi : "",
+                        entity.usage != null ? entity.usage : "",
                         entity.domain,
                         entity.note != null ? entity.note : ""
                     ));
@@ -583,6 +617,7 @@ public class AppRepository {
                     wordEntry.getWordType(),
                     wordEntry.getExample(),
                     wordEntry.getExampleVi(),
+                    wordEntry.getUsage(),
                     wordEntry.getNote(),
                     wordEntry.getCategory(),
                     ""
@@ -622,7 +657,9 @@ public class AppRepository {
                     normalized,
                     meaning.trim(),
                     "-",
-                    "User-defined meaning"
+                    "User-defined meaning",
+                    "", // exampleVi
+                    ""  // usage
             );
             entity.source = "user";
             entity.domain = "general";
@@ -813,7 +850,9 @@ public class AppRepository {
                         ScanAnalyzer.canonicalizeLabel(word),
                         meaning,
                         entry.optString("ipa", "-"),
-                        entry.optString("example", "Seed vocabulary")
+                        entry.optString("example", "Seed vocabulary"),
+                        entry.optString("exampleVi", ""),
+                        entry.optString("usage", "")
                 );
                 entity.source = "seed";
                 entity.domain = domain.isEmpty() ? "general" : domain;
@@ -870,6 +909,14 @@ public class AppRepository {
             List<FailedLabelLogEntity> result = database.failedLabelLogDao().getTopFailed(limit);
             mainHandler.post(() -> callback.onResult(result));
         });
+    }
+
+    public androidx.lifecycle.LiveData<List<CustomVocabularyEntity>> getAllCustomVocabularyLive() {
+        return database.customVocabularyDao().getAllLive();
+    }
+
+    public androidx.lifecycle.LiveData<List<FailedLabelLogEntity>> getTopFailedLabelsLive(int limit) {
+        return database.failedLabelLogDao().getTopFailedLive(limit);
     }
 
     public void removeWord(WordEntry wordEntry) {

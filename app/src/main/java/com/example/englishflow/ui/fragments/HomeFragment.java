@@ -532,6 +532,7 @@ public class HomeFragment extends Fragment {
                 wordType,
                 example,
                 "",
+                "",
                 "Từ điển",
                 "Lưu từ trang chủ"
         ));

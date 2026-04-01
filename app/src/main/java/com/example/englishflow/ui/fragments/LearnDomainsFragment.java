@@ -80,15 +80,10 @@ public class LearnDomainsFragment extends Fragment {
             if (adapter.getViewType() == DomainAdapter.VIEW_TYPE_GRID) {
                 adapter.setViewType(DomainAdapter.VIEW_TYPE_LIST);
                 recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-                btnToggleView.setImageResource(R.drawable.ic_list); // Assuming ic_list exists, or swap icons
-                btnToggleView.setImageResource(R.drawable.ic_grid); // Oops, I'll just change the icon to the *next* view type
-                btnToggleView.setImageResource(android.R.drawable.ic_dialog_dialer); // Placeholder for grid icon
             } else {
                 adapter.setViewType(DomainAdapter.VIEW_TYPE_GRID);
                 recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 2));
-                btnToggleView.setImageResource(android.R.drawable.ic_menu_sort_by_size); // Placeholder for list icon
             }
-            // Realistically, swap between ic_grid and ic_list
             updateToggleIcon(btnToggleView);
         });
         updateToggleIcon(btnToggleView);
@@ -96,10 +91,7 @@ public class LearnDomainsFragment extends Fragment {
 
     private void updateToggleIcon(ImageButton btn) {
         if (adapter.getViewType() == DomainAdapter.VIEW_TYPE_GRID) {
-            btn.setImageResource(R.drawable.ic_grid); // Grid icon means "I am in grid" OR "switch to grid"? 
-            // Usually, icon shows current state or available action. Let's make it show the action.
-            // If in grid, show list icon.
-            btn.setImageResource(R.drawable.ic_list); 
+            btn.setImageResource(R.drawable.ic_list);
         } else {
             btn.setImageResource(R.drawable.ic_grid);
         }

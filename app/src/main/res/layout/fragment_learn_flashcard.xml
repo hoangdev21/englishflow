@@ -1,32 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8FAFC"
-    android:orientation="vertical">
+    android:background="@color/ef_background">
 
-    <!-- Header Section -->
-    <LinearLayout
+    <!-- Hero Background Shape -->
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="28dp"
-        android:paddingBottom="12dp">
+        android:layout_height="280dp"
+        android:background="@drawable/bg_hero_home_premium"
+        android:alpha="0.05" />
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            app:cardElevation="0dp"
-            app:cardCornerRadius="24dp"
-            app:cardBackgroundColor="@android:color/transparent"
-            android:clipToPadding="false">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Top Navigation & Progress -->
+        <LinearLayout
+            android:id="@+id/headerLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="56dp"
+            android:paddingBottom="12dp"
+            app:layout_constraintTop_toTopOf="parent">
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnBackFlashcards"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/bg_3d_badge_silver"
                 app:backgroundTint="@null"
                 android:insetTop="0dp"
@@ -37,260 +43,363 @@
                 app:iconTint="@color/ef_primary_dark"
                 app:iconSize="22dp"
                 app:iconGravity="textStart" />
-        </com.google.android.material.card.MaterialCardView>
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <com.google.android.material.progressindicator.LinearProgressIndicator
-                android:id="@+id/sessionProgress"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:max="100"
-                app:indicatorColor="@color/ef_primary"
-                app:trackColor="#E2E8F0"
-                app:trackCornerRadius="8dp"
-                app:trackThickness="10dp" />
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/flashcardCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:alpha="0.7"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="@color/ef_text_secondary"
-                android:textSize="12sp" />
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/sessionProgress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="100"
+                    app:indicatorColor="@color/ef_primary"
+                    app:trackColor="#E2E8F0"
+                    app:trackCornerRadius="8dp"
+                    app:trackThickness="10dp" />
+
+                <TextView
+                    android:id="@+id/flashcardCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:alpha="0.7"
+                    tools:text="Thẻ 1 / 10"
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="@color/ef_text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/flashcardTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_marginHorizontal="20dp"
-        android:letterSpacing="-0.02"
-        android:textColor="@color/ef_primary_dark"
-        android:textSize="22sp"
-        app:autoSizeTextType="uniform"
-        app:autoSizeMinTextSize="16sp"
-        app:autoSizeMaxTextSize="22sp"
-        app:autoSizeStepGranularity="1sp"
-        android:maxLines="2"
-        android:textStyle="bold" />
-
-    <!-- Flashcard Flip Container -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="24dp"
-        android:layout_weight="1">
-
-        <!-- Using a complex card structure for better shadow/3D effect -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/flashcardCard"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginBottom="24dp"
-            app:cardBackgroundColor="@android:color/transparent"
-            app:cardElevation="0dp"
-            app:strokeWidth="0dp">
-
-            <FrameLayout
-                android:id="@+id/cardContentRoot"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_stats_premium_card"
-                android:elevation="12dp"
-                android:padding="32dp">
-
-                <!-- Front Face -->
-                <LinearLayout
-                    android:id="@+id/frontLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/flashcardEmoji"
-                        android:layout_width="100dp"
-                        android:layout_height="100dp"
-                        android:background="@drawable/bg_3d_badge_silver"
-                        android:elevation="6dp"
-                        android:gravity="center"
-                        android:paddingBottom="8dp"
-                        android:textSize="50sp" />
-
-                    <TextView
-                        android:id="@+id/flashcardWord"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="40dp"
-                        android:fontFamily="sans-serif-black"
-                        android:gravity="center"
-                        android:letterSpacing="-0.03"
-                        android:textColor="@color/ef_primary_dark"
-                        android:textSize="40sp"
-                        android:shadowColor="#30000000"
-                        android:shadowDy="3"
-                        android:shadowRadius="2" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="60dp"
-                        android:alpha="0.5"
-                        android:text="Chạm để lật thẻ"
-                        android:textAllCaps="true"
-                        android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.1" />
-                </LinearLayout>
-
-                <!-- Back Face -->
-                <LinearLayout
-                    android:id="@+id/backLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:id="@+id/flashcardIpa"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_3d_badge_silver"
-                        android:paddingHorizontal="16dp"
-                        android:paddingVertical="6dp"
-                        android:textColor="@color/ef_primary"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:fontFamily="monospace" />
-
-                    <TextView
-                        android:id="@+id/flashcardMeaning"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="32dp"
-                        android:gravity="center"
-                        android:textColor="@color/ef_primary_dark"
-                        android:textSize="28sp"
-                        android:textStyle="bold" />
-
-                    <View
-                        android:id="@+id/divider"
-                        android:layout_width="80dp"
-                        android:layout_height="4dp"
-                        android:layout_marginTop="24dp"
-                        android:background="@drawable/bg_pill_grey"
-                        android:alpha="0.3" />
-
-                    <TextView
-                        android:id="@+id/flashcardExample"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
-                        android:gravity="center"
-                        android:lineSpacingExtra="6dp"
-                        android:textColor="@color/ef_text_secondary"
-                        android:textSize="17sp"
-                        android:textStyle="italic" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnPronounceFlashcard"
-                        android:layout_width="wrap_content"
-                        android:layout_height="54dp"
-                        android:layout_marginTop="32dp"
-                        android:backgroundTint="@color/white"
-                        android:text="@string/btn_pronounce"
-                        android:textColor="@color/ef_primary_dark"
-                        app:cornerRadius="27dp"
-                        app:elevation="4dp"
-                        app:icon="@drawable/ic_volume_up"
-                        app:iconTint="@color/ef_primary"
-                        app:strokeColor="#CBD5E1"
-                        app:strokeWidth="1dp" />
-                </LinearLayout>
-
-            </FrameLayout>
-        </com.google.android.material.card.MaterialCardView>
-    </FrameLayout>
-
-    <!-- SRS Controls -->
-    <LinearLayout
-        android:id="@+id/srsContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
-        android:gravity="center"
-        android:orientation="vertical">
 
         <TextView
-            android:id="@+id/srsHint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:fontFamily="sans-serif-medium"
-            android:textColor="@color/ef_text_secondary"
-            android:textSize="14sp" />
-
-        <LinearLayout
-            android:id="@+id/srsButtons"
+            android:id="@+id/flashcardTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingHorizontal="20dp"
-            android:visibility="invisible">
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:textColor="@color/ef_primary_dark"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/headerLayout"
+            tools:text="Ẩm thực • Ẩm thực cơ bản" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnHard"
-                android:layout_width="0dp"
-                android:layout_height="64dp"
-                android:layout_marginEnd="12dp"
-                android:layout_weight="1"
-                android:text="KHÔNG BIẾT"
-                android:textColor="#E11D48"
-                android:textSize="12sp"
-                app:backgroundTint="#FFF1F2"
-                app:cornerRadius="16dp"
-                app:strokeColor="#FDA4AF"
-                app:strokeWidth="1.5dp" />
+        <!-- Main Card Container -->
+        <FrameLayout
+            android:id="@+id/flashcardContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="16dp"
+            app:layout_constraintBottom_toTopOf="@+id/srsContainer"
+            app:layout_constraintTop_toBottomOf="@id/flashcardTitle">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnOkay"
-                android:layout_width="0dp"
-                android:layout_height="64dp"
-                android:layout_marginEnd="12dp"
-                android:layout_weight="1"
-                android:text="BÌNH THƯỜNG"
-                android:textColor="#D97706"
-                android:textSize="12sp"
-                app:backgroundTint="#FFFBEB"
-                app:cornerRadius="16dp"
-                app:strokeColor="#FCD34D"
-                app:strokeWidth="1.5dp" />
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/flashcardCard"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnEasy"
-                android:layout_width="0dp"
+                <FrameLayout
+                    android:id="@+id/cardContentRoot"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_stats_premium_card"
+                    android:elevation="6dp">
+
+                    <!-- Front Face -->
+                    <LinearLayout
+                        android:id="@+id/frontLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="32dp">
+
+                        <TextView
+                            android:id="@+id/flashcardEmoji"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:background="@drawable/bg_3d_badge_silver"
+                            android:elevation="6dp"
+                            android:gravity="center"
+                            android:paddingBottom="8dp"
+                            android:textSize="50sp"
+                            tools:text="🍜" />
+
+                        <TextView
+                            android:id="@+id/flashcardWord"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="40dp"
+                            android:fontFamily="sans-serif-black"
+                            android:gravity="center"
+                            android:letterSpacing="-0.03"
+                            android:textColor="@color/ef_primary_dark"
+                            android:textSize="44sp"
+                            tools:text="flavor" />
+
+                        <View
+                            android:layout_width="60dp"
+                            android:layout_height="4dp"
+                            android:layout_marginTop="20dp"
+                            android:background="@color/ef_primary"
+                            android:alpha="0.2" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="40dp"
+                            android:text="Chạm để lật thẻ"
+                            android:textAllCaps="true"
+                            android:textSize="11sp"
+                            android:alpha="0.5"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.1" />
+                    </LinearLayout>
+
+                    <!-- Back Face -->
+                    <LinearLayout
+                        android:id="@+id/backLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <androidx.core.widget.NestedScrollView
+                            android:id="@+id/cardScroll"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:clipToPadding="false"
+                            android:padding="24dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical">
+
+                                <!-- IPA Badge -->
+                                <TextView
+                                    android:id="@+id/flashcardIpa"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center_horizontal"
+                                    android:background="@drawable/bg_3d_badge_silver"
+                                    android:paddingHorizontal="16dp"
+                                    android:paddingVertical="6dp"
+                                    android:textColor="@color/ef_primary"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    android:fontFamily="monospace"
+                                    tools:text="/'fleı.vər/" />
+
+                                <!-- Meaning -->
+                                <TextView
+                                    android:id="@+id/flashcardMeaning"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="20dp"
+                                    android:gravity="center"
+                                    android:textColor="@color/ef_primary_dark"
+                                    android:textSize="32sp"
+                                    android:textStyle="bold"
+                                    tools:text="hương vị" />
+
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="1dp"
+                                    android:layout_marginTop="24dp"
+                                    android:background="@color/ef_divider"
+                                    android:alpha="0.1" />
+
+                                <!-- Usage Section -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="20dp"
+                                    android:orientation="vertical">
+                                    
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="CÁCH SỬ DỤNG"
+                                        android:textColor="@color/ef_primary"
+                                        android:textSize="11sp"
+                                        android:textStyle="bold"
+                                        android:letterSpacing="0.1"
+                                        android:paddingHorizontal="8dp"
+                                        android:paddingVertical="2dp"
+                                        android:background="#1510B981" />
+
+                                    <TextView
+                                        android:id="@+id/flashcardUsage"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:lineSpacingExtra="4dp"
+                                        android:textColor="@color/ef_text_primary"
+                                        android:textSize="14sp"
+                                        tools:text="Sử dụng khi mô tả vị giác của thức ăn hoặc đặc trưng riêng của một món ăn cụ thể." />
+                                </LinearLayout>
+
+                                <!-- Example Section -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="24dp"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="VÍ DỤ MINH HOẠ"
+                                        android:textColor="@color/ef_primary"
+                                        android:textSize="11sp"
+                                        android:textStyle="bold"
+                                        android:letterSpacing="0.1"
+                                        android:paddingHorizontal="8dp"
+                                        android:paddingVertical="2dp"
+                                        android:background="#1510B981" />
+
+                                    <TextView
+                                        android:id="@+id/flashcardExample"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:lineSpacingExtra="5dp"
+                                        android:textColor="@color/ef_text_secondary"
+                                        android:textSize="16sp"
+                                        android:textStyle="italic"
+                                        tools:text="This ice cream has a strong vanilla flavor." />
+
+                                    <TextView
+                                        android:id="@+id/flashcardExampleVi"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="6dp"
+                                        android:lineSpacingExtra="4dp"
+                                        android:textColor="@color/ef_primary_dark"
+                                        android:alpha="0.8"
+                                        android:textSize="14sp"
+                                        android:paddingStart="8dp"
+                                        android:background="#05000000"
+                                        tools:text="Loại kem này có hương vani rất mạnh." />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </androidx.core.widget.NestedScrollView>
+
+                        <!-- Bottom Action (Pronounce) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:paddingVertical="12dp"
+                            android:background="#05000000">
+                            
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnPronounceFlashcard"
+                                android:layout_width="wrap_content"
+                                android:layout_height="48dp"
+                                android:backgroundTint="@color/white"
+                                android:text="@string/btn_pronounce"
+                                android:textColor="@color/ef_primary_dark"
+                                app:cornerRadius="24dp"
+                                app:elevation="2dp"
+                                app:icon="@drawable/ic_volume_up"
+                                app:iconTint="@color/ef_primary"
+                                app:strokeColor="#CBD5E1"
+                                app:strokeWidth="1dp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                </FrameLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
+
+        <!-- Assessment SRS Controls -->
+        <LinearLayout
+            android:id="@+id/srsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="90dp"
+            android:background="@android:color/transparent"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <TextView
+                android:id="@+id/srsHint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:alpha="0.7"
+                android:fontFamily="sans-serif-medium"
+                android:text="Đánh giá mức độ ghi nhớ"
+                android:textColor="@color/ef_text_secondary"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:id="@+id/srsButtons"
+                android:layout_width="match_parent"
                 android:layout_height="64dp"
-                android:layout_weight="1"
-                android:text="ĐÃ THUỘC"
-                android:textColor="#059669"
-                android:textSize="12sp"
-                app:backgroundTint="#ECFDF5"
-                app:cornerRadius="16dp"
-                app:strokeColor="#6EE7B7"
-                app:strokeWidth="1.5dp" />
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:visibility="invisible"
+                tools:visibility="visible">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnHard"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_3d_badge_failed"
+                    app:backgroundTint="@null"
+                    android:text="QUÊN"
+                    android:textColor="#E11D48"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnOkay"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="10dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_3d_badge_learning"
+                    app:backgroundTint="@null"
+                    android:text="KHÁ NHỚ"
+                    android:textColor="#92400E"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEasy"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_3d_badge_completed"
+                    app:backgroundTint="@null"
+                    android:text="ĐÃ THUỘC"
+                    android:textColor="#065F46"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"/>
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
 
-</LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

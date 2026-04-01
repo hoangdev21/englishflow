@@ -45,7 +45,6 @@ public class CustomVocabularyManagerActivity extends AppCompatActivity {
                 Toast.makeText(CustomVocabularyManagerActivity.this,
                         deleted ? "Da xoa: " + item.word : "Khong xoa duoc tu",
                         Toast.LENGTH_SHORT).show();
-                loadData();
             }
 
             @Override
@@ -54,7 +53,6 @@ public class CustomVocabularyManagerActivity extends AppCompatActivity {
                 Toast.makeText(CustomVocabularyManagerActivity.this,
                         ok ? (!item.isLocked ? "Da khoa" : "Da mo khoa") : "Cap nhat that bai",
                         Toast.LENGTH_SHORT).show();
-                loadData();
             }
         });
         failedLabelAdapter = new FailedLabelLogAdapter();
@@ -68,21 +66,12 @@ public class CustomVocabularyManagerActivity extends AppCompatActivity {
         // Back button
         findViewById(R.id.btnBackAction).setOnClickListener(v -> onBackPressed());
 
-        loadData();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadData();
-    }
-
-    private void loadData() {
-        repository.getAllCustomVocabularyAsync(customList -> {
+        // Observe data changes automatically
+        repository.getAllCustomVocabularyLive().observe(this, customList -> {
             if (customAdapter != null) customAdapter.submitList(customList);
         });
-        
-        repository.getTopFailedLabelsAsync(20, failedList -> {
+
+        repository.getTopFailedLabelsLive(20).observe(this, failedList -> {
             if (failedLabelAdapter != null) failedLabelAdapter.submitList(failedList);
         });
     }
@@ -110,7 +99,6 @@ public class CustomVocabularyManagerActivity extends AppCompatActivity {
                     }
 
                     Toast.makeText(this, updated ? "Da cap nhat" : "Khong cap nhat duoc", Toast.LENGTH_SHORT).show();
-                    loadData();
                 })
                 .show();
     }
@@ -123,7 +111,6 @@ public class CustomVocabularyManagerActivity extends AppCompatActivity {
                 .setPositiveButton("Cap nhat", (dialog, which) -> {
                     boolean forced = repository.updateCustomMeaning(word, meaning, true);
                     Toast.makeText(this, forced ? "Da cap nhat (force)" : "Cap nhat that bai", Toast.LENGTH_SHORT).show();
-                    loadData();
                 })
                 .show();
     }

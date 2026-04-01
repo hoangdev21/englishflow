@@ -29,6 +29,9 @@ public interface CustomVocabularyDao {
     @Query("SELECT * FROM custom_vocabulary ORDER BY updatedAt DESC")
     List<CustomVocabularyEntity> getAll();
 
+    @Query("SELECT * FROM custom_vocabulary ORDER BY updatedAt DESC")
+    androidx.lifecycle.LiveData<List<CustomVocabularyEntity>> getAllLive();
+
     @Query("UPDATE custom_vocabulary SET meaning = :meaning, updatedAt = :updatedAt WHERE word = :word AND isLocked = 0")
     int updateMeaningIfUnlocked(String word, String meaning, long updatedAt);
 

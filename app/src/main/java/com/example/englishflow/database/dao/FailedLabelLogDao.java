@@ -28,4 +28,7 @@ public interface FailedLabelLogDao {
 
     @Query("SELECT * FROM failed_label_logs ORDER BY failCount DESC, lastSeenAt DESC LIMIT :limit")
     List<FailedLabelLogEntity> getTopFailed(int limit);
+
+    @Query("SELECT * FROM failed_label_logs ORDER BY failCount DESC, lastSeenAt DESC LIMIT :limit")
+    androidx.lifecycle.LiveData<List<FailedLabelLogEntity>> getTopFailedLive(int limit);
 }
