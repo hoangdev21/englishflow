@@ -1,7 +1,6 @@
 package com.example.englishflow.ui.adapters;
 
 import android.content.Context;
-import android.speech.tts.TextToSpeech;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,37 +18,47 @@ import com.example.englishflow.database.entity.CustomVocabularyEntity;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.List;
-import java.util.Locale;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private final List<ChatItem> messages;
-    private TextToSpeech tts;
-    private boolean ttsReady = false;
 
     public ChatAdapter(List<ChatItem> messages) {
         this.messages = messages;
     }
 
-    /** Call this from Fragment/Activity when ready. TTS is initialized lazily on first use. */
-    public void initTts(Context context) {
-        if (tts != null) return;
-        tts = new TextToSpeech(context.getApplicationContext(), status -> {
-            if (status == TextToSpeech.SUCCESS) {
-                int result = tts.setLanguage(Locale.US);
-                ttsReady = (result != TextToSpeech.LANG_MISSING_DATA
-                        && result != TextToSpeech.LANG_NOT_SUPPORTED);
+    /** Callback for speaking a word — provided by Fragment to route through VoiceFlowEngine */
+    public interface SpeakCallback {
+        void speak(String text);
+    }
+
+    private SpeakCallback speakCallback;
+
+    public void setSpeakCallback(SpeakCallback cb) {
+        this.speakCallback = cb;
+    }
+
+    /** Legacy TTS kept ONLY as fallback when no engine callback is set */
+    private android.speech.tts.TextToSpeech fallbackTts;
+    private boolean fallbackTtsReady = false;
+
+    public void initTts(android.content.Context context) {
+        if (fallbackTts != null) return;
+        fallbackTts = new android.speech.tts.TextToSpeech(context.getApplicationContext(), status -> {
+            if (status == android.speech.tts.TextToSpeech.SUCCESS) {
+                int r = fallbackTts.setLanguage(java.util.Locale.US);
+                fallbackTtsReady = (r != android.speech.tts.TextToSpeech.LANG_MISSING_DATA
+                        && r != android.speech.tts.TextToSpeech.LANG_NOT_SUPPORTED);
             }
         });
     }
 
-    /** Release TTS engine — call from Fragment.onDestroyView() */
     public void shutdownTts() {
-        if (tts != null) {
-            tts.stop();
-            tts.shutdown();
-            tts = null;
-            ttsReady = false;
+        if (fallbackTts != null) {
+            fallbackTts.stop();
+            fallbackTts.shutdown();
+            fallbackTts = null;
+            fallbackTtsReady = false;
         }
     }
 
@@ -112,10 +121,36 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
                 String word   = item.getVocabWord();
                 String ipa    = item.getVocabIpa();
+                String meaning = item.getVocabMeaning();
+                String example = item.getVocabExample();
+                String exampleVi = item.getVocabExampleVi();
 
                 h.tvVocabWord.setText(word != null ? word : "");
                 h.tvVocabIpa.setText(ipa != null ? "/" + ipa + "/" : "");
                 h.tvVocabIpa.setVisibility(ipa != null ? View.VISIBLE : View.GONE);
+
+                boolean hasMeaning = meaning != null && !meaning.trim().isEmpty();
+                boolean hasExample = example != null && !example.trim().isEmpty();
+                boolean hasExampleVi = exampleVi != null && !exampleVi.trim().isEmpty();
+
+                if (hasMeaning || hasExample || hasExampleVi) {
+                    h.vocabDetailBlock.setVisibility(View.VISIBLE);
+                    h.tvVocabMeaning.setVisibility(hasMeaning ? View.VISIBLE : View.GONE);
+                    h.tvVocabExample.setVisibility(hasExample ? View.VISIBLE : View.GONE);
+                    h.tvVocabExampleVi.setVisibility(hasExampleVi ? View.VISIBLE : View.GONE);
+
+                    if (hasMeaning) {
+                        h.tvVocabMeaning.setText("Nghĩa: " + meaning);
+                    }
+                    if (hasExample) {
+                        h.tvVocabExample.setText("Ví dụ: " + example);
+                    }
+                    if (hasExampleVi) {
+                        h.tvVocabExampleVi.setText("Dịch: " + exampleVi);
+                    }
+                } else {
+                    h.vocabDetailBlock.setVisibility(View.GONE);
+                }
 
                 // 🔊 Speak button
                 h.btnSpeak.setOnClickListener(v -> speakWord(word, v.getContext()));
@@ -125,6 +160,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
             } else {
                 h.vocabActionBar.setVisibility(View.GONE);
+                h.vocabDetailBlock.setVisibility(View.GONE);
             }
         }
     }
@@ -132,18 +168,20 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     // ── TTS Speaker ───────────────────────────────────────────────────────────
     private void speakWord(String word, Context context) {
         if (word == null || word.isEmpty()) return;
-        if (tts == null) {
-            initTts(context);
-            // Give TTS time to init, then speak
-            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                if (ttsReady) tts.speak(word, TextToSpeech.QUEUE_FLUSH, null, null);
-            }, 600);
+        // Prefer the VoiceFlowEngine route
+        if (speakCallback != null) {
+            speakCallback.speak(word);
             return;
         }
-        if (ttsReady) {
-            tts.speak(word, TextToSpeech.QUEUE_FLUSH, null, null);
+        // Fallback: standalone TTS
+        if (fallbackTts == null) initTts(context);
+        if (fallbackTtsReady) {
+            fallbackTts.speak(word, android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, null);
         } else {
-            Toast.makeText(context, "TTS chưa sẵn sàng, thử lại sau", Toast.LENGTH_SHORT).show();
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                if (fallbackTtsReady) fallbackTts.speak(word,
+                        android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, null);
+            }, 700);
         }
     }
 
@@ -216,6 +254,10 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         final TextView tvVocabIpa;
         final MaterialButton btnSpeak;
         final MaterialButton btnSaveVocab;
+        final LinearLayout vocabDetailBlock;
+        final TextView tvVocabMeaning;
+        final TextView tvVocabExample;
+        final TextView tvVocabExampleVi;
 
         AiViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -228,6 +270,10 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvVocabIpa      = itemView.findViewById(R.id.tvVocabIpa);
             btnSpeak        = itemView.findViewById(R.id.btnSpeak);
             btnSaveVocab    = itemView.findViewById(R.id.btnSaveVocab);
+            vocabDetailBlock = itemView.findViewById(R.id.vocabDetailBlock);
+            tvVocabMeaning = itemView.findViewById(R.id.tvVocabMeaning);
+            tvVocabExample = itemView.findViewById(R.id.tvVocabExample);
+            tvVocabExampleVi = itemView.findViewById(R.id.tvVocabExampleVi);
         }
     }
 

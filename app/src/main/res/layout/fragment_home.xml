@@ -121,93 +121,191 @@
                 android:orientation="horizontal">
 
                 <!-- Streak Badge -->
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="75dp"
                     android:layout_marginEnd="12dp"
                     android:layout_weight="1"
-                    android:background="@drawable/bg_3d_badge_silver"
-                    android:elevation="4dp"
-                    android:gravity="center_vertical"
-                    android:paddingStart="16dp"
-                    android:paddingTop="14dp"
-                    android:paddingEnd="16dp"
-                    android:paddingBottom="16dp">
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:strokeWidth="1.5dp"
+                    app:strokeColor="#60FFFFFF">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🔥"
-                        android:textSize="18sp" />
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
 
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:orientation="vertical">
+                        <!-- Background Image -->
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/streak"
+                            android:id="@+id/imgStreakBg"/>
 
-                        <TextView
-                            android:id="@+id/txtCurrentStreak"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0"
-                            android:textColor="@color/ef_text_primary"
-                            android:textSize="20sp"
-                            android:textStyle="bold" />
+                        <!-- Darker Overlay for high contrast -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="#60000000" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:alpha="0.75"
-                            android:text="ngày liên tiếp"
-                            android:textColor="@color/ef_text_secondary"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </LinearLayout>
+                        <!-- Premium 3D Glossy / Shine Layer -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="35dp"
+                            android:background="@drawable/bg_glass_shine" />
+
+                        <!-- Bottom Deep Shadow Inside -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="8dp"
+                            android:layout_gravity="bottom"
+                            android:background="@drawable/bg_inner_shadow_bottom" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🔥"
+                                android:textSize="20sp"
+                                android:shadowColor="#000000"
+                                android:shadowDx="1"
+                                android:shadowDy="1"
+                                android:shadowRadius="2" />
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/txtCurrentStreak"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="0"
+                                    android:includeFontPadding="false"
+                                    android:textColor="@color/white"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold"
+                                    android:shadowColor="#000000"
+                                    android:shadowDx="1"
+                                    android:shadowDy="1"
+                                    android:shadowRadius="2"/>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:alpha="0.95"
+                                    android:text="ngày liên tiếp"
+                                    android:includeFontPadding="false"
+                                    android:textColor="@color/white"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </FrameLayout>
+                </com.google.android.material.card.MaterialCardView>
 
                 <!-- XP Badge -->
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="75dp"
                     android:layout_weight="1"
-                    android:background="@drawable/bg_3d_badge_silver"
-                    android:elevation="4dp"
-                    android:gravity="center_vertical"
-                    android:paddingStart="16dp"
-                    android:paddingTop="14dp"
-                    android:paddingEnd="16dp"
-                    android:paddingBottom="16dp">
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:strokeWidth="1.5dp"
+                    app:strokeColor="#60FFFFFF">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="⚡"
-                        android:textSize="18sp" />
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
 
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:orientation="vertical">
+                        <!-- Background Image -->
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/score"
+                            android:id="@+id/imgScoreBg"/>
 
-                        <TextView
-                            android:id="@+id/txtHeaderXp"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0"
-                            android:textColor="@color/ef_text_primary"
-                            android:textSize="20sp"
-                            android:textStyle="bold" />
+                        <!-- Darker Overlay -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="#60000000" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:alpha="0.75"
-                            android:text="XP hôm nay"
-                            android:textColor="@color/ef_text_secondary"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </LinearLayout>
+                        <!-- Glossy / Shine -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="35dp"
+                            android:background="@drawable/bg_glass_shine" />
+
+                        <!-- Bottom Deep Shadow Inside -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="8dp"
+                            android:layout_gravity="bottom"
+                            android:background="@drawable/bg_inner_shadow_bottom" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="⚡"
+                                android:textSize="20sp"
+                                android:shadowColor="#000000"
+                                android:shadowDx="1"
+                                android:shadowDy="1"
+                                android:shadowRadius="2" />
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/txtHeaderXp"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="0"
+                                    android:includeFontPadding="false"
+                                    android:textColor="@color/white"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold"
+                                    android:shadowColor="#000000"
+                                    android:shadowDx="1"
+                                    android:shadowDy="1"
+                                    android:shadowRadius="2" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:alpha="0.95"
+                                    android:text="XP hôm nay"
+                                    android:includeFontPadding="false"
+                                    android:textColor="@color/white"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </FrameLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

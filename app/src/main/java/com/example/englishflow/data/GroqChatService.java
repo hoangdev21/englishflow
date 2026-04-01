@@ -34,8 +34,16 @@ public class GroqChatService {
 
     public GroqChatService(Context context) {
         this.apiKey = BuildConfig.GROQ_API_KEY;
-        this.modelName = "llama-3.3-70b-versatile"; 
-        this.httpClient = new OkHttpClient();
+        // Use model from BuildConfig if provided, fallback to standard versatile model
+        this.modelName = (BuildConfig.GROQ_MODEL != null && !BuildConfig.GROQ_MODEL.isEmpty()) 
+                ? BuildConfig.GROQ_MODEL : "llama-3.1-70b-versatile"; 
+        
+        this.httpClient = new OkHttpClient.Builder()
+                .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                .build();
+                
         this.gson = new Gson();
         this.database = EnglishFlowDatabase.getInstance(context);
     }
@@ -80,62 +88,40 @@ public class GroqChatService {
         }
     }
 
+    private static final String SYSTEM_PROMPT =
+            "Bạn là 'Flow' - một Gia sư tiếng Anh song ngữ chuyên nghiệp và tận tâm.\n\n" +
+            "QUY TẮC PHẢN HỒI (BẮT BUỘC):\n" +
+            "1. KHÔNG ĐƯỢC trả về mảng (Arrays []). Mọi giá trị trong JSON phải là Chuỗi (Strings \"\").\n" +
+            "2. Mọi nội dung hiển thị cho người dùng (bao gồm lời chào, danh sách từ vựng, giải thích) PHẢI nằm trọn vẹn trong trường 'response'.\n" +
+            "3. Nếu người dùng yêu cầu NHIỀU từ vựng, hãy trình bày tất cả chúng thật đẹp trong trường 'response' (dùng xuống dòng, emoji). Các trường vocab_word, vocab_ipa... chỉ chứa thông tin của từ QUAN TRỌNG NHẤT hoặc để trống nếu có quá nhiều từ.\n" +
+            "4. Sử dụng cấu trúc sau cho mỗi từ vựng trong trường 'response':\n" +
+            "   ✿ **Từ vựng**: [Word]\n" +
+            "   ☁ **Phiên âm**: /[IPA]/\n" +
+            "   ⚡ **Nghĩa**: [Nghĩa]\n" +
+            "   ➠ **Ví dụ**: [Example]\n\n" +
+            "QUY TẮC TRÌNH BÀY:\n" +
+            "- Luôn sử dụng XUỐNG DÒNG KẾP giữa các đoạn.\n" +
+            "- Trả về JSON với các trường: response, correction, explanation, vocab_word, vocab_ipa, vocab_meaning, vocab_example, vocab_example_vi.";
+
     private String buildSystemPrompt(String topic, List<CustomVocabularyEntity> vocab) {
         StringBuilder sb = new StringBuilder();
-        sb.append("You are Flow, a refined and highly expert English tutor from the EnglishFlow app. ");
-        sb.append("You have deep expertise in the topic: ").append(topic).append(". ");
-        sb.append("Always provide high-level, professional advice tailored specifically to this domain.\n\n");
+        sb.append(SYSTEM_PROMPT);
+        sb.append("\n\nCHỦ ĐỀ: ").append(topic);
         
-        sb.append("CRITICAL FORMATTING RULES:\n");
-        sb.append("1. LANGUAGE: Respond in Vietnamese. Keep core English terms in English.\n");
-        sb.append("2. STRUCTURE: Every piece of information MUST be on a NEW LINE. Use DOUBLE NEWLINES (\\n\\n) between sections for clinical clarity.\n");
-        sb.append("3. VOCABULARY QUERIES: If the user asks about a word or phrase, you MUST:\n");
-        sb.append("   a) Follow this EXACT multi-line template in the 'answer' field:\n\n");
-        sb.append("✿ **Từ vựng**: [Word]\\n\\n");
-        sb.append("☁ **Phiên âm (IPA)**: [Phonetic]\\n\\n");
-        sb.append("☂ **Loại từ**: (Danh từ/Động từ/Tính từ/Trạng từ...)\\n\\n");
-        sb.append("ϟ **Nghĩa**: [Clear definition in Vietnamese]\\n\\n");
-        sb.append("💡 **Ví dụ & Dịch**:\\n");
-        sb.append(" ➠ [Example Sentence 1]\\n");
-        sb.append("  ⇋ [Dịch nghĩa ví dụ 1]\\n\\n");
-        sb.append(" ➠ [Example Sentence 2]\\n");
-        sb.append("  ⇋ [Dịch nghĩa ví dụ 2]\\n\\n");
-        sb.append("📝 **Lưu ý (nếu có)**: [Usage notes or common collocations]\\n\\n");
-        sb.append("   b) ALSO fill the vocab_* JSON fields below with the extracted data.\n\n");
-        
-        sb.append("4. RAG CONTEXT: Use the following database information if it helps answer accurately:\n");
         if (vocab != null && !vocab.isEmpty()) {
+            sb.append("\n\nDỮ LIỆU THAM KHẢO:\n");
             for (CustomVocabularyEntity v : vocab) {
-                sb.append("- Word: ").append(v.word);
-                if (v.ipa != null) sb.append(" [").append(v.ipa).append("]");
-                sb.append(" | Nghĩa: ").append(v.meaning);
-                if (v.example != null) sb.append(" | Ví dụ: ").append(v.example);
-                sb.append("\n");
+                sb.append("- ").append(v.word).append(": ").append(v.meaning).append("\n");
             }
         }
-        
-        sb.append("\n5. CORRECTION: If the user's input has English grammar/spelling errors, provide accurate corrections in the JSON fields below.\n");
-        
-        sb.append("\nRESPONSE FORMAT (Strictly JSON):\n");
-        sb.append("{\n");
-        sb.append("  \"answer\": \"your structured, professional response with explicit double newlines \\n\\n between sections\",\n");
-        sb.append("  \"correction\": \"only the corrected English text (null if no error)\",\n");
-        sb.append("  \"explanation\": \"short Vietnamese explanation of the fix (null if no error)\",\n");
-        sb.append("  \"vocab_word\": \"the English word/phrase being queried (null if not a vocabulary query)\",\n");
-        sb.append("  \"vocab_ipa\": \"the IPA phonetic transcription (null if not a vocabulary query)\",\n");
-        sb.append("  \"vocab_meaning\": \"the Vietnamese meaning/definition (null if not a vocabulary query)\",\n");
-        sb.append("  \"vocab_example\": \"the best English example sentence (null if not a vocabulary query)\",\n");
-        sb.append("  \"vocab_example_vi\": \"Vietnamese translation of the example sentence (null if not a vocabulary query)\"\n");
-        sb.append("}");
-        
         return sb.toString();
     }
 
     private JsonObject buildChatRequest(String systemPrompt, String userMessage) {
         JsonObject request = new JsonObject();
         request.addProperty("model", modelName);
-        request.addProperty("temperature", 0.5);
-        request.addProperty("max_tokens", 700);
+        request.addProperty("temperature", 0.6);
+        request.addProperty("max_tokens", 2500);
         
         JsonObject responseFormat = new JsonObject();
         responseFormat.addProperty("type", "json_object");
@@ -173,7 +159,7 @@ public class GroqChatService {
 
         try (Response response = httpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                String err = response.body() != null ? response.body().string() : "Empty";
+                String err = response.body() != null ? response.body().string() : "Unknown Error";
                 Log.e(TAG, "Groq Error: " + response.code() + " - " + err);
                 throw new RuntimeException("API error: " + response.code() + " - " + err);
             }
@@ -190,26 +176,31 @@ public class GroqChatService {
         try {
             Log.d(TAG, "Raw response: " + rawResponse);
             String sanitized = rawResponse.trim();
-            if (sanitized.startsWith("```json")) {
-                sanitized = sanitized.substring(7);
+            
+            // Extract JSON block if surrounded by text
+            if (sanitized.contains("{")) {
+                int start = sanitized.indexOf("{");
+                int end = sanitized.lastIndexOf("}");
+                if (start != -1 && end != -1) {
+                    sanitized = sanitized.substring(start, end + 1);
+                }
             }
-            if (sanitized.contains("```")) {
-                sanitized = sanitized.replace("```json", "").replace("```", "");
-            }
-            sanitized = sanitized.trim();
 
             JsonObject json = gson.fromJson(sanitized, JsonObject.class);
             
-            String answer = getStringOrNull(json, "answer");
-            if (answer == null) answer = "Xin lỗi, đã có lỗi định dạng kết quả.";
+            // Comprehensive key search (Case-insensitive & Fallbacks)
+            String answer = searchKeys(json, "response", "answer", "content", "result", "message");
             
-            String correction  = getStringOrNull(json, "correction");
-            String explanation = getStringOrNull(json, "explanation");
-            String vocabWord      = getStringOrNull(json, "vocab_word");
-            String vocabIpa       = getStringOrNull(json, "vocab_ipa");
-            String vocabMeaning   = getStringOrNull(json, "vocab_meaning");
-            String vocabExample   = getStringOrNull(json, "vocab_example");
-            String vocabExampleVi = getStringOrNull(json, "vocab_example_vi");
+            // Total fallback: take whole input if no key matches
+            if (answer == null) answer = rawResponse; 
+            
+            String correction  = searchKeys(json, "correction", "corrected");
+            String explanation = searchKeys(json, "explanation", "explain");
+            String vocabWord      = searchKeys(json, "vocab_word", "word");
+            String vocabIpa       = searchKeys(json, "vocab_ipa", "ipa", "phonetic");
+            String vocabMeaning   = searchKeys(json, "vocab_meaning", "meaning", "definition");
+            String vocabExample   = searchKeys(json, "vocab_example", "example");
+            String vocabExampleVi = searchKeys(json, "vocab_example_vi", "example_vi", "translation");
             
             callback.onSuccess(answer, correction, explanation,
                     vocabWord, vocabIpa, vocabMeaning, vocabExample, vocabExampleVi);
@@ -219,11 +210,38 @@ public class GroqChatService {
         }
     }
 
-    private String getStringOrNull(JsonObject json, String key) {
-        if (json.has(key) && !json.get(key).isJsonNull()) {
-            String val = json.get(key).getAsString().trim();
-            return val.isEmpty() || val.equalsIgnoreCase("null") ? null : val;
+    private String searchKeys(JsonObject json, String... keys) {
+        for (String key : keys) {
+            // Case-insensitive check
+            for (String actualKey : json.keySet()) {
+                if (actualKey.equalsIgnoreCase(key)) {
+                    String val = getStringOrNull(json, actualKey);
+                    if (val != null) return val;
+                }
+            }
         }
         return null;
+    }
+
+    private String getStringOrNull(JsonObject json, String key) {
+        if (!json.has(key) || json.get(key).isJsonNull()) return null;
+        
+        com.google.gson.JsonElement element = json.get(key);
+        if (element.isJsonPrimitive()) {
+            String val = element.getAsString().trim();
+            return (val.isEmpty() || val.equalsIgnoreCase("null")) ? null : val;
+        } else if (element.isJsonArray()) {
+            // If it's an array, join elements with newlines (prevents crash and shows content)
+            StringBuilder sb = new StringBuilder();
+            com.google.gson.JsonArray array = element.getAsJsonArray();
+            for (int i = 0; i < array.size(); i++) {
+                if (i > 0) sb.append("\n");
+                sb.append(array.get(i).getAsString());
+            }
+            return sb.toString();
+        } else {
+            // Fallback for objects or other types
+            return element.toString();
+        }
     }
 }
