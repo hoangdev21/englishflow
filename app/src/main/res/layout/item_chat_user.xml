@@ -10,23 +10,30 @@
     android:paddingTop="10dp"
     android:paddingBottom="10dp">
 
-    <!-- User Bubble (3D Premium) -->
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_bubble_user_premium"
-        android:elevation="3dp"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp">
+        android:layout_weight="1"
+        android:gravity="end">
 
-        <TextView
-            android:id="@+id/chatUserMessage"
+        <!-- User Bubble (3D Premium) -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:textSize="15sp"
-            android:lineSpacingExtra="4dp"
-            android:letterSpacing="0.01" />
+            android:background="@drawable/bg_bubble_user_premium"
+            android:elevation="3dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp">
+
+            <TextView
+                android:id="@+id/chatUserMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:lineSpacingExtra="4dp"
+                android:letterSpacing="0.01" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- User Avatar (3D Silver) -->

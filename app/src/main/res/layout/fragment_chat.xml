@@ -19,14 +19,13 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Hero Section with Gradient -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_hero_home_premium"
                 android:orientation="vertical"
                 android:paddingStart="24dp"
-                android:paddingTop="24dp"
+                android:paddingTop="52dp"
                 android:paddingEnd="24dp"
                 android:paddingBottom="24dp">
 
@@ -37,31 +36,6 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <!-- Online Status Badge (3D White) -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_3d_badge_silver"
-                        android:elevation="4dp"
-                        android:gravity="center_vertical"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="8dp">
-
-                        <View
-                            android:layout_width="8dp"
-                            android:layout_height="8dp"
-                            android:background="@drawable/bg_pill_grey"
-                            android:backgroundTint="@color/ef_primary" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:text="Flow Online"
-                            android:textColor="@color/ef_text_primary"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
 
                     <View
                         android:layout_width="0dp"
@@ -178,6 +152,47 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:listitem="@layout/item_chat_message" />
 
+
+    <!-- Voice Status Bar — visible during listen/speak states -->
+    <LinearLayout
+        android:id="@+id/voiceStatusBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="164dp"
+        android:background="@drawable/bg_stats_premium_card"
+        android:elevation="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="10dp"
+        android:visibility="gone">
+
+        <!-- Pulsing dot indicator -->
+        <View
+            android:id="@+id/voiceDot"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/bg_pill_grey"
+            android:backgroundTint="@color/ef_primary" />
+
+        <!-- Live transcript / status text -->
+        <TextView
+            android:id="@+id/tvVoiceStatus"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:text="Đang lắng nghe..."
+            android:textColor="@color/ef_text_primary"
+            android:textSize="13.5sp"
+            android:fontFamily="sans-serif-medium" />
+    </LinearLayout>
+
     <!-- Premium Floating Input Bar -->
     <LinearLayout
         android:id="@+id/chatInputContainer"
@@ -208,6 +223,27 @@
                 android:paddingTop="4dp"
                 android:paddingBottom="4dp">
 
+                <!-- Mic Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMic"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/bg_mic_idle"
+                    android:contentDescription="Nhấn để nói"
+                    android:elevation="6dp"
+                    app:backgroundTint="@null"
+                    app:icon="@drawable/ic_mic"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="22dp"
+                    app:iconTint="@color/white" />
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edtMessage"
                     android:layout_width="0dp"
@@ -218,7 +254,7 @@
                     android:imeOptions="actionSend"
                     android:inputType="textCapSentences|textMultiLine"
                     android:maxLines="5"
-                    android:paddingHorizontal="20dp"
+                    android:paddingHorizontal="14dp"
                     android:paddingVertical="12dp"
                     android:textColor="@color/ef_text_primary"
                     android:textColorHint="@color/ef_text_secondary"
@@ -248,3 +284,4 @@
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

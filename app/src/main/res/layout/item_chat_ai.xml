@@ -35,8 +35,9 @@
     </com.google.android.material.card.MaterialCardView>
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:orientation="vertical">
 
         <!-- AI Bubble -->
@@ -142,6 +143,47 @@
                 app:iconTint="@color/white"
                 app:iconGravity="textStart"
                 android:elevation="2dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/vocabDetailBlock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp">
+
+            <TextView
+                android:id="@+id/tvVocabMeaning"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="270dp"
+                android:textColor="@color/ef_text_primary"
+                android:textSize="13.5sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvVocabExample"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:maxWidth="270dp"
+                android:textColor="@color/ef_text_secondary"
+                android:textSize="12.5sp"
+                android:lineSpacingExtra="2dp" />
+
+            <TextView
+                android:id="@+id/tvVocabExampleVi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:maxWidth="270dp"
+                android:textColor="@color/ef_text_secondary"
+                android:textSize="12sp"
+                android:alpha="0.85"
+                android:lineSpacingExtra="2dp" />
         </LinearLayout>
 
         <!-- Correction block (3D Silver Card) -->
