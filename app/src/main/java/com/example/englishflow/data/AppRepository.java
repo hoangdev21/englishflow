@@ -50,6 +50,7 @@ public class AppRepository {
     private static final String KEY_LAST_TOPIC_TITLE = "last_topic_title";
     private static final String KEY_LAST_TOPIC_DOMAIN = "last_topic_domain";
     private static final String KEY_LAST_TOPIC_REMAINING_CARDS = "last_topic_remaining_cards";
+    private static final String KEY_COMPLETED_MAP_NODES = "completed_map_nodes";
     private static final String SEED_FILE_NAME = "vocab_seed_packages.json";
 
     private static AppRepository instance;
@@ -90,7 +91,13 @@ public class AppRepository {
     }
 
     public String getUserName() {
-        return preferences.getString(getPrefKey(KEY_NAME), "An");
+        if (authStore != null && authStore.getCurrentUser() != null) {
+            String displayName = authStore.getCurrentUser().displayName;
+            if (displayName != null && !displayName.isEmpty()) {
+                return displayName;
+            }
+        }
+        return preferences.getString(getPrefKey(KEY_NAME), "Bạn");
     }
 
     public void setUserName(String name) {
@@ -1375,5 +1382,16 @@ public class AppRepository {
             return "";
         }
         return word.trim().toLowerCase(Locale.US);
+    }
+
+    public void saveMapNodeCompleted(String nodeId) {
+        Set<String> completed = new HashSet<>(preferences.getStringSet(getPrefKey(KEY_COMPLETED_MAP_NODES), new HashSet<>()));
+        completed.add(nodeId);
+        preferences.edit().putStringSet(getPrefKey(KEY_COMPLETED_MAP_NODES), completed).apply();
+    }
+
+    public boolean isMapNodeCompleted(String nodeId) {
+        Set<String> completed = preferences.getStringSet(getPrefKey(KEY_COMPLETED_MAP_NODES), new HashSet<>());
+        return completed.contains(nodeId);
     }
 }
