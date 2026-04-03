@@ -23,7 +23,7 @@
                 android:background="@drawable/bg_hero_home_premium"
                 android:orientation="vertical"
                 android:paddingStart="18dp"
-                android:paddingTop="18dp"
+                android:paddingTop="8dp"
                 android:paddingEnd="18dp"
                 android:paddingBottom="34dp">
 
