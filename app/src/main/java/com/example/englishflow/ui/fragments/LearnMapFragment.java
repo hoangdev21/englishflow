@@ -21,6 +21,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.englishflow.R;
+import com.example.englishflow.data.AppRepository;
+import com.example.englishflow.data.LessonVocabulary;
 import com.example.englishflow.data.MapNodeItem;
 import com.example.englishflow.ui.MapConversationActivity;
 import com.example.englishflow.ui.views.MapPathView;
@@ -55,15 +57,60 @@ public class LearnMapFragment extends Fragment {
         mapNodesContainer.post(this::drawPath);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mapNodesContainer != null) {
+            buildNodeRows(getMockJourney());
+            mapNodesContainer.post(this::drawPath);
+        }
+    }
+
     private List<MapNodeItem> getMockJourney() {
-        return Arrays.asList(
-                new MapNodeItem("greetings_01", "Greetings", "Hi", "greetings_basic", 3, MapNodeItem.Status.COMPLETED),
-                new MapNodeItem("greetings_02", "Formal Hello", "GM", "greetings_formal", 4, MapNodeItem.Status.AVAILABLE),
-                new MapNodeItem("greetings_03", "Time-based", "Time", "greetings_time", 4, MapNodeItem.Status.LOCKED),
-                new MapNodeItem("greetings_04", "Phone Talk", "Call", "greetings_phone", 4, MapNodeItem.Status.LOCKED),
-                new MapNodeItem("greetings_05", "Goodbye", "Bye", "greetings_goodbye", 3, MapNodeItem.Status.LOCKED),
-                new MapNodeItem("greetings_06", "How are you", "Mood", "greetings_howru", 5, MapNodeItem.Status.LOCKED)
+        AppRepository repo = AppRepository.getInstance(requireContext());
+        List<MapNodeItem> mockNodes = Arrays.asList(
+            new MapNodeItem("greetings_01", "Greetings", "Hi", "greetings_basic", 
+                    "You are a friendly neighbor meeting the user on a sidewalk. Start by saying Hi and ask for their name.", 3, 
+                    Arrays.asList(new com.example.englishflow.data.LessonVocabulary("Hello", "/həˈloʊ/", "Xin chào", "Hello, how are you?"), new com.example.englishflow.data.LessonVocabulary("Meet", "/miːt/", "Gặp gỡ", "Nice to meet you.")),
+                    MapNodeItem.Status.AVAILABLE),
+            new MapNodeItem("greetings_02", "Formal Hello", "GM", "greetings_formal", 
+                    "You are an interviewer at a big tech company. Start by greeting the user formally for their interview.", 4, 
+                     Arrays.asList(new com.example.englishflow.data.LessonVocabulary("Formal", "/ˈfɔːrml/", "Trang trọng", "This is a formal meeting."), new com.example.englishflow.data.LessonVocabulary("Appointment", "/əˈpɔɪntmənt/", "Cuộc hẹn", "I have an appointment.")),
+                    MapNodeItem.Status.LOCKED),
+            new MapNodeItem("greetings_03", "Time-based", "Time", "greetings_time", 
+                    "You are a barista early in the morning. Greet the user and ask what kind of coffee they'd like to start their day.", 4, 
+                    Arrays.asList(new com.example.englishflow.data.LessonVocabulary("Morning", "/ˈmɔːrnɪŋ/", "Buổi sáng", "Good morning!")),
+                    MapNodeItem.Status.LOCKED),
+            new MapNodeItem("greetings_04", "Phone Talk", "Call", "greetings_phone", 
+                    "You are a hotel receptionist answering a call. Greet the customer and offer your assistance.", 4, 
+                    Arrays.asList(new com.example.englishflow.data.LessonVocabulary("Reception", "/rɪˈsepʃn/", "Quầy lễ tân", "Go to the reception.")),
+                    MapNodeItem.Status.LOCKED),
+            new MapNodeItem("greetings_05", "Goodbye", "Bye", "greetings_goodbye", 
+                    "You are a teacher at the end of class. Say goodbye to the user and remind them about their homework.", 3, 
+                    Arrays.asList(new com.example.englishflow.data.LessonVocabulary("Class", "/klæs/", "Lớp học", "The class is over.")),
+                    MapNodeItem.Status.LOCKED),
+            new MapNodeItem("greetings_06", "How are you", "Mood", "greetings_howru", 
+                    "You are an old friend who hasn't seen the user for years. Greet them excitedly and ask how their life is going.", 5, 
+                    Arrays.asList(new com.example.englishflow.data.LessonVocabulary("Exciting", "/ɪkˈsaɪtɪŋ/", "Thú vị/Hứng thú", "This is exciting.")),
+                    MapNodeItem.Status.LOCKED)
         );
+
+        boolean prevCompleted = true; // First node is always available if previous is "completed"
+        for (int i = 0; i < mockNodes.size(); i++) {
+            MapNodeItem node = mockNodes.get(i);
+            boolean isDone = repo.isMapNodeCompleted(node.getNodeId());
+            
+            if (isDone) {
+                node.setStatus(MapNodeItem.Status.COMPLETED);
+                prevCompleted = true;
+            } else if (prevCompleted) {
+                node.setStatus(MapNodeItem.Status.AVAILABLE);
+                prevCompleted = false; // Next ones are locked
+            } else {
+                node.setStatus(MapNodeItem.Status.LOCKED);
+            }
+        }
+        return mockNodes;
     }
 
     private void buildNodeRows(List<MapNodeItem> nodes) {
@@ -156,6 +203,8 @@ public class LearnMapFragment extends Fragment {
         intent.putExtra(MapConversationActivity.EXTRA_NODE_ID, node.getNodeId());
         intent.putExtra(MapConversationActivity.EXTRA_TITLE, node.getTitle());
         intent.putExtra(MapConversationActivity.EXTRA_PROMPT_KEY, node.getPromptKey());
+        intent.putExtra(MapConversationActivity.EXTRA_ROLE_CONTEXT, node.getRoleDescription());
+        intent.putExtra(MapConversationActivity.EXTRA_VOCAB_LIST, new java.util.ArrayList<>(node.getVocabList()));
         intent.putExtra(MapConversationActivity.EXTRA_MIN_EXCHANGES, node.getMinExchanges());
         startActivity(intent);
     }

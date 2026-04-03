@@ -12,22 +12,50 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingBottom="100dp">
-        <LinearLayout
-            android:id="@+id/heroHeader"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_hero_home_premium"
-            android:orientation="vertical">
 
+        <!-- Unified Hero Display -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="210dp">
+
+            <!-- Background Layer -->
+            <FrameLayout
+                android:id="@+id/heroHeader"
+                android:layout_width="match_parent"
+                android:layout_height="170dp"
+                android:background="@color/ef_primary_light">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/englist_hero_home" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_hero_image_overlay" />
+            </FrameLayout>
+
+            <!-- Transition Wave (White) -->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="145dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/bg_wave_bottom"
+                app:tint="@color/white" />
+
+            <!-- Interactive Content Layer (Always on top) -->
             <LinearLayout
                 android:id="@+id/headerContent"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
+                android:gravity="bottom"
                 android:paddingStart="24dp"
-                android:paddingTop="4dp"
                 android:paddingEnd="24dp"
-                android:paddingBottom="12dp">
+                android:paddingBottom="10dp">
 
 
 
@@ -39,7 +67,7 @@
                 android:layout_marginTop="4dp"
                 android:letterSpacing="-0.03"
                 android:lineSpacingExtra="4dp"
-                android:text="Chào buổi sáng, An!"
+                android:text="Chào buổi sáng, Bạn!"
                 android:textColor="@color/ef_hero_text_white"
                 android:textSize="26sp"
                 app:autoSizeTextType="uniform"
@@ -48,16 +76,25 @@
                 app:autoSizeStepGranularity="1sp"
                 android:maxLines="2"
                 android:ellipsize="end"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:shadowColor="#B0000000"
+                android:shadowDx="2"
+                android:shadowDy="2"
+                android:shadowRadius="6" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="0dp"
-                android:alpha="0.75"
+                android:alpha="0.95"
                 android:text="Sẵn sàng nâng trình tiếng Anh mỗi ngày 🚀"
                 android:textColor="@color/ef_hero_text_white"
-                android:textSize="14sp" />
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:shadowColor="#B0000000"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="4" />
 
             <!-- Streak + XP Mini Badges -->
             <LinearLayout
@@ -72,10 +109,10 @@
                     android:layout_height="54dp"
                     android:layout_marginEnd="12dp"
                     android:layout_weight="1"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="6dp"
-                    app:strokeWidth="1.2dp"
-                    app:strokeColor="#50FFFFFF">
+                    app:cardCornerRadius="18dp"
+                    app:cardElevation="12dp"
+                    app:strokeWidth="3dp"
+                    app:strokeColor="#FFFFFF">
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -165,10 +202,10 @@
                     android:layout_width="0dp"
                     android:layout_height="54dp"
                     android:layout_weight="1"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="6dp"
-                    app:strokeWidth="1.2dp"
-                    app:strokeColor="#50FFFFFF">
+                    app:cardCornerRadius="18dp"
+                    app:cardElevation="12dp"
+                    app:strokeWidth="3dp"
+                    app:strokeColor="#FFFFFF">
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -254,15 +291,17 @@
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
+    </FrameLayout>
 
     <!-- Wave Cutout -->
         <ImageView
             android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:layout_marginTop="-20dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="-28dp"
             android:scaleType="fitXY"
-            android:src="@drawable/bg_wave_bottom" />
+            android:src="@drawable/bg_wave_bottom"
+            android:elevation="4dp"
+            android:translationZ="2dp" />
 
         <!-- Content Container -->
         <LinearLayout

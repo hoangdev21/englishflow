@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="8dp"
+    android:background="@drawable/bg_stats_premium_card">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/vocabWord"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Word"
+            android:textColor="@color/ef_text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/vocabMeaning"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Meaning"
+            android:textColor="@color/ef_text_secondary"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnPracticeWord"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:insetLeft="0dp"
+        android:insetRight="0dp"
+        android:backgroundTint="#F1F5F9"
+        app:icon="@drawable/ic_mic"
+        app:iconSize="18dp"
+        app:iconTint="@color/ef_primary" />
+
+    <ImageView
+        android:id="@+id/checkDone"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/ic_check_circle"
+        android:tint="@color/ef_primary"
+        android:visibility="gone" />
+</LinearLayout>
