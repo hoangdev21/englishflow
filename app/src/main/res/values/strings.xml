@@ -21,6 +21,12 @@
     <string name="learn_fields">Lĩnh vực học từ vựng</string>
     <string name="learn_topics">Đề tài</string>
     <string name="learn_flashcard">Flashcard</string>
+    <string name="learn_map_tab">Hành trình</string>
+    <string name="learn_flashcard_tab">Flashcards</string>
+    <string name="learn_map_title">Mới bắt đầu</string>
+    <string name="learn_map_subtitle">Tap vào node để bắt đầu luyện nói cùng AI Flow</string>
+    <string name="learn_map_speak">Nói</string>
+    <string name="map_conversation_hint">Nhấn để nói</string>
 
     <string name="scan_title">Scan vật thể bằng AI</string>
     <string name="scan_preview_desc">Hình ảnh xem trước để quét</string>

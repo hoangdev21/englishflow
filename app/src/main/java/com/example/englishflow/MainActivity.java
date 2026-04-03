@@ -2,7 +2,11 @@ package com.example.englishflow;
 
 import android.os.Bundle;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.englishflow.data.LocalAuthStore;
@@ -19,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         if (!new LocalAuthStore(getApplicationContext()).hasActiveSession()) {
             startActivity(new android.content.Intent(this, LoginActivity.class));
@@ -65,6 +70,20 @@ public class MainActivity extends AppCompatActivity {
 
             // ══ Keyboard Visibility Handling ══
             handleKeyboardVisibility();
+
+            // ══ Window Insets Handling (Edge-to-Edge) ══
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.mainRoot), (v, windowInsets) -> {
+                Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                
+                // Keep the bottom nav above the system navigation bar
+                ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.bottomAppBar), (nav, navInsets) -> {
+                    Insets navSystemBars = navInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                    nav.setPadding(0, 0, 0, navSystemBars.bottom);
+                    return navInsets;
+                });
+
+                return windowInsets;
+            });
 
         } catch (Exception e) {
             e.printStackTrace();

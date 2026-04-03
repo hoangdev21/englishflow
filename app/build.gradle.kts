@@ -16,6 +16,11 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        // Ship only arm64 to satisfy Google Play 16 KB page-size native requirement.
+        ndk {
+            abiFilters += listOf("arm64-v8a")
+        }
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
         // Load Groq API settings from local.properties
@@ -68,15 +73,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-}
 
-configurations.all {
-    resolutionStrategy.eachDependency {
-        if (requested.group == "androidx.datastore") {
-            useVersion("1.2.1")
-            because("Use newer DataStore native libs compatible with 16 KB page-size devices")
-        }
-    }
 }
 
 dependencies {
@@ -112,6 +109,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata:2.8.7")
     // HTTP + JSON (for Gemini Vision API REST calls)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.airbnb.android:lottie:6.6.4")
     implementation("com.google.code.gson:gson:2.10.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

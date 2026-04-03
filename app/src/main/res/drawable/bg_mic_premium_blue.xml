@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pulse/Outer Glow Layer -->
+    <item>
+        <shape android:shape="oval">
+            <gradient
+                android:centerX="0.5"
+                android:centerY="0.5"
+                android:gradientRadius="80dp"
+                android:startColor="#203B82F6"
+                android:endColor="#003B82F6"
+                android:type="radial" />
+        </shape>
+    </item>
+
+    <!-- Main Button Layer with Elevation -->
+    <item android:top="8dp" android:bottom="8dp" android:left="8dp" android:right="8dp">
+        <selector>
+            <item android:state_pressed="true">
+                <shape android:shape="oval">
+                    <gradient
+                        android:angle="270"
+                        android:endColor="#2B7BD9"
+                        android:startColor="#5BB8FF" />
+                    <size android:width="80dp" android:height="80dp" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="oval">
+                    <gradient
+                        android:angle="270"
+                        android:endColor="#3B82F6"
+                        android:startColor="#60A5FA" />
+                    <size android:width="80dp" android:height="80dp" />
+                    <stroke android:width="4dp" android:color="#E0F2FE" />
+                </shape>
+            </item>
+        </selector>
+    </item>
+</layer-list>

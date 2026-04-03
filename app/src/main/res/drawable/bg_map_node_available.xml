@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <gradient
+        android:angle="315"
+        android:startColor="@color/ef_map_node_available_start"
+        android:endColor="@color/ef_map_node_available_end" />
+    <stroke
+        android:width="2dp"
+        android:color="#66FFFFFF" />
+</shape>

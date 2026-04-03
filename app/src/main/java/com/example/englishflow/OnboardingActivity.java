@@ -14,9 +14,12 @@ import com.google.android.material.tabs.TabLayoutMediator;
 public class OnboardingActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
-    private TabLayout tabLayout;
     private MaterialButton skipButton;
     private MaterialButton nextButton;
+    
+    // Custom Stepper Views
+    private android.widget.TextView s1, s2, s3, s4;
+    private android.view.View l1, l2, l3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,11 +28,19 @@ public class OnboardingActivity extends AppCompatActivity {
 
         try {
             viewPager = findViewById(R.id.onboardingViewPager);
-            tabLayout = findViewById(R.id.onboardingTabs);
             skipButton = findViewById(R.id.btnSkip);
             nextButton = findViewById(R.id.btnNext);
 
-            if (viewPager == null || tabLayout == null || skipButton == null || nextButton == null) {
+            // Stepper views
+            s1 = findViewById(R.id.step1);
+            s2 = findViewById(R.id.step2);
+            s3 = findViewById(R.id.step3);
+            s4 = findViewById(R.id.step4);
+            l1 = findViewById(R.id.line1);
+            l2 = findViewById(R.id.line2);
+            l3 = findViewById(R.id.line3);
+
+            if (viewPager == null || skipButton == null || nextButton == null) {
                 startMainActivity();
                 return;
             }
@@ -37,9 +48,6 @@ public class OnboardingActivity extends AppCompatActivity {
             // Setup ViewPager with adapter
             OnboardingPagerAdapter adapter = new OnboardingPagerAdapter(this);
             viewPager.setAdapter(adapter);
-
-            // Connect TabLayout with ViewPager
-            new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {}).attach();
 
             // Skip button
             skipButton.setOnClickListener(v -> startMainActivity());
@@ -57,6 +65,7 @@ public class OnboardingActivity extends AppCompatActivity {
             viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
                 @Override
                 public void onPageSelected(int position) {
+                    updateStepper(position);
                     if (position == adapter.getItemCount() - 1) {
                         nextButton.setText("Bắt đầu");
                     } else {
@@ -67,6 +76,35 @@ public class OnboardingActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
             startMainActivity();
+        }
+    }
+
+    private void updateStepper(int position) {
+        // Reset all steps to inactive
+        s1.setBackgroundResource(R.drawable.bg_step_inactive); s1.setTextColor(getColor(R.color.ef_text_tertiary));
+        s2.setBackgroundResource(R.drawable.bg_step_inactive); s2.setTextColor(getColor(R.color.ef_text_tertiary));
+        s3.setBackgroundResource(R.drawable.bg_step_inactive); s3.setTextColor(getColor(R.color.ef_text_tertiary));
+        s4.setBackgroundResource(R.drawable.bg_step_inactive); s4.setTextColor(getColor(R.color.ef_text_tertiary));
+        
+        l1.setBackgroundColor(getColor(R.color.ef_outline));
+        l2.setBackgroundColor(getColor(R.color.ef_outline));
+        l3.setBackgroundColor(getColor(R.color.ef_outline));
+
+        // Highlight active and previous steps
+        if (position >= 0) {
+            s1.setBackgroundResource(R.drawable.bg_step_active); s1.setTextColor(getColor(R.color.white));
+        }
+        if (position >= 1) {
+            l1.setBackgroundColor(getColor(R.color.ef_primary));
+            s2.setBackgroundResource(R.drawable.bg_step_active); s2.setTextColor(getColor(R.color.white));
+        }
+        if (position >= 2) {
+            l2.setBackgroundColor(getColor(R.color.ef_primary));
+            s3.setBackgroundResource(R.drawable.bg_step_active); s3.setTextColor(getColor(R.color.white));
+        }
+        if (position >= 3) {
+            l3.setBackgroundColor(getColor(R.color.ef_primary));
+            s4.setBackgroundResource(R.drawable.bg_step_active); s4.setTextColor(getColor(R.color.white));
         }
     }
 
