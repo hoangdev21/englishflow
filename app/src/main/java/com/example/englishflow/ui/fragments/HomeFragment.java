@@ -99,7 +99,7 @@ public class HomeFragment extends Fragment {
                     Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
                     // Apply dynamic top padding to clear status bar/notch + base padding
                     float density = getResources().getDisplayMetrics().density;
-                    int baseTopPadding = (int) (12 * density);
+                    int baseTopPadding = (int) (24 * density);
                     v.setPadding(v.getPaddingLeft(), systemBars.top + baseTopPadding, v.getPaddingRight(), v.getPaddingBottom());
                     return windowInsets;
                 });
@@ -142,14 +142,7 @@ public class HomeFragment extends Fragment {
         try {
             // Premium header defaults
             TextView greetingText = view.findViewById(R.id.txtGreeting);
-            TextView greetingEmoji = view.findViewById(R.id.greetingEmoji);
-            TextView currentTimeText = view.findViewById(R.id.currentTime);
-            TextView dayOfWeekText = view.findViewById(R.id.dayOfWeek);
-
             if (greetingText != null) greetingText.setText("Xin chào");
-            if (greetingEmoji != null) greetingEmoji.setText("👋");
-            if (currentTimeText != null) currentTimeText.setText("00:00");
-            if (dayOfWeekText != null) dayOfWeekText.setText("Hôm nay");
 
             // Default stats
             setDefaultStats(view);
@@ -658,18 +651,7 @@ public class HomeFragment extends Fragment {
         try {
             // Header
             TextView greetingText = view.findViewById(R.id.txtGreeting);
-            TextView greetingEmoji = view.findViewById(R.id.greetingEmoji);
-            TextView currentTimeText = view.findViewById(R.id.currentTime);
-            TextView dayOfWeekText = view.findViewById(R.id.dayOfWeek);
-
             if (greetingText != null) greetingText.setText(greeting);
-            if (greetingEmoji != null) greetingEmoji.setText(emoji);
-            if (currentTimeText != null)
-                currentTimeText.setText(String.format(Locale.getDefault(), "%02d:%02d", hour, minute));
-
-            String[] dayNames = {"Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"};
-            if (dayOfWeekText != null)
-                dayOfWeekText.setText(dayNames[Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1]);
 
             // Stat Cards
             TextView learnedCountText = view.findViewById(R.id.txtLearnedCount);

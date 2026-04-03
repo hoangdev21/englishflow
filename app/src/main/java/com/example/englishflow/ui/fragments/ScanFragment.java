@@ -34,6 +34,9 @@ import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.appcompat.app.AlertDialog;
@@ -94,6 +97,7 @@ public class ScanFragment extends Fragment {
     private ScanViewModel scanViewModel;
     private boolean isProcessing = false;
     private boolean isPreviewAnalyzing = false;
+    private int lensFacing = CameraSelector.LENS_FACING_BACK;
     private Handler previewHintHandler;
     private Runnable previewHintRunnable;
 
@@ -143,6 +147,18 @@ public class ScanFragment extends Fragment {
             startCamera();
         } else {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+        }
+
+        // ══ Window Insets Handling (Responsive Status Bar Clearance) ══
+        View headerContent = view.findViewById(R.id.scanHeaderContent);
+        if (headerContent != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(headerContent, (v, windowInsets) -> {
+                Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                float density = getResources().getDisplayMetrics().density;
+                int baseTopPadding = (int) (24 * density);
+                v.setPadding(v.getPaddingLeft(), systemBars.top + baseTopPadding, v.getPaddingRight(), v.getPaddingBottom());
+                return windowInsets;
+            });
         }
     }
 
@@ -202,7 +218,7 @@ public class ScanFragment extends Fragment {
 
         takePhotoButton.setOnClickListener(v -> capturePhoto());
         pickGalleryButton.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
-    analyzeButton.setOnClickListener(v -> capturePhoto());
+        analyzeButton.setOnClickListener(v -> toggleCamera());
         pronounceButton.setOnClickListener(v -> pronounceWord());
         saveButton.setOnClickListener(v -> saveCurrentWord());
         manageCustomWordsButton.setOnClickListener(v -> {
@@ -238,7 +254,7 @@ public class ScanFragment extends Fragment {
                         .build();
 
                 CameraSelector cameraSelector = new CameraSelector.Builder()
-                        .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                        .requireLensFacing(lensFacing)
                         .build();
 
                 cameraProvider.unbindAll();
@@ -249,6 +265,13 @@ public class ScanFragment extends Fragment {
                 }
             }
         }, ContextCompat.getMainExecutor(requireContext()));
+    }
+
+    private void toggleCamera() {
+        lensFacing = (lensFacing == CameraSelector.LENS_FACING_BACK)
+                ? CameraSelector.LENS_FACING_FRONT
+                : CameraSelector.LENS_FACING_BACK;
+        startCamera();
     }
 
     private void analyzeGalleryImage(@NonNull Uri imageUri) {
