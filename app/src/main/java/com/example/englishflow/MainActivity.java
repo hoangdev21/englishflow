@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
+1
     private void smoothScrollTo(int target) {
         if (viewPager == null) return;
         int current = viewPager.getCurrentItem();
