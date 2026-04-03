@@ -29,70 +29,18 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:paddingStart="24dp"
-                android:paddingTop="16dp"
+                android:paddingTop="4dp"
                 android:paddingEnd="24dp"
-                android:paddingBottom="36dp">
+                android:paddingBottom="12dp">
 
-            <!-- Top Bar: Time + Day -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
 
-                <FrameLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_3d_badge_silver"
-                    android:elevation="2dp">
-
-                    <TextView
-                        android:id="@+id/greetingEmoji"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="🌅"
-                        android:textSize="18sp" />
-                </FrameLayout>
-
-                <TextView
-                    android:id="@+id/currentTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:alpha="0.85"
-                    android:text="08:30"
-                    android:textColor="@color/white"
-                    android:textSize="13sp" />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/dayOfWeek"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:alpha="1"
-                    android:background="@drawable/bg_3d_badge_silver"
-                    android:elevation="2dp"
-                    android:paddingStart="14dp"
-                    android:paddingTop="6dp"
-                    android:paddingEnd="14dp"
-                    android:paddingBottom="8dp"
-                    android:text="Thứ ba"
-                    android:textColor="@color/ef_text_primary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
 
             <!-- Main Greeting -->
             <TextView
                 android:id="@+id/txtGreeting"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="4dp"
                 android:letterSpacing="-0.03"
                 android:lineSpacingExtra="4dp"
                 android:text="Chào buổi sáng, An!"
@@ -109,7 +57,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="0dp"
                 android:alpha="0.75"
                 android:text="Sẵn sàng nâng trình tiếng Anh mỗi ngày 🚀"
                 android:textColor="@color/ef_hero_text_white"
@@ -119,19 +67,19 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="8dp"
                 android:orientation="horizontal">
 
                 <!-- Streak Badge -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
-                    android:layout_height="68dp"
+                    android:layout_height="54dp"
                     android:layout_marginEnd="12dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="16dp"
-                    app:cardElevation="8dp"
-                    app:strokeWidth="1.5dp"
-                    app:strokeColor="#60FFFFFF">
+                    app:cardElevation="6dp"
+                    app:strokeWidth="1.2dp"
+                    app:strokeColor="#50FFFFFF">
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -219,12 +167,12 @@
                 <!-- XP Badge -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
-                    android:layout_height="68dp"
+                    android:layout_height="54dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="16dp"
-                    app:cardElevation="8dp"
-                    app:strokeWidth="1.5dp"
-                    app:strokeColor="#60FFFFFF">
+                    app:cardElevation="6dp"
+                    app:strokeWidth="1.2dp"
+                    app:strokeColor="#50FFFFFF">
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -315,8 +263,8 @@
     <!-- Wave Cutout -->
         <ImageView
             android:layout_width="match_parent"
-            android:layout_height="45dp"
-            android:layout_marginTop="-45dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="-20dp"
             android:scaleType="fitXY"
             android:src="@drawable/bg_wave_bottom" />
 
