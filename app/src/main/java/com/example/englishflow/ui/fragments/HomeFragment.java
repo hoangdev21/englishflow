@@ -95,14 +95,17 @@ public class HomeFragment extends Fragment {
             // ══ Window Insets Handling (Safe for All Screen Types) ══
             View headerContent = view.findViewById(R.id.headerContent);
             if (headerContent != null) {
+                final int initialLeftPadding = headerContent.getPaddingLeft();
+                final int initialTopPadding = headerContent.getPaddingTop();
+                final int initialRightPadding = headerContent.getPaddingRight();
+                final int initialBottomPadding = headerContent.getPaddingBottom();
                 ViewCompat.setOnApplyWindowInsetsListener(headerContent, (v, windowInsets) -> {
                     Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-                    // Apply dynamic top padding to clear status bar/notch + base padding
-                    float density = getResources().getDisplayMetrics().density;
-                    int baseTopPadding = (int) (24 * density);
-                    v.setPadding(v.getPaddingLeft(), systemBars.top + baseTopPadding, v.getPaddingRight(), v.getPaddingBottom());
+                    // Keep the XML base spacing and only add actual status bar inset.
+                    v.setPadding(initialLeftPadding, systemBars.top + initialTopPadding, initialRightPadding, initialBottomPadding);
                     return windowInsets;
                 });
+                ViewCompat.requestApplyInsets(headerContent);
             }
         } catch (Exception e) {
             e.printStackTrace();

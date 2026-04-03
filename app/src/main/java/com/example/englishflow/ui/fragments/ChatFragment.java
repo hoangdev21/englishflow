@@ -124,13 +124,16 @@ public class ChatFragment extends Fragment {
         // ══ Window Insets — Responsive Status Bar Clearance ══
         View headerContent = view.findViewById(R.id.chatHeaderContent);
         if (headerContent != null) {
+            final int initialLeftPadding = headerContent.getPaddingLeft();
+            final int initialTopPadding = headerContent.getPaddingTop();
+            final int initialRightPadding = headerContent.getPaddingRight();
+            final int initialBottomPadding = headerContent.getPaddingBottom();
             ViewCompat.setOnApplyWindowInsetsListener(headerContent, (v, windowInsets) -> {
                 Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-                float density = getResources().getDisplayMetrics().density;
-                int baseTopPadding = (int) (22 * density);
-                v.setPadding(v.getPaddingLeft(), systemBars.top + baseTopPadding, v.getPaddingRight(), v.getPaddingBottom());
+                v.setPadding(initialLeftPadding, systemBars.top + initialTopPadding, initialRightPadding, initialBottomPadding);
                 return windowInsets;
             });
+            ViewCompat.requestApplyInsets(headerContent);
         }
     }
 

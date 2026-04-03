@@ -13,6 +13,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -109,6 +112,20 @@ public class ProfileFragment extends Fragment {
                 getActivity().finish();
             }
         });
+
+        View headerContent = view.findViewById(R.id.profileHeaderContent);
+        if (headerContent != null) {
+            final int initialLeftPadding = headerContent.getPaddingLeft();
+            final int initialTopPadding = headerContent.getPaddingTop();
+            final int initialRightPadding = headerContent.getPaddingRight();
+            final int initialBottomPadding = headerContent.getPaddingBottom();
+            ViewCompat.setOnApplyWindowInsetsListener(headerContent, (v, windowInsets) -> {
+                Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(initialLeftPadding, systemBars.top + initialTopPadding, initialRightPadding, initialBottomPadding);
+                return windowInsets;
+            });
+            ViewCompat.requestApplyInsets(headerContent);
+        }
     }
 
     @Override
