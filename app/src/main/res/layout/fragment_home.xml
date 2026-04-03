@@ -11,25 +11,27 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingBottom="120dp">
+        android:paddingBottom="100dp">
 
         <!-- ═══════════════════════════════════════════ -->
         <!-- PREMIUM HERO HEADER                         -->
         <!-- ═══════════════════════════════════════════ -->
         <LinearLayout
+            android:id="@+id/heroHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_hero_home_premium"
             android:orientation="vertical">
 
             <LinearLayout
+                android:id="@+id/headerContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:paddingStart="24dp"
-                android:paddingTop="56dp"
+                android:paddingTop="16dp"
                 android:paddingEnd="24dp"
-                android:paddingBottom="55dp">
+                android:paddingBottom="36dp">
 
             <!-- Top Bar: Time + Day -->
             <LinearLayout
@@ -90,7 +92,7 @@
                 android:id="@+id/txtGreeting"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="12dp"
                 android:letterSpacing="-0.03"
                 android:lineSpacingExtra="4dp"
                 android:text="Chào buổi sáng, An!"
@@ -123,7 +125,7 @@
                 <!-- Streak Badge -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
-                    android:layout_height="75dp"
+                    android:layout_height="68dp"
                     android:layout_marginEnd="12dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="16dp"
@@ -217,7 +219,7 @@
                 <!-- XP Badge -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
-                    android:layout_height="75dp"
+                    android:layout_height="68dp"
                     android:layout_weight="1"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="8dp"

@@ -11,6 +11,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.englishflow.R;
+import com.airbnb.lottie.LottieAnimationView;
+
 
 public class OnboardingPageFragment extends Fragment {
 
@@ -51,13 +53,25 @@ public class OnboardingPageFragment extends Fragment {
         String description = getArguments().getString(ARG_DESCRIPTION);
         int position = getArguments().getInt(ARG_POSITION);
 
-        TextView emojiView = view.findViewById(R.id.onboardingEmoji);
+        View whaleContainer = view.findViewById(R.id.whaleContainer);
+        LottieAnimationView whaleLottie = view.findViewById(R.id.whaleLottie);
+        android.widget.ImageView waveFront = view.findViewById(R.id.waveFront);
+        android.widget.ImageView waveBack = view.findViewById(R.id.waveBack);
+        
         TextView titleView = view.findViewById(R.id.onboardingTitle);
         TextView descriptionView = view.findViewById(R.id.onboardingDescription);
 
-        emojiView.setText(emoji);
         titleView.setText(title);
         descriptionView.setText(description);
+
+        // Use LottieAnimationView to avoid dotlottie native libs that break 16 KB page-size checks.
+        whaleLottie.setAnimationFromUrl("https://assets4.lottiefiles.com/packages/lf20_kkflmtur.json");
+        whaleLottie.setRepeatCount(com.airbnb.lottie.LottieDrawable.INFINITE);
+        whaleLottie.setSpeed(1.2f);
+        whaleLottie.playAnimation();
+
+        // Still keep wave swaying for depth effect
+        startWaveAnimation(waveFront, waveBack);
 
         // Stagger animation based on position
         long delay = position * 150L;
@@ -67,5 +81,37 @@ public class OnboardingPageFragment extends Fragment {
             .setDuration(600)
             .setStartDelay(delay)
             .start();
+    }
+
+    private void startWaveAnimation(View frontWave, View backWave) {
+        // Front wave swaying
+        frontWave.animate()
+            .translationX(20f)
+            .setDuration(1500)
+            .setInterpolator(new android.view.animation.LinearInterpolator())
+            .withEndAction(() -> {
+                if (isAdded()) {
+                    frontWave.animate()
+                        .translationX(-20f)
+                        .setDuration(1500)
+                        .withEndAction(() -> { if (isAdded()) startWaveAnimation(frontWave, backWave); })
+                        .start();
+                }
+            }).start();
+            
+        // Back wave swaying (opposite direction)
+        backWave.animate()
+            .translationX(-15f)
+            .setDuration(1800)
+            .setInterpolator(new android.view.animation.LinearInterpolator())
+            .withEndAction(() -> {
+                if (isAdded()) {
+                    backWave.animate()
+                        .translationX(15f)
+                        .setDuration(1800)
+                        .withEndAction(null)
+                        .start();
+                }
+            }).start();
     }
 }

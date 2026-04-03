@@ -6,6 +6,7 @@ import android.util.Log;
 import com.example.englishflow.BuildConfig;
 import com.example.englishflow.database.EnglishFlowDatabase;
 import com.example.englishflow.database.entity.CustomVocabularyEntity;
+import com.example.englishflow.ui.MapConversationActivity;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -56,16 +57,21 @@ public class GroqChatService {
     }
 
     public void getChatResponse(String userMessage, String topic, ChatCallback callback) {
+        getChatResponse(userMessage, topic, null, null, callback);
+    }
+
+    public void getChatResponse(String userMessage, String topic, String customSystemPrompt, List<com.example.englishflow.ui.MapConversationActivity.ChatMessage> history, ChatCallback callback) {
         new Thread(() -> {
             try {
                 // 1. RAG: Search relevant vocabulary
                 List<CustomVocabularyEntity> contextVocab = searchRelevantVocab(userMessage);
                 
                 // 2. Build Prompt
-                String systemPrompt = buildSystemPrompt(topic, contextVocab);
+                String systemPrompt = (customSystemPrompt != null && !customSystemPrompt.isEmpty()) 
+                        ? customSystemPrompt : buildSystemPrompt(topic, contextVocab);
                 
                 // 3. Call API
-                JsonObject requestBody = buildChatRequest(systemPrompt, userMessage);
+                JsonObject requestBody = buildChatRequestWithHistory(systemPrompt, userMessage, history);
                 String rawResponse = callGroqApi(requestBody);
                 
                 // 4. Parse Response
@@ -76,6 +82,52 @@ public class GroqChatService {
                 callback.onError(e.getMessage());
             }
         }).start();
+    }
+
+    private JsonObject buildChatRequestWithHistory(String systemPrompt, String userMessage, List<com.example.englishflow.ui.MapConversationActivity.ChatMessage> history) {
+        JsonObject request = new JsonObject();
+        request.addProperty("model", modelName);
+        request.addProperty("temperature", 0.7);
+        request.addProperty("max_tokens", 2000);
+        
+        JsonObject responseFormat = new JsonObject();
+        responseFormat.addProperty("type", "json_object");
+        request.add("response_format", responseFormat);
+
+        JsonArray messages = new JsonArray();
+        
+        // System Prompt - MUST contain the word "json" for Groq JSON mode to work
+        String finalSystemPrompt = systemPrompt;
+        if (!finalSystemPrompt.toLowerCase().contains("json")) {
+            finalSystemPrompt += "\n\nCRITICAL: You MUST respond in valid JSON format.";
+        }
+
+        JsonObject system = new JsonObject();
+        system.addProperty("role", "system");
+        system.addProperty("content", finalSystemPrompt);
+        messages.add(system);
+        
+        // Add History
+        if (history != null) {
+            // Take only last 10 messages for context
+            int start = Math.max(0, history.size() - 10);
+            for (int i = start; i < history.size(); i++) {
+                MapConversationActivity.ChatMessage msg = history.get(i);
+                JsonObject h = new JsonObject();
+                h.addProperty("role", msg.isAi ? "assistant" : "user");
+                h.addProperty("content", msg.text);
+                messages.add(h);
+            }
+        }
+        
+        // Current User Message
+        JsonObject user = new JsonObject();
+        user.addProperty("role", "user");
+        user.addProperty("content", userMessage);
+        messages.add(user);
+        
+        request.add("messages", messages);
+        return request;
     }
 
     private List<CustomVocabularyEntity> searchRelevantVocab(String message) {
@@ -89,12 +141,15 @@ public class GroqChatService {
     }
 
     private static final String SYSTEM_PROMPT =
-            "Bạn là 'Flow' - một Gia sư tiếng Anh song ngữ chuyên nghiệp và tận tâm.\n\n" +
-            "QUY TẮC PHẢN HỒI (BẮT BUỘC):\n" +
+            "Bạn là 'Flow' - một Gia sư tiếng Anh song ngữ (Bilingual English Tutor) chuyên nghiệp.\n\n" +
+            "QUY TẮC NGÔN NGỮ (BẮT BUỘC):\n" +
+            "1. LUÔN LUÔN giao tiếp và giải thích bằng TIẾNG VIỆT với người dùng.\n" +
+            "2. Chỉ sử dụng tiếng Anh khi đưa ra ví dụ, dạy từ vựng, hoặc đặt câu hỏi luyện tập.\n" +
+            "3. Ngay cả khi người dùng nói tiếng Anh, bạn vẫn phải phản hồi bằng Tiếng Việt (kèm dịch câu trả lời sang tiếng Anh nếu cần).\n\n" +
+            "QUY TẮC PHẢN HỒI (JSON):\n" +
             "1. KHÔNG ĐƯỢC trả về mảng (Arrays []). Mọi giá trị trong JSON phải là Chuỗi (Strings \"\").\n" +
-            "2. Mọi nội dung hiển thị cho người dùng (bao gồm lời chào, danh sách từ vựng, giải thích) PHẢI nằm trọn vẹn trong trường 'response'.\n" +
-            "3. Nếu người dùng yêu cầu NHIỀU từ vựng, hãy trình bày tất cả chúng thật đẹp trong trường 'response' (dùng xuống dòng, emoji). Các trường vocab_word, vocab_ipa... chỉ chứa thông tin của từ QUAN TRỌNG NHẤT hoặc để trống nếu có quá nhiều từ.\n" +
-            "4. Sử dụng cấu trúc sau cho mỗi từ vựng trong trường 'response':\n" +
+            "2. Mọi nội dung hiển thị cho người dùng (bao gồm lời chào, danh sách từ vựng, giải thích, câu hỏi tiếp theo) PHẢI nằm trọn vẹn trong trường 'response'.\n" +
+            "3. Sử dụng cấu trúc sau cho mỗi từ vựng trong trường 'response':\n" +
             "   ✿ **Từ vựng**: [Word]\n" +
             "   ☁ **Phiên âm**: /[IPA]/\n" +
             "   ⚡ **Nghĩa**: [Nghĩa]\n" +

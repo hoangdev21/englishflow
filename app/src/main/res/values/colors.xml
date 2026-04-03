@@ -99,4 +99,18 @@
     <color name="ef_domains_progress_track">#DFEAE5</color>
     <color name="ef_domains_chip_text">#0E5B4F</color>
     <color name="ef_domains_chip_bg">#DDF2EB</color>
+
+    <!-- Learning Map Palette -->
+    <color name="ef_map_hero_start">#2A3E77</color>
+    <color name="ef_map_hero_end">#2E72BF</color>
+    <color name="ef_map_route">#E4E8F2</color>
+    <color name="ef_map_route_glow">#F1F4FA</color>
+    <color name="ef_map_card_bg">#F6F7FB</color>
+    <color name="ef_map_node_locked">#C8D2E2</color>
+    <color name="ef_map_node_available_start">#27D2C0</color>
+    <color name="ef_map_node_available_end">#0FA58F</color>
+    <color name="ef_map_node_progress_start">#5BB8FF</color>
+    <color name="ef_map_node_progress_end">#2B7BD9</color>
+    <color name="ef_map_node_completed_start">#FF6E57</color>
+    <color name="ef_map_node_completed_end">#F04730</color>
 </resources>

@@ -21,6 +21,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -88,6 +91,19 @@ public class HomeFragment extends Fragment {
             setupBasicViews(view);
             initTextToSpeech();
             refreshData();
+
+            // ══ Window Insets Handling (Safe for All Screen Types) ══
+            View headerContent = view.findViewById(R.id.headerContent);
+            if (headerContent != null) {
+                ViewCompat.setOnApplyWindowInsetsListener(headerContent, (v, windowInsets) -> {
+                    Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                    // Apply dynamic top padding to clear status bar/notch + base padding
+                    float density = getResources().getDisplayMetrics().density;
+                    int baseTopPadding = (int) (12 * density);
+                    v.setPadding(v.getPaddingLeft(), systemBars.top + baseTopPadding, v.getPaddingRight(), v.getPaddingBottom());
+                    return windowInsets;
+                });
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(requireContext(), "Lỗi tải dữ liệu trang chủ", Toast.LENGTH_SHORT).show();
