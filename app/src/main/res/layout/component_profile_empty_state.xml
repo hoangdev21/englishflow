@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/profileWeeklyEmptyState"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingTop="2dp"
+    android:paddingBottom="2dp"
+    android:visibility="gone">
+
+    <ImageView
+        android:layout_width="92dp"
+        android:layout_height="92dp"
+        android:layout_marginEnd="12dp"
+        android:src="@drawable/book"
+        android:scaleType="fitCenter"
+        android:contentDescription="empty-state-illustration" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tuần này bạn chưa bắt đầu!"
+            android:textColor="@color/ef_text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Hoàn thành bài học đầu tiên để lấp đầy biểu đồ XP nhé!"
+            android:textColor="@color/ef_text_secondary"
+            android:textSize="13sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnStartLearningWeek"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:layout_marginTop="12dp"
+            android:text="Học ngay"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/ef_card_blue_text"
+            app:cornerRadius="14dp" />
+    </LinearLayout>
+</LinearLayout>

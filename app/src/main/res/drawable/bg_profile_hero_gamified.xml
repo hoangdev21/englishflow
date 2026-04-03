@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="320"
+                android:startColor="@color/ef_hero_grad_start"
+                android:centerColor="@color/ef_hero_grad_mid"
+                android:endColor="@color/ef_hero_grad_end"
+                android:type="linear" />
+        </shape>
+    </item>
+
+    <item android:top="10dp" android:left="14dp">
+        <shape android:shape="oval">
+            <size android:width="120dp" android:height="120dp" />
+            <solid android:color="#14FFFFFF" />
+        </shape>
+    </item>
+
+    <item android:top="56dp" android:right="8dp">
+        <shape android:shape="oval">
+            <size android:width="92dp" android:height="92dp" />
+            <solid android:color="#10FFFFFF" />
+        </shape>
+    </item>
+
+    <item android:bottom="14dp" android:left="160dp">
+        <shape android:shape="oval">
+            <size android:width="84dp" android:height="84dp" />
+            <solid android:color="#0EFFFFFF" />
+        </shape>
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="90"
+                android:startColor="#08000000"
+                android:endColor="#14000000"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

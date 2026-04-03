@@ -1,0 +1,102 @@
+package com.example.englishflow.data;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+
+import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+
+import com.example.englishflow.R;
+
+public class AppSettingsStore {
+
+    private static final String PREFS = "englishflow_settings";
+
+    private static final String KEY_PROFILE_EMAIL = "profile_email";
+    private static final String KEY_PROFILE_AVATAR = "profile_avatar";
+    private static final String KEY_DAILY_GOAL_MINUTES = "daily_goal_minutes";
+    private static final String KEY_VOICE_SPEED_MODE = "voice_speed_mode";
+
+    public static final int DAILY_GOAL_RELAX = 5;
+    public static final int DAILY_GOAL_FOCUSED = 15;
+    public static final int DAILY_GOAL_TRY_HARD = 30;
+
+    public static final String VOICE_MODE_NORMAL = "normal";
+    public static final String VOICE_MODE_SLOW = "slow";
+
+    public static final String AVATAR_DEFAULT = "default";
+    public static final String AVATAR_DOLPHIN = "dolphin";
+    public static final String AVATAR_GRADUATE = "graduate";
+
+    private final SharedPreferences preferences;
+
+    public AppSettingsStore(@NonNull Context context) {
+        Context appContext = context.getApplicationContext();
+        preferences = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+    }
+
+    public void setProfileEmail(@NonNull String email) {
+        preferences.edit().putString(KEY_PROFILE_EMAIL, email.trim()).apply();
+    }
+
+    @NonNull
+    public String getProfileEmail(@NonNull String fallbackEmail) {
+        return preferences.getString(KEY_PROFILE_EMAIL, fallbackEmail);
+    }
+
+    public void setAvatarKey(@NonNull String avatarKey) {
+        preferences.edit().putString(KEY_PROFILE_AVATAR, avatarKey).apply();
+    }
+
+    @NonNull
+    public String getAvatarKey() {
+        return preferences.getString(KEY_PROFILE_AVATAR, AVATAR_DEFAULT);
+    }
+
+    @DrawableRes
+    public int getAvatarResId() {
+        return avatarResFromKey(getAvatarKey());
+    }
+
+    @DrawableRes
+    public static int avatarResFromKey(@NonNull String avatarKey) {
+        switch (avatarKey) {
+            case AVATAR_DOLPHIN:
+                return R.drawable.english_flow;
+            case AVATAR_GRADUATE:
+                return R.drawable.graduation;
+            case AVATAR_DEFAULT:
+            default:
+                return R.drawable.user_avatar;
+        }
+    }
+
+    public void setDailyGoalMinutes(int minutes) {
+        int safeValue = minutes;
+        if (minutes != DAILY_GOAL_RELAX && minutes != DAILY_GOAL_FOCUSED && minutes != DAILY_GOAL_TRY_HARD) {
+            safeValue = DAILY_GOAL_FOCUSED;
+        }
+        preferences.edit().putInt(KEY_DAILY_GOAL_MINUTES, safeValue).apply();
+    }
+
+    public int getDailyGoalMinutes() {
+        return preferences.getInt(KEY_DAILY_GOAL_MINUTES, DAILY_GOAL_FOCUSED);
+    }
+
+    public void setVoiceSpeedMode(@NonNull String mode) {
+        String safeMode = VOICE_MODE_NORMAL;
+        if (VOICE_MODE_SLOW.equals(mode) || VOICE_MODE_NORMAL.equals(mode)) {
+            safeMode = mode;
+        }
+        preferences.edit().putString(KEY_VOICE_SPEED_MODE, safeMode).apply();
+    }
+
+    @NonNull
+    public String getVoiceSpeedMode() {
+        return preferences.getString(KEY_VOICE_SPEED_MODE, VOICE_MODE_NORMAL);
+    }
+
+    public float getVoiceSpeechRate() {
+        return VOICE_MODE_SLOW.equals(getVoiceSpeedMode()) ? 0.8f : 1.0f;
+    }
+}

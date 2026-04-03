@@ -337,12 +337,12 @@ public class AppRepository {
         int scanned = getScannedImages();
         int chat = getChatSessions();
         
-        list.add(new AchievementItem("7 ngày bền bỉ", "Giữ streak 7 ngày", "🔥", streak >= 7));
-        list.add(new AchievementItem("Tân binh scan", "Scan 10 vật thể", "📷", scanned >= 10));
-        list.add(new AchievementItem("100 từ đầu tiên", "Học 100 từ", "📚", learned >= 100));
-        list.add(new AchievementItem("Chat pro", "20 cuộc chat", "💬", chat >= 20));
-        list.add(new AchievementItem("Ngày bền bỉ", "Vào học mỗi ngày 30 ngày", "⏱️", streak >= 30));
-        list.add(new AchievementItem("Hacker từ vựng", "Học 250 từ", "🧠", learned >= 250));
+        list.add(new AchievementItem("7 ngày bền bỉ", "Giữ streak 7 ngày", "🔥", streak >= 7, streak, 7));
+        list.add(new AchievementItem("Tân binh scan", "Scan 10 vật thể", "📷", scanned >= 10, scanned, 10));
+        list.add(new AchievementItem("100 từ đầu tiên", "Học 100 từ", "📚", learned >= 100, learned, 100));
+        list.add(new AchievementItem("Chat pro", "20 cuộc chat", "💬", chat >= 20, chat, 20));
+        list.add(new AchievementItem("Ngày bền bỉ", "Vào học mỗi ngày 30 ngày", "⏱️", streak >= 30, streak, 30));
+        list.add(new AchievementItem("Hacker từ vựng", "Học 250 từ", "🧠", learned >= 250, learned, 250));
         return list;
     }
 

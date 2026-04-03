@@ -16,6 +16,8 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 
+import com.example.englishflow.data.AppSettingsStore;
+
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -40,6 +42,7 @@ public class VoiceFlowEngine {
     private final VoiceCallback callback;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private boolean autoRelisten = false;
+    private final AppSettingsStore settingsStore;
     
     private final Locale localeEn = Locale.US;
     // Fix Deprecated constructor: use Locale.forLanguageTag()
@@ -59,6 +62,7 @@ public class VoiceFlowEngine {
     public VoiceFlowEngine(Context context, VoiceCallback callback) {
         this.context = context.getApplicationContext();
         this.callback = callback;
+        this.settingsStore = new AppSettingsStore(this.context);
         initTts();
         initStt();
     }
@@ -68,7 +72,7 @@ public class VoiceFlowEngine {
             if (status == TextToSpeech.SUCCESS) {
                 ttsReady = true;
                 tts.setLanguage(localeEn);
-                tts.setSpeechRate(0.95f);
+                tts.setSpeechRate(settingsStore.getVoiceSpeechRate());
                 tts.setPitch(1.0f);
             }
         });
@@ -93,6 +97,7 @@ public class VoiceFlowEngine {
     public void speakResponse(String fullText) {
         if (fullText == null || fullText.isEmpty() || !ttsReady) return;
         
+        tts.setSpeechRate(settingsStore.getVoiceSpeechRate());
         requestAudioFocus();
         stopSpeaking();
         setState(State.SPEAKING);

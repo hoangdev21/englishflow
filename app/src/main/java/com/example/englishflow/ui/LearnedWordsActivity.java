@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
+import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.database.entity.LearnedWordEntity;
 
 import java.text.SimpleDateFormat;
@@ -33,6 +34,7 @@ public class LearnedWordsActivity extends AppCompatActivity {
     private LearnedWordsAdapter adapter;
     private TextView txtTotalWords, txtTotalDomains;
     private TextToSpeech textToSpeech;
+    private AppSettingsStore settingsStore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +42,7 @@ public class LearnedWordsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_learned_words);
 
         repository = AppRepository.getInstance(this);
+        settingsStore = new AppSettingsStore(this);
         initViews();
         loadData();
     }
@@ -55,7 +58,7 @@ public class LearnedWordsActivity extends AppCompatActivity {
         textToSpeech = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeech.setLanguage(Locale.US);
-                textToSpeech.setSpeechRate(0.9f);
+                textToSpeech.setSpeechRate(settingsStore.getVoiceSpeechRate());
             }
         });
         
