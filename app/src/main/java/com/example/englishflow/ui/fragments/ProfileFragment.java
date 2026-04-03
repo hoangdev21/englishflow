@@ -117,7 +117,16 @@ public class ProfileFragment extends Fragment {
 
         btnOpenSettings.setOnClickListener(v -> {
             if (isAdded()) {
-                startActivity(new android.content.Intent(requireContext(), SettingsActivity.class));
+                android.content.Intent intent = new android.content.Intent(requireContext(), SettingsActivity.class);
+                try {
+                    if (intent.resolveActivity(requireContext().getPackageManager()) != null) {
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(requireContext(), "Không tìm thấy màn hình cài đặt", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(requireContext(), "Không thể mở cài đặt lúc này", Toast.LENGTH_SHORT).show();
+                }
             }
         });
         btnReset.setOnClickListener(v -> {

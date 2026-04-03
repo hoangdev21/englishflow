@@ -2,11 +2,13 @@ package com.example.englishflow.ui;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Patterns;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -17,14 +19,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.LocalAuthStore;
 import com.example.englishflow.database.entity.LocalUserEntity;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.imageview.ShapeableImageView;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -92,11 +96,17 @@ public class SettingsActivity extends AppCompatActivity {
         String fallbackName = currentUser != null ? currentUser.displayName : repository.getUserName();
         String fallbackEmail = currentUser != null ? currentUser.email : "";
 
-        inputDisplayName.setText(fallbackName);
-        inputProfileEmail.setText(settingsStore.getProfileEmail(fallbackEmail));
+        if (inputDisplayName != null) {
+            inputDisplayName.setText(fallbackName);
+        }
+        if (inputProfileEmail != null) {
+            inputProfileEmail.setText(settingsStore.getProfileEmail(fallbackEmail));
+        }
 
         selectedAvatarKey = settingsStore.getAvatarKey();
-        avatarPreview.setImageResource(AppSettingsStore.avatarResFromKey(selectedAvatarKey));
+        if (avatarPreview != null) {
+            avatarPreview.setImageResource(AppSettingsStore.avatarResFromKey(selectedAvatarKey));
+        }
 
         // Daily Goal
         int goal = settingsStore.getDailyGoalMinutes();
@@ -122,9 +132,13 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void setupActions() {
-        findViewById(R.id.btnBackSettings).setOnClickListener(v -> finish());
-        findViewById(R.id.btnChooseAvatar).setOnClickListener(v -> showAvatarPicker());
-        findViewById(R.id.btnSaveProfile).setOnClickListener(v -> saveProfileInfo());
+        View backButton = findViewById(R.id.btnBackSettings);
+        View chooseAvatarButton = findViewById(R.id.btnChooseAvatar);
+        View saveProfileButton = findViewById(R.id.btnSaveProfile);
+
+        if (backButton != null) backButton.setOnClickListener(v -> finish());
+        if (chooseAvatarButton != null) chooseAvatarButton.setOnClickListener(v -> showAvatarPicker());
+        if (saveProfileButton != null) saveProfileButton.setOnClickListener(v -> saveProfileInfo());
 
         // Goal selection
         MaterialButton btnRelax = findViewById(R.id.btnGoalRelax);
@@ -133,9 +147,9 @@ public class SettingsActivity extends AppCompatActivity {
 
         View.OnClickListener goalListener = v -> {
             int id = v.getId();
-            btnRelax.setChecked(id == R.id.btnGoalRelax);
-            btnFocused.setChecked(id == R.id.btnGoalFocused);
-            btnTryHard.setChecked(id == R.id.btnGoalTryHard);
+            if (btnRelax != null) btnRelax.setChecked(id == R.id.btnGoalRelax);
+            if (btnFocused != null) btnFocused.setChecked(id == R.id.btnGoalFocused);
+            if (btnTryHard != null) btnTryHard.setChecked(id == R.id.btnGoalTryHard);
 
             if (id == R.id.btnGoalRelax) {
                 settingsStore.setDailyGoalMinutes(AppSettingsStore.DAILY_GOAL_RELAX);
@@ -156,8 +170,8 @@ public class SettingsActivity extends AppCompatActivity {
 
         View.OnClickListener voiceListener = v -> {
             int id = v.getId();
-            btnVoiceSlow.setChecked(id == R.id.btnVoiceSlow);
-            btnVoiceNormal.setChecked(id == R.id.btnVoiceNormal);
+            if (btnVoiceSlow != null) btnVoiceSlow.setChecked(id == R.id.btnVoiceSlow);
+            if (btnVoiceNormal != null) btnVoiceNormal.setChecked(id == R.id.btnVoiceNormal);
 
             if (id == R.id.btnVoiceSlow) {
                 settingsStore.setVoiceSpeedMode(AppSettingsStore.VOICE_MODE_SLOW);
@@ -169,44 +183,87 @@ public class SettingsActivity extends AppCompatActivity {
         if (btnVoiceSlow != null) btnVoiceSlow.setOnClickListener(voiceListener);
         if (btnVoiceNormal != null) btnVoiceNormal.setOnClickListener(voiceListener);
 
-        findViewById(R.id.btnFeedback).setOnClickListener(v -> sendFeedbackEmail());
-        findViewById(R.id.btnRateApp).setOnClickListener(v -> openAppRating());
-        findViewById(R.id.btnTerms).setOnClickListener(v -> openUrl(TERMS_URL));
-        findViewById(R.id.btnPrivacy).setOnClickListener(v -> openUrl(PRIVACY_URL));
+        View feedbackButton = findViewById(R.id.btnFeedback);
+        View rateButton = findViewById(R.id.btnRateApp);
+        View termsButton = findViewById(R.id.btnTerms);
+        View privacyButton = findViewById(R.id.btnPrivacy);
+
+        if (feedbackButton != null) feedbackButton.setOnClickListener(v -> sendFeedbackEmail());
+        if (rateButton != null) rateButton.setOnClickListener(v -> openAppRating());
+        if (termsButton != null) termsButton.setOnClickListener(v -> openUrl(TERMS_URL));
+        if (privacyButton != null) privacyButton.setOnClickListener(v -> openUrl(PRIVACY_URL));
     }
 
     private void showAvatarPicker() {
-        String[] labels = new String[] {"Mặc định", "Cá heo", "Tốt nghiệp"};
-        String[] keys = new String[] {
-                AppSettingsStore.AVATAR_DEFAULT,
-                AppSettingsStore.AVATAR_DOLPHIN,
-                AppSettingsStore.AVATAR_GRADUATE
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View v = getLayoutInflater().inflate(R.layout.dialog_avatar_picker, null);
+
+        RecyclerView rv = v.findViewById(R.id.rvAvatarGrid);
+
+        String[] keys = new String[]{
+                AppSettingsStore.AVATAR_DEFAULT, AppSettingsStore.AVATAR_DOLPHIN, AppSettingsStore.AVATAR_GRADUATE,
+                AppSettingsStore.AVATAR_CA, AppSettingsStore.AVATAR_CAHEOBA, AppSettingsStore.AVATAR_CAHOACHA,
+                AppSettingsStore.AVATAR_CAHEOCON, AppSettingsStore.AVATAR_CAHEOCONN, AppSettingsStore.AVATAR_CAHEOONG,
+                AppSettingsStore.AVATAR_CAHEOSOSINH, AppSettingsStore.AVATAR_CHO, AppSettingsStore.AVATAR_GA,
+                AppSettingsStore.AVATAR_HO, AppSettingsStore.AVATAR_HUOU, AppSettingsStore.AVATAR_KHI,
+                AppSettingsStore.AVATAR_KYSI, AppSettingsStore.AVATAR_NATA, AppSettingsStore.AVATAR_NGOKHONG,
+                AppSettingsStore.AVATAR_RAN, AppSettingsStore.AVATAR_RONG
         };
 
-        int checkedIndex = 0;
-        for (int i = 0; i < keys.length; i++) {
-            if (keys[i].equals(selectedAvatarKey)) {
-                checkedIndex = i;
-                break;
+        rv.setAdapter(new RecyclerView.Adapter<AvatarViewHolder>() {
+            @NonNull
+            @Override
+            public AvatarViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                View item = getLayoutInflater().inflate(R.layout.item_avatar_grid, parent, false);
+                return new AvatarViewHolder(item);
             }
-        }
 
-        final int[] selectedIndex = {checkedIndex};
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Chọn ảnh đại diện")
-                .setSingleChoiceItems(labels, checkedIndex, (dialog, which) -> selectedIndex[0] = which)
-                .setPositiveButton("Áp dụng", (dialog, which) -> {
-                    selectedAvatarKey = keys[selectedIndex[0]];
-                    settingsStore.setAvatarKey(selectedAvatarKey);
-                    avatarPreview.setImageResource(AppSettingsStore.avatarResFromKey(selectedAvatarKey));
-                })
-                .setNegativeButton("Huỷ", null)
-                .show();
+            @Override
+            public void onBindViewHolder(@NonNull AvatarViewHolder holder, int position) {
+                String key = keys[position];
+                holder.img.setImageResource(AppSettingsStore.avatarResFromKey(key));
+
+                // Highlight if selected
+                if (key.equals(selectedAvatarKey)) {
+                    holder.img.setStrokeWidth(6f);
+                    holder.img.setStrokeColor(ColorStateList.valueOf(getColor(R.color.ef_primary)));
+                } else {
+                    holder.img.setStrokeWidth(0f);
+                }
+
+                holder.itemView.setOnClickListener(view -> {
+                    selectedAvatarKey = key;
+                    settingsStore.setAvatarKey(key);
+                    avatarPreview.setImageResource(AppSettingsStore.avatarResFromKey(key));
+                    bottomSheetDialog.dismiss();
+                    Toast.makeText(SettingsActivity.this, "Đã đổi ảnh đại diện", Toast.LENGTH_SHORT).show();
+                });
+            }
+
+            @Override
+            public int getItemCount() {
+                return keys.length;
+            }
+        });
+
+        bottomSheetDialog.setContentView(v);
+        bottomSheetDialog.show();
+    }
+
+    static class AvatarViewHolder extends RecyclerView.ViewHolder {
+        ShapeableImageView img;
+
+        AvatarViewHolder(View v) {
+            super(v);
+            img = v.findViewById(R.id.imgAvatarItem);
+        }
     }
 
     private void saveProfileInfo() {
-        String name = inputDisplayName.getText() != null ? inputDisplayName.getText().toString().trim() : "";
-        String email = inputProfileEmail.getText() != null ? inputProfileEmail.getText().toString().trim() : "";
+        String name = inputDisplayName != null && inputDisplayName.getText() != null
+                ? inputDisplayName.getText().toString().trim() : "";
+        String email = inputProfileEmail != null && inputProfileEmail.getText() != null
+                ? inputProfileEmail.getText().toString().trim() : "";
 
         if (TextUtils.isEmpty(name)) {
             Toast.makeText(this, "Tên không được để trống", Toast.LENGTH_SHORT).show();

@@ -28,6 +28,25 @@ public class AppSettingsStore {
     public static final String AVATAR_DOLPHIN = "dolphin";
     public static final String AVATAR_GRADUATE = "graduate";
 
+    // New Avatars
+    public static final String AVATAR_CA = "ca";
+    public static final String AVATAR_CAHEOBA = "caheoba";
+    public static final String AVATAR_CAHOACHA = "cahoacha";
+    public static final String AVATAR_CAHEOCON = "caheocon";
+    public static final String AVATAR_CAHEOCONN = "caheoconn";
+    public static final String AVATAR_CAHEOONG = "caheoong";
+    public static final String AVATAR_CAHEOSOSINH = "caheososinh";
+    public static final String AVATAR_CHO = "cho";
+    public static final String AVATAR_GA = "ga";
+    public static final String AVATAR_HO = "ho";
+    public static final String AVATAR_HUOU = "huou";
+    public static final String AVATAR_KHI = "khi";
+    public static final String AVATAR_KYSI = "kysi";
+    public static final String AVATAR_NATA = "nata";
+    public static final String AVATAR_NGOKHONG = "ngokhong";
+    public static final String AVATAR_RAN = "ran";
+    public static final String AVATAR_RONG = "rong";
+
     private final SharedPreferences preferences;
 
     public AppSettingsStore(@NonNull Context context) {
@@ -65,6 +84,40 @@ public class AppSettingsStore {
                 return R.drawable.english_flow;
             case AVATAR_GRADUATE:
                 return R.drawable.graduation;
+            case AVATAR_CA:
+                return R.drawable.ca;
+            case AVATAR_CAHEOBA:
+                return R.drawable.caheoba;
+            case AVATAR_CAHOACHA:
+                return R.drawable.caheocha;
+            case AVATAR_CAHEOCON:
+                return R.drawable.caheocon;
+            case AVATAR_CAHEOCONN:
+                return R.drawable.caheoconn;
+            case AVATAR_CAHEOONG:
+                return R.drawable.caheoong;
+            case AVATAR_CAHEOSOSINH:
+                return R.drawable.caheososinh;
+            case AVATAR_CHO:
+                return R.drawable.cho;
+            case AVATAR_GA:
+                return R.drawable.ga;
+            case AVATAR_HO:
+                return R.drawable.ho;
+            case AVATAR_HUOU:
+                return R.drawable.huou;
+            case AVATAR_KHI:
+                return R.drawable.khi;
+            case AVATAR_KYSI:
+                return R.drawable.kysi;
+            case AVATAR_NATA:
+                return R.drawable.nata;
+            case AVATAR_NGOKHONG:
+                return R.drawable.ngokhong;
+            case AVATAR_RAN:
+                return R.drawable.ran;
+            case AVATAR_RONG:
+                return R.drawable.rong;
             case AVATAR_DEFAULT:
             default:
                 return R.drawable.user_avatar;
