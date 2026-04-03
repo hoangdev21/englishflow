@@ -12,8 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
-        android:clickable="true"
-        android:focusable="true"
+        android:descendantFocusability="afterDescendants"
         app:elevation="10dp">
 
         <LinearLayout
@@ -146,48 +145,6 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:listitem="@layout/item_chat_message" />
 
-
-    <!-- Voice Status Bar — visible during listen/speak states -->
-    <LinearLayout
-        android:id="@+id/voiceStatusBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="164dp"
-        android:background="@drawable/bg_stats_premium_card"
-        android:elevation="8dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="10dp"
-        android:visibility="gone">
-
-        <!-- Pulsing dot indicator -->
-        <View
-            android:id="@+id/voiceDot"
-            android:layout_width="8dp"
-            android:layout_height="8dp"
-            android:layout_marginEnd="10dp"
-            android:background="@drawable/bg_pill_grey"
-            android:backgroundTint="@color/ef_primary" />
-
-        <!-- Live transcript / status text -->
-        <TextView
-            android:id="@+id/tvVoiceStatus"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:text="Đang lắng nghe..."
-            android:textColor="@color/ef_text_primary"
-            android:textSize="13.5sp"
-            android:fontFamily="sans-serif-medium" />
-    </LinearLayout>
-
-    <!-- Premium Floating Input Bar -->
     <LinearLayout
         android:id="@+id/chatInputContainer"
         android:layout_width="match_parent"
@@ -197,6 +154,43 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="96dp"
         android:orientation="vertical">
+
+        <!-- Voice Status Bar (Integrated) -->
+        <LinearLayout
+            android:id="@+id/voiceStatusBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginBottom="-12dp"
+            android:background="@drawable/bg_stats_premium_card"
+            android:elevation="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            android:visibility="gone">
+
+            <!-- Pulsing dot indicator -->
+            <View
+                android:id="@+id/voiceDot"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_pill_grey"
+                android:backgroundTint="@color/ef_primary" />
+
+            <!-- Live transcript / status text -->
+            <TextView
+                android:id="@+id/tvVoiceStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Đang lắng nghe..."
+                android:textColor="@color/ef_text_primary"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/chatInputCard"
