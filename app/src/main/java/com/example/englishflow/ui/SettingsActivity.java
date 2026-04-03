@@ -24,7 +24,6 @@ import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.LocalAuthStore;
 import com.example.englishflow.database.entity.LocalUserEntity;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -99,21 +98,26 @@ public class SettingsActivity extends AppCompatActivity {
         selectedAvatarKey = settingsStore.getAvatarKey();
         avatarPreview.setImageResource(AppSettingsStore.avatarResFromKey(selectedAvatarKey));
 
-        MaterialButtonToggleGroup goalGroup = findViewById(R.id.groupDailyGoal);
+        // Daily Goal
         int goal = settingsStore.getDailyGoalMinutes();
-        if (goal == AppSettingsStore.DAILY_GOAL_RELAX) {
-            goalGroup.check(R.id.btnGoalRelax);
-        } else if (goal == AppSettingsStore.DAILY_GOAL_TRY_HARD) {
-            goalGroup.check(R.id.btnGoalTryHard);
-        } else {
-            goalGroup.check(R.id.btnGoalFocused);
+        MaterialButton btnRelax = findViewById(R.id.btnGoalRelax);
+        MaterialButton btnFocused = findViewById(R.id.btnGoalFocused);
+        MaterialButton btnTryHard = findViewById(R.id.btnGoalTryHard);
+
+        if (btnRelax != null && btnFocused != null && btnTryHard != null) {
+            btnRelax.setChecked(goal == AppSettingsStore.DAILY_GOAL_RELAX);
+            btnFocused.setChecked(goal == AppSettingsStore.DAILY_GOAL_FOCUSED);
+            btnTryHard.setChecked(goal == AppSettingsStore.DAILY_GOAL_TRY_HARD);
         }
 
-        MaterialButtonToggleGroup voiceGroup = findViewById(R.id.groupVoiceSpeed);
-        if (AppSettingsStore.VOICE_MODE_SLOW.equals(settingsStore.getVoiceSpeedMode())) {
-            voiceGroup.check(R.id.btnVoiceSlow);
-        } else {
-            voiceGroup.check(R.id.btnVoiceNormal);
+        // Voice Speed
+        String voiceSpeed = settingsStore.getVoiceSpeedMode();
+        MaterialButton btnSlow = findViewById(R.id.btnVoiceSlow);
+        MaterialButton btnNormal = findViewById(R.id.btnVoiceNormal);
+
+        if (btnSlow != null && btnNormal != null) {
+            btnSlow.setChecked(AppSettingsStore.VOICE_MODE_SLOW.equals(voiceSpeed));
+            btnNormal.setChecked(AppSettingsStore.VOICE_MODE_NORMAL.equals(voiceSpeed));
         }
     }
 
@@ -122,27 +126,48 @@ public class SettingsActivity extends AppCompatActivity {
         findViewById(R.id.btnChooseAvatar).setOnClickListener(v -> showAvatarPicker());
         findViewById(R.id.btnSaveProfile).setOnClickListener(v -> saveProfileInfo());
 
-        MaterialButtonToggleGroup goalGroup = findViewById(R.id.groupDailyGoal);
-        goalGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) return;
-            if (checkedId == R.id.btnGoalRelax) {
+        // Goal selection
+        MaterialButton btnRelax = findViewById(R.id.btnGoalRelax);
+        MaterialButton btnFocused = findViewById(R.id.btnGoalFocused);
+        MaterialButton btnTryHard = findViewById(R.id.btnGoalTryHard);
+
+        View.OnClickListener goalListener = v -> {
+            int id = v.getId();
+            btnRelax.setChecked(id == R.id.btnGoalRelax);
+            btnFocused.setChecked(id == R.id.btnGoalFocused);
+            btnTryHard.setChecked(id == R.id.btnGoalTryHard);
+
+            if (id == R.id.btnGoalRelax) {
                 settingsStore.setDailyGoalMinutes(AppSettingsStore.DAILY_GOAL_RELAX);
-            } else if (checkedId == R.id.btnGoalTryHard) {
+            } else if (id == R.id.btnGoalTryHard) {
                 settingsStore.setDailyGoalMinutes(AppSettingsStore.DAILY_GOAL_TRY_HARD);
             } else {
                 settingsStore.setDailyGoalMinutes(AppSettingsStore.DAILY_GOAL_FOCUSED);
             }
-        });
+        };
 
-        MaterialButtonToggleGroup voiceGroup = findViewById(R.id.groupVoiceSpeed);
-        voiceGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) return;
-            if (checkedId == R.id.btnVoiceSlow) {
+        if (btnRelax != null) btnRelax.setOnClickListener(goalListener);
+        if (btnFocused != null) btnFocused.setOnClickListener(goalListener);
+        if (btnTryHard != null) btnTryHard.setOnClickListener(goalListener);
+
+        // Voice speed selection
+        MaterialButton btnVoiceSlow = findViewById(R.id.btnVoiceSlow);
+        MaterialButton btnVoiceNormal = findViewById(R.id.btnVoiceNormal);
+
+        View.OnClickListener voiceListener = v -> {
+            int id = v.getId();
+            btnVoiceSlow.setChecked(id == R.id.btnVoiceSlow);
+            btnVoiceNormal.setChecked(id == R.id.btnVoiceNormal);
+
+            if (id == R.id.btnVoiceSlow) {
                 settingsStore.setVoiceSpeedMode(AppSettingsStore.VOICE_MODE_SLOW);
             } else {
                 settingsStore.setVoiceSpeedMode(AppSettingsStore.VOICE_MODE_NORMAL);
             }
-        });
+        };
+
+        if (btnVoiceSlow != null) btnVoiceSlow.setOnClickListener(voiceListener);
+        if (btnVoiceNormal != null) btnVoiceNormal.setOnClickListener(voiceListener);
 
         findViewById(R.id.btnFeedback).setOnClickListener(v -> sendFeedbackEmail());
         findViewById(R.id.btnRateApp).setOnClickListener(v -> openAppRating());

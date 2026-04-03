@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pressed state: Slightly lower and darker shadow -->
+    <item android:state_pressed="true">
+        <layer-list>
+            <!-- Shadow Layer (darker bottom part) -->
+            <item android:top="2dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="16dp" />
+                    <solid android:color="@color/ef_primary_dark" />
+                </shape>
+            </item>
+            <!-- Main Content Layer -->
+            <item android:bottom="0dp" android:top="2dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="16dp" />
+                    <solid android:color="@color/ef_primary" />
+                    <gradient
+                        android:angle="270"
+                        android:endColor="@color/ef_primary_dark"
+                        android:startColor="@color/ef_primary" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <!-- Default state: Raised effect -->
+    <item>
+        <layer-list>
+            <!-- Shadow Layer (darker bottom part) -->
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="16dp" />
+                    <solid android:color="@color/ef_primary_dark" />
+                </shape>
+            </item>
+            <!-- Main Content Layer -->
+            <item android:bottom="4dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="16dp" />
+                    <solid android:color="@color/ef_primary" />
+                    <gradient
+                        android:angle="270"
+                        android:endColor="@color/ef_primary"
+                        android:startColor="@color/ef_primary_light" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pressed state -->
+    <item android:state_pressed="true">
+        <layer-list>
+            <item android:top="2dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="12dp" />
+                    <solid android:color="#E0E7FF" />
+                </shape>
+            </item>
+            <item android:top="2dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="12dp" />
+                    <solid android:color="#F0F4FF" />
+                    <stroke android:width="1dp" android:color="#D1D5DB" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <!-- Default state: Raised effect -->
+    <item>
+        <layer-list>
+            <!-- Shadow Layer -->
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="12dp" />
+                    <solid android:color="#E0E7FF" />
+                </shape>
+            </item>
+            <!-- Main Layer -->
+            <item android:bottom="3dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="12dp" />
+                    <solid android:color="#F8FAFF" />
+                    <stroke android:width="1dp" android:color="#E5E7EB" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>
