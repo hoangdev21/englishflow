@@ -20,12 +20,13 @@
 
             <!-- Hero Section (3D Gradient) -->
             <LinearLayout
+                android:id="@+id/profileHeaderContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_hero_home_premium"
                 android:orientation="vertical"
                 android:paddingStart="24dp"
-                android:paddingTop="52dp"
+                android:paddingTop="8dp"
                 android:paddingEnd="24dp"
                 android:paddingBottom="50dp">
 
