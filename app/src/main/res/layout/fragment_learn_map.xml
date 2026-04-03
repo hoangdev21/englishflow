@@ -29,12 +29,12 @@
         <!-- Back Button & Status Badges -->
         <ImageButton
             android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="20dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="32dp"
             android:background="@drawable/bg_back_button_premium"
-            android:padding="12dp"
+            android:padding="14dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_back_arrow"
             app:layout_constraintStart_toStartOf="parent"

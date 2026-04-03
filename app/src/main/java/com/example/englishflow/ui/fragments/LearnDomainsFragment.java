@@ -97,6 +97,13 @@ public class LearnDomainsFragment extends Fragment {
                 requireActivity().getOnBackPressedDispatcher().onBackPressed();
             });
         }
+
+        // Apply Insets for Status Bar
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+            androidx.core.graphics.Insets systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            v.setPadding(0, systemBars.top, 0, 0);
+            return insets;
+        });
     }
 
     private void updateToggleIcon(ImageButton btn) {

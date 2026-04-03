@@ -63,6 +63,13 @@ public class LearnMapFragment extends Fragment {
                 requireActivity().getOnBackPressedDispatcher().onBackPressed();
             });
         }
+
+        // Apply Insets for Status Bar (Edge-to-Edge compatibility)
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+            androidx.core.graphics.Insets systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
+            v.setPadding(0, systemBars.top, 0, 0);
+            return insets;
+        });
     }
 
     @Override
