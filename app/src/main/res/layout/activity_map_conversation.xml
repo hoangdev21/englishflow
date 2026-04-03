@@ -9,9 +9,9 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="104dp"
+        android:layout_height="80dp"
         android:paddingHorizontal="16dp"
-        android:paddingTop="32dp"
+        android:paddingTop="24dp"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageButton
@@ -91,9 +91,9 @@
     <!-- Robot Mascot Display -->
     <ImageView
         android:id="@+id/robotMascot"
-        android:layout_width="260dp"
-        android:layout_height="260dp"
-        android:layout_marginTop="24dp"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:layout_marginTop="8dp"
         android:scaleType="centerCrop"
         android:src="@drawable/chat_bot_avatar"
         app:layout_constraintEnd_toEndOf="parent"
@@ -174,15 +174,42 @@
         app:layout_constraintTop_toBottomOf="@id/robotMascot"
         app:layout_constraintVertical_bias="1.0">
 
-        <TextView
-            android:id="@+id/mapConversationProgress"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/progressContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="3/5 Steps"
-            android:textColor="@color/ef_text_tertiary"
-            android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ProgressBar
+                android:id="@+id/mapProgressBar"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="8dp"
+                android:layout_weight="1"
+                android:progressDrawable="@drawable/bg_convo_progress_bar"
+                android:progress="20" />
+
+            <TextView
+                android:id="@+id/mapConversationProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="1/3"
+                android:textColor="@color/ef_text_tertiary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/ivFinishFlag"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_check_circle"
+                android:alpha="0.3"
+                app:tint="@color/ef_primary" />
+        </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/mapChatHistory"
@@ -191,19 +218,28 @@
             android:layout_marginTop="8dp"
             android:clipToPadding="false"
             android:divider="@android:color/transparent"
-            android:paddingBottom="120dp"
+            android:paddingBottom="180dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@id/mapConversationProgress" />
+
+        <!-- Gradient Fade Overlay -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:background="@drawable/bg_chat_fade"
+            android:alpha="0.9"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
         <!-- Listening status -->
         <TextView
             android:id="@+id/mapListeningStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             android:text="Đang lắng nghe..."
-            android:textColor="@color/ef_text_secondary"
+            android:textColor="@color/ef_primary"
             android:textSize="13sp"
+            android:textStyle="bold"
             android:visibility="invisible"
             app:layout_constraintBottom_toTopOf="@id/mapBottomActions"
             app:layout_constraintEnd_toEndOf="parent"

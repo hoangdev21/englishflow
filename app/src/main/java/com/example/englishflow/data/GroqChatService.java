@@ -56,6 +56,11 @@ public class GroqChatService {
         void onError(String error);
     }
 
+    public interface RawCallback {
+        void onSuccess(String rawResponse);
+        void onError(String error);
+    }
+
     public void getChatResponse(String userMessage, String topic, ChatCallback callback) {
         getChatResponse(userMessage, topic, null, null, callback);
     }
@@ -79,6 +84,35 @@ public class GroqChatService {
                 
             } catch (Exception e) {
                 Log.e(TAG, "Chat error", e);
+                callback.onError(e.getMessage());
+            }
+        }).start();
+    }
+
+    public void getRawAiResponse(String prompt, RawCallback callback) {
+        new Thread(() -> {
+            try {
+                JsonObject requestBody = new JsonObject();
+                requestBody.addProperty("model", modelName);
+                requestBody.addProperty("temperature", 0.8);
+                requestBody.addProperty("max_tokens", 800);
+                
+                JsonArray messages = new JsonArray();
+                JsonObject system = new JsonObject();
+                system.addProperty("role", "system");
+                system.addProperty("content", "You are a helpful language learning assistant. Provide natural and concise English phrases. NEVER RESPOND IN JSON FORMAT. ONLY PLAIN TEXT.");
+                messages.add(system);
+                
+                JsonObject user = new JsonObject();
+                user.addProperty("role", "user");
+                user.addProperty("content", prompt);
+                messages.add(user);
+                
+                requestBody.add("messages", messages);
+                
+                String response = callGroqApi(requestBody);
+                callback.onSuccess(response);
+            } catch (Exception e) {
                 callback.onError(e.getMessage());
             }
         }).start();
@@ -244,18 +278,18 @@ public class GroqChatService {
             JsonObject json = gson.fromJson(sanitized, JsonObject.class);
             
             // Comprehensive key search (Case-insensitive & Fallbacks)
-            String answer = searchKeys(json, "response", "answer", "content", "result", "message");
+            String answer = searchKeys(json, "response", "answer", "content", "result", "message", "nội dung", "phần trả lời", "phản hồi");
             
             // Total fallback: take whole input if no key matches
             if (answer == null) answer = rawResponse; 
             
-            String correction  = searchKeys(json, "correction", "corrected");
-            String explanation = searchKeys(json, "explanation", "explain");
-            String vocabWord      = searchKeys(json, "vocab_word", "word");
-            String vocabIpa       = searchKeys(json, "vocab_ipa", "ipa", "phonetic");
-            String vocabMeaning   = searchKeys(json, "vocab_meaning", "meaning", "definition");
-            String vocabExample   = searchKeys(json, "vocab_example", "example");
-            String vocabExampleVi = searchKeys(json, "vocab_example_vi", "example_vi", "translation");
+            String correction  = searchKeys(json, "correction", "corrected", "sửa lỗi", "chỉnh sửa");
+            String explanation = searchKeys(json, "explanation", "explain", "giải thích");
+            String vocabWord      = searchKeys(json, "vocab_word", "word", "từ vựng");
+            String vocabIpa       = searchKeys(json, "vocab_ipa", "ipa", "phonetic", "phiên âm");
+            String vocabMeaning   = searchKeys(json, "vocab_meaning", "meaning", "definition", "nghĩa");
+            String vocabExample   = searchKeys(json, "vocab_example", "example", "ví dụ");
+            String vocabExampleVi = searchKeys(json, "vocab_example_vi", "example_vi", "translation", "dịch ví dụ");
             
             callback.onSuccess(answer, correction, explanation,
                     vocabWord, vocabIpa, vocabMeaning, vocabExample, vocabExampleVi);
