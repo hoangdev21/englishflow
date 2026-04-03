@@ -6,13 +6,13 @@ plugins {
 android {
     namespace = "com.example.englishflow"
     compileSdk {
-        version = release(36)
+        version = release(34)
     }
 
     defaultConfig {
         applicationId = "com.example.englishflow"
-        minSdk = 29
-        targetSdk = 36
+        minSdk = 28
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
