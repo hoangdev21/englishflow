@@ -12,10 +12,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingBottom="100dp">
-
-        <!-- ═══════════════════════════════════════════ -->
-        <!-- PREMIUM HERO HEADER                         -->
-        <!-- ═══════════════════════════════════════════ -->
         <LinearLayout
             android:id="@+id/heroHeader"
             android:layout_width="match_parent"

@@ -104,6 +104,13 @@ public class ChatFragment extends Fragment {
         tvVoiceStatus  = view.findViewById(R.id.tvVoiceStatus);
         voiceDot       = view.findViewById(R.id.voiceDot);
 
+        View chatHeaderSection = view.findViewById(R.id.chatHeaderSection);
+        if (chatHeaderSection != null) {
+            chatHeaderSection.setClickable(false);
+            chatHeaderSection.setFocusable(false);
+            chatHeaderSection.bringToFront();
+        }
+
         // RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new ChatAdapter(chatItems);
@@ -130,6 +137,33 @@ public class ChatFragment extends Fragment {
                 int baseTopPadding = (int) (22 * density);
                 v.setPadding(v.getPaddingLeft(), systemBars.top + baseTopPadding, v.getPaddingRight(), v.getPaddingBottom());
                 return windowInsets;
+            });
+        }
+
+        // ════ Keyboard Handling (IME Insets) — Keep Input Bar Above Keyboard ════
+        View inputContainer = view.findViewById(R.id.chatInputContainer);
+        if (inputContainer != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(inputContainer, (v, insets) -> {
+                Insets imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime());
+                float density = getResources().getDisplayMetrics().density;
+                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+                
+                if (imeInsets.bottom > 0) {
+                    // Keyboard is visible: Lift input bar above keyboard edge
+                    lp.bottomMargin = imeInsets.bottom + (int)(12 * density);
+                    // Force scroll to current bottom so messages aren't hidden
+                    recyclerView.postDelayed(() -> {
+                        if (isAdded() && adapter.getItemCount() > 0) {
+                            recyclerView.smoothScrollToPosition(adapter.getItemCount() - 1);
+                        }
+                    }, 100);
+                } else {
+                    // Keyboard hidden: Reset to standard floating position above BottomNav
+                    lp.bottomMargin = (int)(96 * density);
+                }
+                
+                v.setLayoutParams(lp);
+                return WindowInsetsCompat.CONSUMED;
             });
         }
     }
