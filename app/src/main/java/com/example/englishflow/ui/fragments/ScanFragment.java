@@ -43,6 +43,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
+import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.GeminiVisionService;
 import com.example.englishflow.data.ScanAnalyzer;
 import com.example.englishflow.data.ScanResult;
@@ -62,12 +63,12 @@ import java.util.concurrent.Executors;
 
 public class ScanFragment extends Fragment {
     private static final int REQUEST_CAMERA_PERMISSION = 100;
-    private static final float TTS_SPEECH_RATE = 0.9f;
     private static final float TTS_PITCH = 1.0f;
     private static final int MAX_GALLERY_IMAGE_DIMENSION = 1280;
     private static final long PREVIEW_HINT_INTERVAL_MS = 4500L;
 
     private AppRepository repository;
+    private AppSettingsStore settingsStore;
     private GeminiVisionService geminiService;
     private TextToSpeech textToSpeech;
     private ExecutorService imageExecutor;
@@ -113,6 +114,7 @@ public class ScanFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         repository = AppRepository.getInstance(requireContext());
+        settingsStore = new AppSettingsStore(requireContext());
         imageExecutor = Executors.newSingleThreadExecutor();
         cameraExecutor = Executors.newSingleThreadExecutor();
         scanViewModel = new ViewModelProvider(this).get(ScanViewModel.class);
@@ -202,7 +204,7 @@ public class ScanFragment extends Fragment {
         textToSpeech = new TextToSpeech(requireContext(), status -> {
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeech.setLanguage(Locale.US);
-                textToSpeech.setSpeechRate(TTS_SPEECH_RATE);
+                textToSpeech.setSpeechRate(settingsStore.getVoiceSpeechRate());
                 textToSpeech.setPitch(TTS_PITCH);
             }
         });

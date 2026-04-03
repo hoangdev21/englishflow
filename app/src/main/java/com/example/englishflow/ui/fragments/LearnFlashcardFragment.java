@@ -20,6 +20,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
+import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.FlashcardItem;
 import com.example.englishflow.data.StudySession;
 import com.example.englishflow.data.TopicItem;
@@ -36,7 +37,6 @@ public class LearnFlashcardFragment extends Fragment {
 
     private static final String ARG_DOMAIN = "arg_domain";
     private static final String ARG_TOPIC = "arg_topic";
-    private static final float TTS_SPEECH_RATE = 0.9f;
     private static final float TTS_PITCH = 1.0f;
 
     private TextView titleText;
@@ -70,6 +70,7 @@ public class LearnFlashcardFragment extends Fragment {
     private final Set<String> learnedWordsInSession = new HashSet<>();
 
     private TextToSpeech textToSpeech;
+    private AppSettingsStore settingsStore;
 
     public static LearnFlashcardFragment newInstance(String domain, String topic) {
         LearnFlashcardFragment fragment = new LearnFlashcardFragment();
@@ -125,6 +126,7 @@ public class LearnFlashcardFragment extends Fragment {
         currentDomain = domain;
         sessionStartTime = System.currentTimeMillis();
         titleText.setText(domain + " • " + currentTopic);
+        settingsStore = new AppSettingsStore(requireContext());
 
         AppRepository repository = AppRepository.getInstance(requireContext());
         repository.updateTopicStatus(currentTopic, TopicItem.STATUS_LEARNING);
@@ -143,7 +145,7 @@ public class LearnFlashcardFragment extends Fragment {
         textToSpeech = new TextToSpeech(requireContext(), status -> {
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeech.setLanguage(Locale.US);
-                textToSpeech.setSpeechRate(TTS_SPEECH_RATE);
+                textToSpeech.setSpeechRate(settingsStore.getVoiceSpeechRate());
                 textToSpeech.setPitch(TTS_PITCH);
             }
         });

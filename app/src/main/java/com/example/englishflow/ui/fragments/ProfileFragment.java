@@ -19,13 +19,17 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
+import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.LocalAuthStore;
 import com.example.englishflow.data.WordEntry;
+import com.example.englishflow.ui.SettingsActivity;
 import com.example.englishflow.ui.adapters.AchievementAdapter;
 import com.example.englishflow.ui.adapters.DictionaryAdapter;
+import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -39,13 +43,17 @@ public class ProfileFragment extends Fragment {
 
     private AppRepository repository;
     private LocalAuthStore localAuthStore;
+    private AppSettingsStore settingsStore;
     private TextToSpeech textToSpeech;
 
     private TextView nameText;
     private TextView levelText;
+    private TextView levelBadgeText;
     private TextView tvDetailLearned, tvDetailScanned, tvDetailChats, tvDetailBestStreak;
     private TextView tvLearnedCount, tvStreakCount, tvXpCount;
+    private ShapeableImageView profileAvatar;
     private LinearLayout chartContainer;
+    private View weeklyEmptyState;
 
     @Nullable
     @Override
@@ -59,9 +67,12 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         repository = AppRepository.getInstance(requireContext());
         localAuthStore = new LocalAuthStore(requireContext());
+        settingsStore = new AppSettingsStore(requireContext());
 
         nameText = view.findViewById(R.id.profileName);
         levelText = view.findViewById(R.id.profileLevel);
+        levelBadgeText = view.findViewById(R.id.profileLevelBadgeText);
+        profileAvatar = view.findViewById(R.id.profileAvatar);
         
         tvDetailLearned = view.findViewById(R.id.tvDetailLearned);
         tvDetailScanned = view.findViewById(R.id.tvDetailScanned);
@@ -72,11 +83,13 @@ public class ProfileFragment extends Fragment {
         tvStreakCount = view.findViewById(R.id.tvStreakCount);
         tvXpCount = view.findViewById(R.id.tvXpCount);
         chartContainer = view.findViewById(R.id.chartContainer);
+        weeklyEmptyState = view.findViewById(R.id.profileWeeklyEmptyState);
 
-        MaterialButton btnChangeName = view.findViewById(R.id.btnChangeName);
+        MaterialButton btnOpenSettings = view.findViewById(R.id.btnOpenSettings);
         MaterialButton btnReset = view.findViewById(R.id.btnResetProgress);
         MaterialButton btnLogout = view.findViewById(R.id.btnLogout);
         MaterialButton btnViewDictionary = view.findViewById(R.id.btnViewSavedDictionary);
+        MaterialButton btnStartLearningWeek = view.findViewById(R.id.btnStartLearningWeek);
 
         textToSpeech = new TextToSpeech(requireContext(), status -> {
             if (status == TextToSpeech.SUCCESS) {
@@ -98,7 +111,15 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        btnChangeName.setOnClickListener(v -> showChangeNameDialog());
+        if (btnStartLearningWeek != null) {
+            btnStartLearningWeek.setOnClickListener(v -> navigateToTab(1));
+        }
+
+        btnOpenSettings.setOnClickListener(v -> {
+            if (isAdded()) {
+                startActivity(new android.content.Intent(requireContext(), SettingsActivity.class));
+            }
+        });
         btnReset.setOnClickListener(v -> {
             repository.resetProgress();
             renderProfile();
@@ -126,6 +147,17 @@ public class ProfileFragment extends Fragment {
             });
             ViewCompat.requestApplyInsets(headerContent);
         }
+
+        View scrollView = view.findViewById(R.id.profileScrollView);
+        if (scrollView != null) {
+            final int initialBottomPadding = scrollView.getPaddingBottom();
+            ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, windowInsets) -> {
+                Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), initialBottomPadding + systemBars.bottom);
+                return windowInsets;
+            });
+            ViewCompat.requestApplyInsets(scrollView);
+        }
     }
 
     @Override
@@ -137,9 +169,23 @@ public class ProfileFragment extends Fragment {
         super.onDestroyView();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (isAdded()) {
+            renderProfile();
+        }
+    }
+
     private void renderProfile() {
         nameText.setText(repository.getUserName());
-        levelText.setText("Level: " + repository.getCefrLevel() + " • " + repository.getLearnedWords() + " từ đã học");
+        levelText.setText(repository.getLearnedWords() + " từ đã học");
+        if (levelBadgeText != null) {
+            levelBadgeText.setText(repository.getCefrLevel());
+        }
+        if (profileAvatar != null) {
+            profileAvatar.setImageResource(settingsStore.getAvatarResId());
+        }
         
         tvLearnedCount.setText(String.valueOf(repository.getLearnedWords()));
         tvStreakCount.setText(String.valueOf(repository.getStreakDays()));
@@ -156,6 +202,28 @@ public class ProfileFragment extends Fragment {
 
     private void renderWeeklyChart(List<Integer> values) {
         chartContainer.removeAllViews();
+
+        boolean hasStudyData = false;
+        for (Integer value : values) {
+            if (value != null && value > 0) {
+                hasStudyData = true;
+                break;
+            }
+        }
+
+        if (!hasStudyData) {
+            chartContainer.setVisibility(View.GONE);
+            if (weeklyEmptyState != null) {
+                weeklyEmptyState.setVisibility(View.VISIBLE);
+            }
+            return;
+        }
+
+        chartContainer.setVisibility(View.VISIBLE);
+        if (weeklyEmptyState != null) {
+            weeklyEmptyState.setVisibility(View.GONE);
+        }
+
         int max = 1;
         for (Integer value : values) {
             if (value > max) {
@@ -194,27 +262,15 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-
-
-    private void showChangeNameDialog() {
-        EditText input = new EditText(requireContext());
-        input.setHint("Nhập tên mới");
-        input.setText(repository.getUserName());
-        input.setPadding(40, 24, 40, 24);
-
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Đổi tên hiển thị")
-                .setView(input)
-                .setPositiveButton("Lưu thay đổi", (dialog, which) -> {
-                    String newName = input.getText() != null ? input.getText().toString().trim() : "";
-                    if (!newName.isEmpty()) {
-                        repository.setUserName(newName);
-                        localAuthStore.updateCurrentDisplayName(newName);
-                        renderProfile();
-                        Toast.makeText(requireContext(), "Đã cập nhật tên mới", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Huỷ", null)
-                .show();
+    private void navigateToTab(int tabIndex) {
+        if (getActivity() != null) {
+            ViewPager2 viewPager = getActivity().findViewById(R.id.viewPager);
+            if (viewPager != null) {
+                viewPager.setCurrentItem(tabIndex, true);
+            }
+        }
     }
+
+
+
 }

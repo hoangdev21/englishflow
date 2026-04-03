@@ -113,4 +113,11 @@
     <color name="ef_map_node_progress_end">#2B7BD9</color>
     <color name="ef_map_node_completed_start">#FF6E57</color>
     <color name="ef_map_node_completed_end">#F04730</color>
+
+    <!-- Profile Gamification Accent Palette -->
+    <color name="ef_stat_vocab">#0B8A63</color>
+    <color name="ef_stat_streak">#E87428</color>
+    <color name="ef_stat_xp">#C69112</color>
+    <color name="ef_stat_chat">#2E7BC8</color>
+    <color name="ef_stat_best_streak">#C96A2F</color>
 </resources>
