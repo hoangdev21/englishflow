@@ -52,6 +52,8 @@ public class AppRepository {
     private static final String KEY_LAST_TOPIC_REMAINING_CARDS = "last_topic_remaining_cards";
     private static final String KEY_COMPLETED_MAP_NODES = "completed_map_nodes";
     private static final String SEED_FILE_NAME = "vocab_seed_packages.json";
+    private static final long DASHBOARD_CACHE_TTL_MS = 1200L;
+    private static final long DOMAINS_CACHE_TTL_MS = 10000L;
 
     private static AppRepository instance;
 
@@ -61,6 +63,84 @@ public class AppRepository {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Context appContext;
+    private final Object cacheLock = new Object();
+
+    private DashboardSnapshot cachedDashboardSnapshot;
+    private String cachedDashboardEmail = "";
+    private long cachedDashboardAt = 0L;
+
+    private List<DomainItem> cachedDomains = new ArrayList<>();
+    private String cachedDomainsEmail = "";
+    private long cachedDomainsAt = 0L;
+
+    public static class DashboardSnapshot {
+        public String userName = "Bạn";
+        public UserProgress userProgress = new UserProgress();
+        public int wordsLearnedToday = 0;
+        public int dailyWordGoal = 25;
+        public int xpGoal = 120;
+        public int unlearnedWordsCount = 3000;
+        public String lastTopicTitle = "Giao tiếp cơ bản";
+        public String lastTopicDomain = "Tổng quát";
+        public int lastTopicRemainingCount = 10;
+        public int completedMapNodes = 0;
+        public int totalMapNodes = 6;
+        public int chatSessions = 0;
+        public int totalWeeklyMinutes = 0;
+        public List<Integer> weeklyStudyMinutes = new ArrayList<>();
+        public List<DomainItem> domains = new ArrayList<>();
+        public List<AchievementItem> achievements = new ArrayList<>();
+
+        public DashboardSnapshot copy() {
+            DashboardSnapshot clone = new DashboardSnapshot();
+            clone.userName = userName;
+            clone.userProgress = cloneUserProgress(userProgress);
+            clone.wordsLearnedToday = wordsLearnedToday;
+            clone.dailyWordGoal = dailyWordGoal;
+            clone.xpGoal = xpGoal;
+            clone.unlearnedWordsCount = unlearnedWordsCount;
+            clone.lastTopicTitle = lastTopicTitle;
+            clone.lastTopicDomain = lastTopicDomain;
+            clone.lastTopicRemainingCount = lastTopicRemainingCount;
+            clone.completedMapNodes = completedMapNodes;
+            clone.totalMapNodes = totalMapNodes;
+            clone.chatSessions = chatSessions;
+            clone.totalWeeklyMinutes = totalWeeklyMinutes;
+            clone.weeklyStudyMinutes = new ArrayList<>(weeklyStudyMinutes);
+            clone.domains = new ArrayList<>(domains);
+            clone.achievements = new ArrayList<>(achievements);
+            return clone;
+        }
+    }
+
+    private static UserProgress cloneUserProgress(UserProgress source) {
+        UserProgress clone = new UserProgress();
+        if (source == null) {
+            return clone;
+        }
+        clone.totalWordsLearned = source.totalWordsLearned;
+        clone.totalWordsScanned = source.totalWordsScanned;
+        clone.currentStreak = source.currentStreak;
+        clone.bestStreak = source.bestStreak;
+        clone.totalXpEarned = source.totalXpEarned;
+        clone.xpTodayEarned = source.xpTodayEarned;
+        clone.lastStudyDate = source.lastStudyDate;
+        clone.totalStudyMinutes = source.totalStudyMinutes;
+        clone.cefrLevel = source.cefrLevel;
+        clone.setStudySessions(source.getStudySessions());
+        return clone;
+    }
+
+    private void invalidateDashboardCache() {
+        synchronized (cacheLock) {
+            cachedDashboardSnapshot = null;
+            cachedDashboardEmail = "";
+            cachedDashboardAt = 0L;
+            cachedDomains = new ArrayList<>();
+            cachedDomainsEmail = "";
+            cachedDomainsAt = 0L;
+        }
+    }
 
     private AppRepository(Context context) {
         appContext = context.getApplicationContext();
@@ -118,6 +198,7 @@ public class AppRepository {
                 .putString(getPrefKey(KEY_LAST_TOPIC_DOMAIN), domain)
                 .putInt(getPrefKey(KEY_LAST_TOPIC_REMAINING_CARDS), remaining)
                 .apply();
+        invalidateDashboardCache();
     }
 
     public String getLastTopicTitle() {
@@ -156,32 +237,17 @@ public class AppRepository {
     
     public UserProgress getUserProgress() {
         try {
-            // Use specialized internal getters to ensure logic consistency (like daily reset)
             UserStatsEntity stats = getOrCreateUserStats();
-            String email = getCurrentEmail();
-            
-            List<StudySessionEntity> sessions = database.studySessionDao().getAllSessions(email);
-            List<StudySession> studySessions = new ArrayList<>();
-            if (sessions != null) {
-                for (StudySessionEntity entity : sessions) {
-                    studySessions.add(new StudySession(
-                        entity.startTime, entity.endTime, entity.wordsLearned,
-                        entity.domain, entity.topic, entity.xpEarned
-                    ));
-                }
-            }
-            
             UserProgress progress = new UserProgress();
-            // Use real-time counts from DAOs/Calculated logic for better accuracy
-            progress.totalWordsLearned = getLearnedWords(); 
-            progress.totalWordsScanned = stats.totalWordsScanned;
-            progress.currentStreak = stats.currentStreak;
-            progress.bestStreak = stats.bestStreak;
-            progress.totalXpEarned = stats.totalXpEarned;
-            progress.xpTodayEarned = stats.xpTodayEarned;
-            progress.totalStudyMinutes = stats.totalStudyMinutes;
-            progress.cefrLevel = getCefrLevel();
-            progress.setStudySessions(studySessions);
+            int learnedWords = getLearnedWords();
+            progress.totalWordsLearned = learnedWords;
+            progress.totalWordsScanned = stats != null ? stats.totalWordsScanned : 0;
+            progress.currentStreak = stats != null ? stats.currentStreak : 0;
+            progress.bestStreak = stats != null ? stats.bestStreak : 0;
+            progress.totalXpEarned = stats != null ? stats.totalXpEarned : 0;
+            progress.xpTodayEarned = stats != null ? stats.xpTodayEarned : 0;
+            progress.totalStudyMinutes = stats != null ? stats.totalStudyMinutes : 0;
+            progress.cefrLevel = getCefrLevelForLearned(learnedWords);
             
             return progress;
         } catch (Exception e) {
@@ -217,6 +283,78 @@ public class AppRepository {
         });
     }
 
+    public DashboardSnapshot getDashboardSnapshot() {
+        String email = getCurrentEmail();
+        long now = System.currentTimeMillis();
+
+        synchronized (cacheLock) {
+            if (cachedDashboardSnapshot != null
+                    && email.equals(cachedDashboardEmail)
+                    && now - cachedDashboardAt <= DASHBOARD_CACHE_TTL_MS) {
+                return cachedDashboardSnapshot.copy();
+            }
+        }
+
+        DashboardSnapshot snapshot = buildDashboardSnapshot(email);
+        synchronized (cacheLock) {
+            cachedDashboardSnapshot = snapshot.copy();
+            cachedDashboardEmail = email;
+            cachedDashboardAt = now;
+        }
+        return snapshot;
+    }
+
+    public void getDashboardSnapshotAsync(DataCallback<DashboardSnapshot> callback) {
+        executorService.execute(() -> {
+            DashboardSnapshot snapshot = getDashboardSnapshot();
+            mainHandler.post(() -> callback.onResult(snapshot));
+        });
+    }
+
+    private DashboardSnapshot buildDashboardSnapshot(String email) {
+        DashboardSnapshot snapshot = new DashboardSnapshot();
+        UserStatsEntity stats = getOrCreateUserStats();
+        int learnedWords = getLearnedWords();
+        int scannedWords = stats != null ? stats.totalWordsScanned : 0;
+        int streak = stats != null ? stats.currentStreak : 0;
+        int bestStreak = stats != null ? stats.bestStreak : 0;
+        int xpToday = stats != null ? stats.xpTodayEarned : 0;
+        int totalXp = stats != null ? stats.totalXpEarned : 0;
+        int totalStudyMinutes = stats != null ? stats.totalStudyMinutes : 0;
+
+        snapshot.userName = getUserName();
+        snapshot.dailyWordGoal = getDailyWordGoal();
+        snapshot.xpGoal = getXpGoal();
+        snapshot.wordsLearnedToday = getWordsLearnedToday();
+        snapshot.unlearnedWordsCount = Math.max(0, 3000 - learnedWords);
+        snapshot.lastTopicTitle = getLastTopicTitle();
+        snapshot.lastTopicDomain = getLastTopicDomain();
+        snapshot.lastTopicRemainingCount = getLastTopicRemainingCount();
+        snapshot.completedMapNodes = getCompletedMapNodeCount();
+        snapshot.totalMapNodes = getTotalMapNodeCount();
+        snapshot.chatSessions = getChatSessions();
+        snapshot.weeklyStudyMinutes = getWeeklyStudyMinutes();
+        snapshot.totalWeeklyMinutes = 0;
+        for (Integer minutes : snapshot.weeklyStudyMinutes) {
+            snapshot.totalWeeklyMinutes += Math.max(0, minutes);
+        }
+        snapshot.domains = getDomains();
+        snapshot.achievements = buildAchievements(streak, learnedWords, scannedWords, snapshot.chatSessions);
+
+        UserProgress progress = new UserProgress();
+        progress.totalWordsLearned = learnedWords;
+        progress.totalWordsScanned = scannedWords;
+        progress.currentStreak = streak;
+        progress.bestStreak = bestStreak;
+        progress.totalXpEarned = totalXp;
+        progress.xpTodayEarned = xpToday;
+        progress.totalStudyMinutes = totalStudyMinutes;
+        progress.cefrLevel = getCefrLevelForLearned(learnedWords);
+        snapshot.userProgress = progress;
+
+        return snapshot;
+    }
+
     public int getStreakDays() {
         try {
             UserStatsEntity stats = getOrCreateUserStats();
@@ -224,6 +362,33 @@ public class AppRepository {
         } catch (Exception e) {
             return 0;
         }
+    }
+
+    public int getWordsLearnedToday() {
+        try {
+            long startOfDay = getStartOfDay(System.currentTimeMillis());
+            Integer count = database.studySessionDao().getTotalWordsLearnedSince(getCurrentEmail(), startOfDay);
+            return count != null ? count : 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    public int getDailyWordGoal() {
+        return 25;
+    }
+
+    public int getCompletedMapNodeCount() {
+        try {
+            Set<String> completed = preferences.getStringSet(getPrefKey(KEY_COMPLETED_MAP_NODES), new HashSet<>());
+            return completed != null ? completed.size() : 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    public int getTotalMapNodeCount() {
+        return 6;
     }
 
     public int getXpToday() {
@@ -260,8 +425,7 @@ public class AppRepository {
 
     public int getChatSessions() {
         try {
-            List<ChatMessageEntity> messages = database.chatMessageDao().getAllMessages();
-            return messages != null ? messages.size() : 0;
+            return database.chatMessageDao().getMessageCount();
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
@@ -278,10 +442,14 @@ public class AppRepository {
     }
 
     public int getUnlearnedWordsCount() {
-        return 3000 - getLearnedWords(); // Total vocabulary reference
+        return Math.max(0, 3000 - getLearnedWords()); // Total vocabulary reference
     }
 
     public List<Integer> getWeeklyStudyMinutes() {
+        return buildWeeklyStudyMinutes(getCurrentEmail());
+    }
+
+    private List<Integer> buildWeeklyStudyMinutes(String email) {
         List<Integer> weeklyMinutes = new ArrayList<>();
         try {
             Calendar now = Calendar.getInstance();
@@ -307,8 +475,10 @@ public class AppRepository {
                 long endOfDay = getEndOfDay(cal.getTimeInMillis());
                 
                 try {
-                    Integer minutes = database.studySessionDao().getStudyMinutesForPeriod(getCurrentEmail(), startOfDay, endOfDay);
-                    weeklyMinutes.add(minutes != null ? minutes : 0);
+                    Long ms = database.studySessionDao().getStudyDurationMsForPeriod(email, startOfDay, endOfDay);
+                    // Ensure a day with activity has at least 1 minute to trigger the streak fire icon
+                    int minutes = (ms != null && ms > 0) ? (int) Math.max(1, ms / 60000) : 0;
+                    weeklyMinutes.add(minutes);
                 } catch (Exception e) {
                     weeklyMinutes.add(0);
                 }
@@ -329,8 +499,8 @@ public class AppRepository {
 
     public int getTotalStudyMinutes() {
         try {
-            Integer minutes = database.studySessionDao().getTotalStudyMinutes(getCurrentEmail());
-            return minutes != null ? minutes : 0;
+            Long ms = database.studySessionDao().getTotalStudyDurationMs(getCurrentEmail());
+            return ms != null ? (int) (ms / 60000) : 0;
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
@@ -338,12 +508,16 @@ public class AppRepository {
     }
 
     public List<AchievementItem> getAchievements() {
-        List<AchievementItem> list = new ArrayList<>();
         int streak = getStreakDays();
         int learned = getLearnedWords();
         int scanned = getScannedImages();
         int chat = getChatSessions();
-        
+
+        return buildAchievements(streak, learned, scanned, chat);
+    }
+
+    private List<AchievementItem> buildAchievements(int streak, int learned, int scanned, int chat) {
+        List<AchievementItem> list = new ArrayList<>();
         list.add(new AchievementItem("7 ngày bền bỉ", "Giữ streak 7 ngày", "🔥", streak >= 7, streak, 7));
         list.add(new AchievementItem("Tân binh scan", "Scan 10 vật thể", "📷", scanned >= 10, scanned, 10));
         list.add(new AchievementItem("100 từ đầu tiên", "Học 100 từ", "📚", learned >= 100, learned, 100));
@@ -359,11 +533,16 @@ public class AppRepository {
 
     public void updateTopicStatus(String topic, String status) {
         TOPIC_PROGRESS.put(topic, status);
+        invalidateDashboardCache();
         // In real app: database.topicProgressDao().upsert(new TopicProgressEntity(topic, status))
     }
 
     public String getTopicStatus(String topic) {
-        int progress = getTopicProgressPercent(topic);
+        return getTopicStatus(topic, null);
+    }
+
+    private String getTopicStatus(String topic, List<CustomVocabularyEntity> domainEntities) {
+        int progress = getTopicProgressPercent(topic, domainEntities);
         if (progress >= 100) {
             return TopicItem.STATUS_COMPLETED;
         }
@@ -374,16 +553,28 @@ public class AppRepository {
     }
 
     public List<DomainItem> getDomains() {
+        String email = getCurrentEmail();
+        long now = System.currentTimeMillis();
+        synchronized (cacheLock) {
+            if (!cachedDomains.isEmpty()
+                    && email.equals(cachedDomainsEmail)
+                    && now - cachedDomainsAt <= DOMAINS_CACHE_TTL_MS) {
+                return new ArrayList<>(cachedDomains);
+            }
+        }
+
         List<DomainItem> list = new ArrayList<>();
         try {
             List<String> domains = database.customVocabularyDao().getUniqueDomains();
             for (String domain : domains) {
                 if (domain.equalsIgnoreCase("general") || domain.isEmpty()) continue;
+
+                List<CustomVocabularyEntity> domainEntities = database.customVocabularyDao().getByDomain(domain);
                 
                 String emoji = getEmojiForDomain(domain);
                 String start = getGradientStartForDomain(domain);
                 String end = getGradientEndForDomain(domain);
-                int progress = getDomainProgress(domain);
+                int progress = getDomainProgress(domain, domainEntities);
                 int bgRes = getBackgroundImageForDomain(domain);
                 
                 list.add(new DomainItem(
@@ -393,7 +584,7 @@ public class AppRepository {
                     start,
                     end,
                     bgRes,
-                    sampleTopics(domain)
+                    sampleTopics(domain, domainEntities)
                 ));
             }
             
@@ -405,7 +596,20 @@ public class AppRepository {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        synchronized (cacheLock) {
+            cachedDomains = new ArrayList<>(list);
+            cachedDomainsEmail = email;
+            cachedDomainsAt = now;
+        }
         return list;
+    }
+
+    public void getDomainsAsync(DataCallback<List<DomainItem>> callback) {
+        executorService.execute(() -> {
+            List<DomainItem> list = getDomains();
+            mainHandler.post(() -> callback.onResult(list));
+        });
     }
 
     public List<TopicItem> getTopicsForDomain(String domain) {
@@ -488,15 +692,15 @@ public class AppRepository {
         return 0;
     }
 
-    private int getDomainProgress(String domain) {
-        List<TopicItem> topics = sampleTopics(domain);
+    private int getDomainProgress(String domain, List<CustomVocabularyEntity> domainEntities) {
+        List<TopicItem> topics = sampleTopics(domain, domainEntities);
         if (topics.isEmpty()) {
             return 0;
         }
 
         float score = 0f;
         for (TopicItem topic : topics) {
-            score += getTopicProgressPercent(topic.getTitle());
+            score += getTopicProgressPercent(topic.getTitle(), domainEntities);
         }
         return Math.min(100, Math.round(score / topics.size()));
     }
@@ -561,6 +765,13 @@ public class AppRepository {
             cards.add(new FlashcardItem("🍶", "sauce", "/sɔːs/", "nước sốt", "Add some more soy sauce to the stir-fry.", "Cho thêm một ít nước tương vào món xào.", "Chất lỏng dùng để tăng hương vị cho món ăn."));
         }
         return cards;
+    }
+
+    public void getFlashcardsForTopicAsync(String topic, DataCallback<List<FlashcardItem>> callback) {
+        executorService.execute(() -> {
+            List<FlashcardItem> cards = getFlashcardsForTopic(topic);
+            mainHandler.post(() -> callback.onResult(cards));
+        });
     }
 
     public ScanResult mockScanResult() {
@@ -635,6 +846,7 @@ public class AppRepository {
                 // Update stats
                 // Robust specific update
                 database.userStatsDao().incrementWordsLearned(email, 1);
+                invalidateDashboardCache();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -671,6 +883,7 @@ public class AppRepository {
             entity.source = "user";
             entity.domain = "general";
             database.customVocabularyDao().upsert(entity);
+            invalidateDashboardCache();
         });
     }
 
@@ -687,6 +900,9 @@ public class AppRepository {
         int updated = forceIfLocked
                 ? database.customVocabularyDao().forceUpdateMeaning(normalized, meaning.trim(), now)
                 : database.customVocabularyDao().updateMeaningIfUnlocked(normalized, meaning.trim(), now);
+        if (updated > 0) {
+            invalidateDashboardCache();
+        }
         return updated > 0;
     }
 
@@ -695,7 +911,11 @@ public class AppRepository {
             return false;
         }
         String normalized = ScanAnalyzer.canonicalizeLabel(word);
-        return database.customVocabularyDao().deleteByWord(normalized) > 0;
+        boolean deleted = database.customVocabularyDao().deleteByWord(normalized) > 0;
+        if (deleted) {
+            invalidateDashboardCache();
+        }
+        return deleted;
     }
 
     public boolean setCustomVocabularyLocked(String word, boolean isLocked) {
@@ -703,7 +923,11 @@ public class AppRepository {
             return false;
         }
         String normalized = ScanAnalyzer.canonicalizeLabel(word);
-        return database.customVocabularyDao().setLocked(normalized, isLocked, System.currentTimeMillis()) > 0;
+        boolean updated = database.customVocabularyDao().setLocked(normalized, isLocked, System.currentTimeMillis()) > 0;
+        if (updated) {
+            invalidateDashboardCache();
+        }
+        return updated;
     }
 
     public void logFailedLabel(String label) {
@@ -873,6 +1097,7 @@ public class AppRepository {
             SeedPackageStateEntity nextState = new SeedPackageStateEntity(packageName, packageVersion);
             database.seedPackageStateDao().upsert(nextState);
         }
+        invalidateDashboardCache();
     }
 
     private String buildSuggestedAlias(String label) {
@@ -937,6 +1162,7 @@ public class AppRepository {
                 if (stats != null) {
                     stats.totalWordsScanned += 1;
                     database.userStatsDao().update(stats);
+                    invalidateDashboardCache();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -960,6 +1186,7 @@ public class AppRepository {
                 database.userStatsDao().addTotalXp(email, xp);
                 database.userStatsDao().addDailyXp(email, xp);
                 updateStreakForNewActivity(email, stats, System.currentTimeMillis());
+                invalidateDashboardCache();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -991,6 +1218,7 @@ public class AppRepository {
                     database.userStatsDao().addDailyXp(email, session.getXpEarned());
                 }
                 updateStreakForNewActivity(email, stats, System.currentTimeMillis());
+                invalidateDashboardCache();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -998,7 +1226,10 @@ public class AppRepository {
     }
 
     public String getCefrLevel() {
-        int learned = getLearnedWords();
+        return getCefrLevelForLearned(getLearnedWords());
+    }
+
+    private String getCefrLevelForLearned(int learned) {
         if (learned < 80) return "A1";
         if (learned < 160) return "A2";
         if (learned < 260) return "B1";
@@ -1027,6 +1258,7 @@ public class AppRepository {
                     }
                 }
                 editor.apply();
+                invalidateDashboardCache();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -1034,22 +1266,26 @@ public class AppRepository {
     }
 
     private List<TopicItem> sampleTopics(String domain) {
+        return sampleTopics(domain, null);
+    }
+
+    private List<TopicItem> sampleTopics(String domain, List<CustomVocabularyEntity> domainEntities) {
         List<TopicItem> topics = new ArrayList<>();
-        topics.add(new TopicItem(domain + " cơ bản", getTopicStatus(domain + " cơ bản")));
-        topics.add(new TopicItem(domain + " giao tiếp", getTopicStatus(domain + " giao tiếp")));
-        topics.add(new TopicItem(domain + " nâng cao", getTopicStatus(domain + " nâng cao")));
-        topics.add(new TopicItem(domain + " thực chiến", getTopicStatus(domain + " thực chiến")));
-        topics.add(new TopicItem(domain + " chuyên sâu", getTopicStatus(domain + " chuyên sâu")));
-        topics.add(new TopicItem(domain + " chuyên ngành", getTopicStatus(domain + " chuyên ngành")));
-        topics.add(new TopicItem(domain + " thuật ngữ", getTopicStatus(domain + " thuật ngữ")));
-        topics.add(new TopicItem(domain + " tình huống", getTopicStatus(domain + " tình huống")));
-        topics.add(new TopicItem(domain + " tiếng lóng", getTopicStatus(domain + " tiếng lóng")));
-        topics.add(new TopicItem(domain + " thành ngữ", getTopicStatus(domain + " thành ngữ")));
-        topics.add(new TopicItem(domain + " mở rộng", getTopicStatus(domain + " mở rộng")));
-        topics.add(new TopicItem(domain + " ứng dụng", getTopicStatus(domain + " ứng dụng")));
-        topics.add(new TopicItem(domain + " nâng tầm", getTopicStatus(domain + " nâng tầm")));
-        topics.add(new TopicItem(domain + " học thuật", getTopicStatus(domain + " học thuật")));
-        topics.add(new TopicItem(domain + " chuyên gia", getTopicStatus(domain + " chuyên gia")));
+        topics.add(new TopicItem(domain + " cơ bản", getTopicStatus(domain + " cơ bản", domainEntities)));
+        topics.add(new TopicItem(domain + " giao tiếp", getTopicStatus(domain + " giao tiếp", domainEntities)));
+        topics.add(new TopicItem(domain + " nâng cao", getTopicStatus(domain + " nâng cao", domainEntities)));
+        topics.add(new TopicItem(domain + " thực chiến", getTopicStatus(domain + " thực chiến", domainEntities)));
+        topics.add(new TopicItem(domain + " chuyên sâu", getTopicStatus(domain + " chuyên sâu", domainEntities)));
+        topics.add(new TopicItem(domain + " chuyên ngành", getTopicStatus(domain + " chuyên ngành", domainEntities)));
+        topics.add(new TopicItem(domain + " thuật ngữ", getTopicStatus(domain + " thuật ngữ", domainEntities)));
+        topics.add(new TopicItem(domain + " tình huống", getTopicStatus(domain + " tình huống", domainEntities)));
+        topics.add(new TopicItem(domain + " tiếng lóng", getTopicStatus(domain + " tiếng lóng", domainEntities)));
+        topics.add(new TopicItem(domain + " thành ngữ", getTopicStatus(domain + " thành ngữ", domainEntities)));
+        topics.add(new TopicItem(domain + " mở rộng", getTopicStatus(domain + " mở rộng", domainEntities)));
+        topics.add(new TopicItem(domain + " ứng dụng", getTopicStatus(domain + " ứng dụng", domainEntities)));
+        topics.add(new TopicItem(domain + " nâng tầm", getTopicStatus(domain + " nâng tầm", domainEntities)));
+        topics.add(new TopicItem(domain + " học thuật", getTopicStatus(domain + " học thuật", domainEntities)));
+        topics.add(new TopicItem(domain + " chuyên gia", getTopicStatus(domain + " chuyên gia", domainEntities)));
         return topics;
     }
 
@@ -1163,6 +1399,7 @@ public class AppRepository {
             learnedWords.add(normalizedWord);
             saveLearnedWordsForTopic(topic, learnedWords);
         }
+        invalidateDashboardCache();
     }
 
     public Set<String> getLearnedWordsForTopic(String topic) {
@@ -1200,7 +1437,11 @@ public class AppRepository {
     }
 
     private int getTopicProgressPercent(String topic) {
-        List<CustomVocabularyEntity> topicPool = getTopicVocabularyPool(topic);
+        return getTopicProgressPercent(topic, null);
+    }
+
+    private int getTopicProgressPercent(String topic, List<CustomVocabularyEntity> domainEntities) {
+        List<CustomVocabularyEntity> topicPool = getTopicVocabularyPool(topic, domainEntities);
         if (topicPool.isEmpty()) {
             return 0;
         }
@@ -1216,11 +1457,18 @@ public class AppRepository {
     }
 
     private List<CustomVocabularyEntity> getTopicVocabularyPool(String topic) {
+        return getTopicVocabularyPool(topic, null);
+    }
+
+    private List<CustomVocabularyEntity> getTopicVocabularyPool(String topic, List<CustomVocabularyEntity> domainEntities) {
         List<CustomVocabularyEntity> topicPool = new ArrayList<>();
         try {
             String domain = getDomainFromTopic(topic);
             int startIndex = getStartIndexForTopic(topic);
-            List<CustomVocabularyEntity> entities = database.customVocabularyDao().getByDomain(domain);
+            List<CustomVocabularyEntity> entities = domainEntities;
+            if (entities == null) {
+                entities = database.customVocabularyDao().getByDomain(domain);
+            }
             if (entities == null || entities.isEmpty()) {
                 return topicPool;
             }

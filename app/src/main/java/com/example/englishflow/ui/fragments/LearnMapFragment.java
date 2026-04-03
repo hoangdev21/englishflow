@@ -55,6 +55,14 @@ public class LearnMapFragment extends Fragment {
 
         buildNodeRows(getMockJourney());
         mapNodesContainer.post(this::drawPath);
+
+        // Back Button Logic
+        View btnBack = view.findViewById(R.id.btnBack);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                requireActivity().getOnBackPressedDispatcher().onBackPressed();
+            });
+        }
     }
 
     @Override

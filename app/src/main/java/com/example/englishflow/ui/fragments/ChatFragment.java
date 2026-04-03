@@ -47,6 +47,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ChatFragment extends Fragment {
 
@@ -67,6 +69,8 @@ public class ChatFragment extends Fragment {
     private AppRepository repository;
     private GroqChatService chatService;
     private VoiceFlowEngine voiceEngine;
+    private ExecutorService dbExecutor;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     // ── State ─────────────────────────────────────────────────────────────────
     private boolean isInitialSelection = true;
@@ -91,6 +95,7 @@ public class ChatFragment extends Fragment {
 
         repository  = AppRepository.getInstance(requireContext());
         chatService = new GroqChatService(requireContext());
+        dbExecutor = Executors.newSingleThreadExecutor();
 
         // Bind views
         topicSpinner   = view.findViewById(R.id.spinnerTopic);
@@ -113,6 +118,8 @@ public class ChatFragment extends Fragment {
 
         // RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setItemAnimator(null);
         adapter = new ChatAdapter(chatItems);
         recyclerView.setAdapter(adapter);
 
@@ -174,6 +181,11 @@ public class ChatFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        mainHandler.removeCallbacksAndMessages(null);
+        if (dbExecutor != null) {
+            dbExecutor.shutdownNow();
+            dbExecutor = null;
+        }
         if (adapter != null) adapter.shutdownTts();
         if (voiceEngine != null) voiceEngine.shutdown();
     }
@@ -196,7 +208,7 @@ public class ChatFragment extends Fragment {
                 messageEdit.setText(text);
                 tvVoiceStatus.setText("\"" + text + "\"");
                 // Small delay for user to see what was transcribed
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                mainHandler.postDelayed(() -> {
                     sendMessage(true /* fromVoice */);
                 }, 400);
             }
@@ -211,7 +223,7 @@ public class ChatFragment extends Fragment {
             public void onSpeakingDone() {
                 // AI finished speaking — in voice mode, auto-relisten
                 if (isVoiceMode) {
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    mainHandler.postDelayed(() -> {
                         if (isVoiceMode && isAdded()) {
                             startVoiceListening();
                         }
@@ -375,7 +387,7 @@ public class ChatFragment extends Fragment {
             public void onSuccess(String response, String correction, String explanation,
                                   String vocabWord, String vocabIpa, String vocabMeaning,
                                   String vocabExample, String vocabExampleVi) {
-                new Handler(Looper.getMainLooper()).post(() -> {
+            mainHandler.post(() -> {
                     removeTypingIndicator();
                     animateTypewriterResponse(response, correction, explanation,
                             vocabWord, vocabIpa, vocabMeaning, vocabExample, vocabExampleVi,
@@ -386,7 +398,7 @@ public class ChatFragment extends Fragment {
 
             @Override
             public void onError(String error) {
-                new Handler(Looper.getMainLooper()).post(() -> {
+                mainHandler.post(() -> {
                     removeTypingIndicator();
                     String displayError = (error != null && !error.isEmpty()) 
                         ? "Lỗi hệ thống: " + error 
@@ -443,7 +455,7 @@ public class ChatFragment extends Fragment {
             @Override
             public void run() {
                 if (charIndex[0] < fullText.length()) {
-                    int charsToType = Math.min(12, fullText.length() - charIndex[0]);
+                    int charsToType = Math.min(fullText.length() > 240 ? 14 : 8, fullText.length() - charIndex[0]);
                     displayedText.append(fullText.substring(charIndex[0], charIndex[0] + charsToType));
                     charIndex[0] += charsToType;
 
@@ -465,7 +477,7 @@ public class ChatFragment extends Fragment {
                     if (charIndex[0] >= fullText.length()) {
                         saveMessage(item);
                     } else {
-                        handler.postDelayed(this, 16);
+                        handler.postDelayed(this, 28);
                     }
                 }
             }
@@ -503,8 +515,11 @@ public class ChatFragment extends Fragment {
                 if (isInitialSelection) { isInitialSelection = false; return; }
                 String selectedTopic = parent.getItemAtPosition(position).toString();
                 if (position > 0) {
+                    int oldSize = chatItems.size();
                     chatItems.clear();
-                    adapter.notifyDataSetChanged();
+                    if (oldSize > 0) {
+                        adapter.notifyItemRangeRemoved(0, oldSize);
+                    }
                     String userName  = repository.getUserName();
                     String styledName = "[color:#2563EB]***" + userName + "***[/color]";
                     String greeting  = "Xin chào " + styledName + "! Tôi là Flow, trợ lý Tiếng Anh của bạn. "
@@ -545,8 +560,11 @@ public class ChatFragment extends Fragment {
 
     private void startNewConversation() {
         currentSessionId = UUID.randomUUID().toString();
+        int oldSize = chatItems.size();
         chatItems.clear();
-        adapter.notifyDataSetChanged();
+        if (oldSize > 0) {
+            adapter.notifyItemRangeRemoved(0, oldSize);
+        }
         isVoiceMode = false;
         if (voiceEngine != null) voiceEngine.stopSpeaking();
         updateVoiceUI(VoiceFlowEngine.State.IDLE);
@@ -565,7 +583,9 @@ public class ChatFragment extends Fragment {
                 ? topicSpinner.getSelectedItem().toString() : "Tự do";
         String title = lastMsg.length() > 30 ? lastMsg.substring(0, 27) + "..." : lastMsg;
         ChatSessionEntity session = new ChatSessionEntity(currentSessionId, title, topic, lastMsg);
-        new Thread(() -> repository.getDatabase().chatSessionDao().upsert(session)).start();
+        if (dbExecutor != null) {
+            dbExecutor.execute(() -> repository.getDatabase().chatSessionDao().upsert(session));
+        }
     }
 
     private void saveMessage(ChatItem item) {
@@ -574,11 +594,13 @@ public class ChatFragment extends Fragment {
         ChatMessageEntity entity = new ChatMessageEntity(
                 currentSessionId, role, item.getMessage(),
                 item.getCorrection(), item.getExplanation());
-        new Thread(() -> {
-            repository.getDatabase().chatMessageDao().insert(entity);
-            repository.getDatabase().chatSessionDao()
-                    .updateLastMessage(currentSessionId, item.getMessage());
-        }).start();
+        if (dbExecutor != null) {
+            dbExecutor.execute(() -> {
+                repository.getDatabase().chatMessageDao().insert(entity);
+                repository.getDatabase().chatSessionDao()
+                        .updateLastMessage(currentSessionId, item.getMessage());
+            });
+        }
     }
 
     private void removeTypingIndicator() {
@@ -604,10 +626,14 @@ public class ChatFragment extends Fragment {
         rvHistory.setLayoutManager(new LinearLayoutManager(requireContext()));
         View btnDeleteAll = sheetView.findViewById(R.id.btnDeleteAll);
 
-        new Thread(() -> {
+        if (dbExecutor == null) {
+            return;
+        }
+
+        dbExecutor.execute(() -> {
             List<ChatSessionEntity> sessions =
                     repository.getDatabase().chatSessionDao().getAllSessions();
-            new Handler(Looper.getMainLooper()).post(() -> {
+            mainHandler.post(() -> {
                 final ChatHistoryAdapter[] adapterArr = new ChatHistoryAdapter[1];
                 adapterArr[0] = new ChatHistoryAdapter(sessions, new ChatHistoryAdapter.OnSessionClickListener() {
                     @Override
@@ -624,7 +650,7 @@ public class ChatFragment extends Fragment {
                 btnDeleteAll.setVisibility(sessions.isEmpty() ? View.GONE : View.VISIBLE);
                 btnDeleteAll.setOnClickListener(v -> confirmDeleteAll(sessions, adapterArr[0], dialog));
             });
-        }).start();
+        });
 
         dialog.show();
     }
@@ -644,10 +670,13 @@ public class ChatFragment extends Fragment {
         dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.btnConfirm).setOnClickListener(v -> {
             dialog.dismiss();
-            new Thread(() -> {
+            if (dbExecutor == null) {
+                return;
+            }
+            dbExecutor.execute(() -> {
                 repository.getDatabase().chatSessionDao().deleteAllSessions();
                 repository.getDatabase().chatMessageDao().deleteAllMessages();
-                new Handler(Looper.getMainLooper()).post(() -> {
+                mainHandler.post(() -> {
                     sessions.clear();
                     adapt.notifyDataSetChanged();
                     startNewConversation();
@@ -655,19 +684,26 @@ public class ChatFragment extends Fragment {
                     Toast.makeText(requireContext(), "Đã xóa toàn bộ lịch sử",
                             Toast.LENGTH_SHORT).show();
                 });
-            }).start();
+            });
         });
         dialog.show();
     }
 
     private void loadConversation(ChatSessionEntity session) {
         currentSessionId = session.sessionId;
+        int oldSize = chatItems.size();
         chatItems.clear();
-        adapter.notifyDataSetChanged();
-        new Thread(() -> {
+        if (oldSize > 0) {
+            adapter.notifyItemRangeRemoved(0, oldSize);
+        }
+        if (dbExecutor == null) {
+            return;
+        }
+
+        dbExecutor.execute(() -> {
             List<ChatMessageEntity> messages =
                     repository.getDatabase().chatMessageDao().getMessagesBySession(currentSessionId);
-            new Handler(Looper.getMainLooper()).post(() -> {
+            mainHandler.post(() -> {
                 for (ChatMessageEntity msg : messages) {
                     int role = msg.role.equals("user") ? ChatItem.ROLE_USER : ChatItem.ROLE_AI;
                     chatItems.add(new ChatItem(role, msg.content, msg.correction, msg.explanation));
@@ -675,7 +711,7 @@ public class ChatFragment extends Fragment {
                 adapter.notifyDataSetChanged();
                 recyclerView.scrollToPosition(chatItems.size() - 1);
             });
-        }).start();
+        });
     }
 
     private void deleteConversation(ChatSessionEntity session, List<ChatSessionEntity> list,
@@ -689,17 +725,20 @@ public class ChatFragment extends Fragment {
         dialogView.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.btnConfirm).setOnClickListener(v -> {
             dialog.dismiss();
-            new Thread(() -> {
+            if (dbExecutor == null) {
+                return;
+            }
+            dbExecutor.execute(() -> {
                 repository.getDatabase().chatSessionDao().deleteSession(session.sessionId);
                 repository.getDatabase().chatMessageDao().deleteSessionMessages(session.sessionId);
-                new Handler(Looper.getMainLooper()).post(() -> {
+                mainHandler.post(() -> {
                     list.remove(session);
                     adapt.notifyDataSetChanged();
                     if (session.sessionId.equals(currentSessionId)) startNewConversation();
                     Toast.makeText(requireContext(), "Đã xóa hội thoại vĩnh viễn",
                             Toast.LENGTH_SHORT).show();
                 });
-            }).start();
+            });
         });
         dialog.show();
     }

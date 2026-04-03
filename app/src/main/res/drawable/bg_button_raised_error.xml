@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pressed state -->
+    <item android:state_pressed="true">
+        <layer-list>
+            <!-- Shadow (recessed) -->
+            <item android:top="2dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="14dp" />
+                    <solid android:color="#991B1B" />
+                </shape>
+            </item>
+            <!-- Main Content (lowered) -->
+            <item android:bottom="0dp" android:top="2dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="14dp" />
+                    <solid android:color="#DC2626" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <!-- Default state: Raised effect -->
+    <item>
+        <layer-list>
+            <!-- Deep Shadow Layer -->
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="14dp" />
+                    <solid android:color="#7F1D1D" />
+                </shape>
+            </item>
+            <!-- Main Button Body with Gradient Shine -->
+            <item android:bottom="4dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="14dp" />
+                    <solid android:color="#EF4444" />
+                    <gradient
+                        android:angle="270"
+                        android:endColor="#DC2626"
+                        android:startColor="#F87171" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

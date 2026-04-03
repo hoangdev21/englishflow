@@ -40,7 +40,8 @@ public class MainActivity extends AppCompatActivity {
 
             MainPagerAdapter pagerAdapter = new MainPagerAdapter(this);
             viewPager.setAdapter(pagerAdapter);
-            viewPager.setOffscreenPageLimit(5);
+            // Keep only adjacent pages warm to reduce startup memory and first-render jank.
+            viewPager.setOffscreenPageLimit(1);
 
             // ════ Custom 3D Nav Setup ════
             android.view.View btnHome = findViewById(R.id.nav_home_btn);

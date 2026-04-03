@@ -8,13 +8,16 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.LeaderboardItem;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class LeaderboardAdapter extends RecyclerView.Adapter<LeaderboardAdapter.ViewHolder> {
 
@@ -23,13 +26,43 @@ public class LeaderboardAdapter extends RecyclerView.Adapter<LeaderboardAdapter.
     private static final DecimalFormat scoreFormatter = new DecimalFormat("#,###");
 
     public LeaderboardAdapter(List<LeaderboardItem> items, String currentUserEmail) {
-        this.items = items;
+        this.items = new ArrayList<>(items);
         this.currentUserEmail = currentUserEmail;
     }
 
     public void updateData(List<LeaderboardItem> newItems) {
-        this.items = newItems;
-        notifyDataSetChanged();
+        List<LeaderboardItem> oldItems = new ArrayList<>(items);
+        List<LeaderboardItem> updated = newItems != null ? new ArrayList<>(newItems) : new ArrayList<>();
+
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return oldItems.size();
+            }
+
+            @Override
+            public int getNewListSize() {
+                return updated.size();
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                return Objects.equals(oldItems.get(oldItemPosition).email, updated.get(newItemPosition).email);
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                LeaderboardItem oldItem = oldItems.get(oldItemPosition);
+                LeaderboardItem newItem = updated.get(newItemPosition);
+                return Objects.equals(oldItem.name, newItem.name)
+                        && Objects.equals(oldItem.email, newItem.email)
+                        && oldItem.score == newItem.score
+                        && oldItem.rank == newItem.rank;
+            }
+        });
+
+        this.items = updated;
+        diffResult.dispatchUpdatesTo(this);
     }
 
     @NonNull

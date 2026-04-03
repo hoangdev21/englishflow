@@ -35,6 +35,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.ArrayList;
 
 public class ProfileFragment extends Fragment {
 
@@ -54,6 +55,7 @@ public class ProfileFragment extends Fragment {
     private ShapeableImageView profileAvatar;
     private LinearLayout chartContainer;
     private View weeklyEmptyState;
+    private AchievementAdapter achievementAdapter;
 
     @Nullable
     @Override
@@ -101,7 +103,8 @@ public class ProfileFragment extends Fragment {
 
         RecyclerView achievementRecycler = view.findViewById(R.id.achievementRecycler);
         achievementRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
-        achievementRecycler.setAdapter(new AchievementAdapter(repository.getAchievements()));
+        achievementAdapter = new AchievementAdapter(new ArrayList<>());
+        achievementRecycler.setAdapter(achievementAdapter);
 
         renderProfile();
         
@@ -178,26 +181,36 @@ public class ProfileFragment extends Fragment {
     }
 
     private void renderProfile() {
-        nameText.setText(repository.getUserName());
-        levelText.setText(repository.getLearnedWords() + " từ đã học");
-        if (levelBadgeText != null) {
-            levelBadgeText.setText(repository.getCefrLevel());
-        }
-        if (profileAvatar != null) {
-            profileAvatar.setImageResource(settingsStore.getAvatarResId());
-        }
-        
-        tvLearnedCount.setText(String.valueOf(repository.getLearnedWords()));
-        tvStreakCount.setText(String.valueOf(repository.getStreakDays()));
-        tvXpCount.setText(String.valueOf(repository.getXpToday()));
+        repository.getDashboardSnapshotAsync(snapshot -> {
+            if (!isAdded()) {
+                return;
+            }
 
-        // Detailed Stats
-        tvDetailLearned.setText(String.valueOf(repository.getLearnedWords()));
-        tvDetailScanned.setText(String.valueOf(repository.getScannedImages()));
-        tvDetailChats.setText(String.valueOf(repository.getChatSessions()));
-        tvDetailBestStreak.setText(String.valueOf(repository.getBestStreak()));
-        
-        renderWeeklyChart(repository.getWeeklyStudyMinutes());
+            nameText.setText(snapshot.userName);
+            levelText.setText(snapshot.userProgress.totalWordsLearned + " từ đã học");
+            if (levelBadgeText != null) {
+                levelBadgeText.setText(snapshot.userProgress.cefrLevel);
+            }
+            if (profileAvatar != null) {
+                profileAvatar.setImageResource(settingsStore.getAvatarResId());
+            }
+
+            tvLearnedCount.setText(String.valueOf(snapshot.userProgress.totalWordsLearned));
+            tvStreakCount.setText(String.valueOf(snapshot.userProgress.currentStreak));
+            tvXpCount.setText(String.valueOf(snapshot.userProgress.xpTodayEarned));
+
+            // Detailed Stats
+            tvDetailLearned.setText(String.valueOf(snapshot.userProgress.totalWordsLearned));
+            tvDetailScanned.setText(String.valueOf(snapshot.userProgress.totalWordsScanned));
+            tvDetailChats.setText(String.valueOf(snapshot.chatSessions));
+            tvDetailBestStreak.setText(String.valueOf(snapshot.userProgress.bestStreak));
+
+            if (achievementAdapter != null) {
+                achievementAdapter.updateData(snapshot.achievements);
+            }
+
+            renderWeeklyChart(snapshot.weeklyStudyMinutes);
+        });
     }
 
     private void renderWeeklyChart(List<Integer> values) {

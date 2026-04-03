@@ -21,6 +21,9 @@ public interface ChatMessageDao {
     
     @Query("SELECT * FROM chat_messages ORDER BY timestamp DESC LIMIT :limit")
     List<ChatMessageEntity> getRecentMessages(int limit);
+
+    @Query("SELECT COUNT(*) FROM chat_messages")
+    int getMessageCount();
     
     @Query("DELETE FROM chat_messages")
     void deleteAllMessages();

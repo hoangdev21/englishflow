@@ -130,37 +130,48 @@ public class LearnFlashcardFragment extends Fragment {
 
         AppRepository repository = AppRepository.getInstance(requireContext());
         repository.updateTopicStatus(currentTopic, TopicItem.STATUS_LEARNING);
-        flashcards = repository.getFlashcardsForTopic(currentTopic);
+        countText.setText("Đang tải thẻ...");
+        srsHint.setText("Đang chuẩn bị phiên học");
+        cardView.setEnabled(false);
+        srsButtons.setVisibility(View.GONE);
 
-        if (flashcards.isEmpty()) {
-            countText.setText("Đã hoàn thành");
-            srsHint.setText("Bạn đã học hết các từ trong chủ đề này");
-            cardView.setVisibility(View.GONE);
-            srsButtons.setVisibility(View.GONE);
-            return;
-        }
-
-        bindFlashcard();
-
-        textToSpeech = new TextToSpeech(requireContext(), status -> {
-            if (status == TextToSpeech.SUCCESS) {
-                textToSpeech.setLanguage(Locale.US);
-                textToSpeech.setSpeechRate(settingsStore.getVoiceSpeechRate());
-                textToSpeech.setPitch(TTS_PITCH);
+        repository.getFlashcardsForTopicAsync(currentTopic, cards -> {
+            if (!isAdded()) {
+                return;
             }
+
+            flashcards = cards != null ? cards : new java.util.ArrayList<>();
+            if (flashcards.isEmpty()) {
+                countText.setText("Đã hoàn thành");
+                srsHint.setText("Bạn đã học hết các từ trong chủ đề này");
+                cardView.setVisibility(View.GONE);
+                srsButtons.setVisibility(View.GONE);
+                return;
+            }
+
+            cardView.setEnabled(true);
+            bindFlashcard();
+
+            textToSpeech = new TextToSpeech(requireContext(), status -> {
+                if (status == TextToSpeech.SUCCESS) {
+                    textToSpeech.setLanguage(Locale.US);
+                    textToSpeech.setSpeechRate(settingsStore.getVoiceSpeechRate());
+                    textToSpeech.setPitch(TTS_PITCH);
+                }
+            });
+
+            cardView.setOnClickListener(v -> flipCard());
+            setupSwipeNavigation();
+
+            pronounceButton.setOnClickListener(v -> {
+                FlashcardItem item = flashcards.get(currentIndex);
+                textToSpeech.speak(item.getWord(), TextToSpeech.QUEUE_FLUSH, null, "flashcard-word");
+            });
+
+            view.findViewById(R.id.btnHard).setOnClickListener(v -> rateCard(1, "Ôn lại sớm"));
+            view.findViewById(R.id.btnOkay).setOnClickListener(v -> rateCard(2, "Đang học..."));
+            view.findViewById(R.id.btnEasy).setOnClickListener(v -> rateCard(3, "Đã thuộc!"));
         });
-
-        cardView.setOnClickListener(v -> flipCard());
-        setupSwipeNavigation();
-
-        pronounceButton.setOnClickListener(v -> {
-            FlashcardItem item = flashcards.get(currentIndex);
-            textToSpeech.speak(item.getWord(), TextToSpeech.QUEUE_FLUSH, null, "flashcard-word");
-        });
-
-        view.findViewById(R.id.btnHard).setOnClickListener(v -> rateCard(1, "Ôn lại sớm"));
-        view.findViewById(R.id.btnOkay).setOnClickListener(v -> rateCard(2, "Đang học..."));
-        view.findViewById(R.id.btnEasy).setOnClickListener(v -> rateCard(3, "Đã thuộc!"));
         
         // Setup distance for 3D effect
         float scale = getResources().getDisplayMetrics().density;

@@ -29,11 +29,11 @@ public interface StudySessionDao {
     @Query("SELECT SUM(xpEarned) FROM study_sessions WHERE userEmail = :userEmail AND startTime >= :startOfDay AND startTime < :endOfDay")
     Integer getXpEarnedToday(String userEmail, long startOfDay, long endOfDay);
     
-    @Query("SELECT SUM(endTime - startTime) / 60000 FROM study_sessions WHERE userEmail = :userEmail")
-    Integer getTotalStudyMinutes(String userEmail);
+    @Query("SELECT SUM(endTime - startTime) FROM study_sessions WHERE userEmail = :userEmail")
+    Long getTotalStudyDurationMs(String userEmail);
     
-    @Query("SELECT SUM(endTime - startTime) / 60000 FROM study_sessions WHERE userEmail = :userEmail AND startTime >= :startTime AND startTime < :endTime")
-    Integer getStudyMinutesForPeriod(String userEmail, long startTime, long endTime);
+    @Query("SELECT SUM(endTime - startTime) FROM study_sessions WHERE userEmail = :userEmail AND startTime >= :startTime AND startTime < :endTime")
+    Long getStudyDurationMsForPeriod(String userEmail, long startTime, long endTime);
     
     @Query("SELECT COUNT(*) FROM study_sessions WHERE userEmail = :userEmail")
     int getSessionCount(String userEmail);

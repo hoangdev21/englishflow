@@ -6,12 +6,15 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
 import com.example.englishflow.database.entity.LearnedWordEntity;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Objects;
 
 public class LearnedWordsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -27,13 +30,68 @@ public class LearnedWordsAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private DictionaryActionListener listener;
 
     public LearnedWordsAdapter(List<Object> items, DictionaryActionListener listener) {
-        this.items = items;
+        this.items = new ArrayList<>(items);
         this.listener = listener;
     }
 
     public void updateData(List<Object> newItems) {
-        this.items = newItems;
-        notifyDataSetChanged();
+        List<Object> oldItems = new ArrayList<>(items);
+        List<Object> updated = newItems != null ? new ArrayList<>(newItems) : new ArrayList<>();
+
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return oldItems.size();
+            }
+
+            @Override
+            public int getNewListSize() {
+                return updated.size();
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                Object oldItem = oldItems.get(oldItemPosition);
+                Object newItem = updated.get(newItemPosition);
+
+                if (oldItem instanceof String && newItem instanceof String) {
+                    return oldItem.equals(newItem);
+                }
+                if (oldItem instanceof LearnedWordEntity && newItem instanceof LearnedWordEntity) {
+                    LearnedWordEntity oldWord = (LearnedWordEntity) oldItem;
+                    LearnedWordEntity newWord = (LearnedWordEntity) newItem;
+                    if (oldWord.id != 0 && newWord.id != 0) {
+                        return oldWord.id == newWord.id;
+                    }
+                    return Objects.equals(oldWord.word, newWord.word)
+                            && oldWord.learnedAt == newWord.learnedAt;
+                }
+                return false;
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                Object oldItem = oldItems.get(oldItemPosition);
+                Object newItem = updated.get(newItemPosition);
+
+                if (oldItem instanceof String && newItem instanceof String) {
+                    return oldItem.equals(newItem);
+                }
+                if (oldItem instanceof LearnedWordEntity && newItem instanceof LearnedWordEntity) {
+                    LearnedWordEntity oldWord = (LearnedWordEntity) oldItem;
+                    LearnedWordEntity newWord = (LearnedWordEntity) newItem;
+                    return Objects.equals(oldWord.word, newWord.word)
+                            && Objects.equals(oldWord.ipa, newWord.ipa)
+                            && Objects.equals(oldWord.meaning, newWord.meaning)
+                            && Objects.equals(oldWord.domain, newWord.domain)
+                            && oldWord.learnedAt == newWord.learnedAt;
+                }
+                return false;
+            }
+        });
+
+        this.items = updated;
+        diffResult.dispatchUpdatesTo(this);
     }
 
     @Override

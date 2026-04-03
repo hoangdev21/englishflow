@@ -31,6 +31,7 @@ import java.util.List;
 
 public class LearnDomainsFragment extends Fragment {
 
+    private AppRepository repository;
     private DomainAdapter adapter;
     private RecyclerView recyclerView;
     private boolean isAscending = true;
@@ -45,17 +46,19 @@ public class LearnDomainsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        repository = AppRepository.getInstance(requireContext());
         recyclerView = view.findViewById(R.id.domainRecycler);
         recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 2));
+        recyclerView.setHasFixedSize(true);
 
-        List<DomainItem> domains = AppRepository.getInstance(requireContext()).getDomains();
-        adapter = new DomainAdapter(domains, domainItem -> {
+        adapter = new DomainAdapter(new java.util.ArrayList<>(), domainItem -> {
             Fragment parent = getParentFragment();
             if (parent instanceof LearnFlowNavigator) {
                 ((LearnFlowNavigator) parent).openTopics(domainItem);
             }
         });
         recyclerView.setAdapter(adapter);
+        loadDomainsAsync();
 
         // Search logic
         EditText searchInput = view.findViewById(R.id.domainSearchInput);
@@ -87,6 +90,13 @@ public class LearnDomainsFragment extends Fragment {
             updateToggleIcon(btnToggleView);
         });
         updateToggleIcon(btnToggleView);
+        // Back Button Logic
+        View btnBack = view.findViewById(R.id.btnBack);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                requireActivity().getOnBackPressedDispatcher().onBackPressed();
+            });
+        }
     }
 
     private void updateToggleIcon(ImageButton btn) {
@@ -137,11 +147,23 @@ public class LearnDomainsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (!isAdded() || adapter == null) {
+        if (!isAdded() || adapter == null || repository == null) {
             return;
         }
-        List<DomainItem> domains = AppRepository.getInstance(requireContext()).getDomains();
-        adapter.submitDomains(domains);
+        loadDomainsAsync();
+    }
+
+    private void loadDomainsAsync() {
+        if (!isAdded() || repository == null || adapter == null) {
+            return;
+        }
+
+        repository.getDomainsAsync(domains -> {
+            if (!isAdded() || adapter == null) {
+                return;
+            }
+            adapter.submitDomains(domains);
+        });
     }
 }
 

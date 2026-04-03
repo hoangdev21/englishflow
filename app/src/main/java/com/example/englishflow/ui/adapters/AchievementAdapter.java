@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
@@ -14,13 +15,53 @@ import com.example.englishflow.data.AchievementItem;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import java.util.List;
+import java.util.ArrayList;
 
 public class AchievementAdapter extends RecyclerView.Adapter<AchievementAdapter.AchievementViewHolder> {
 
     private final List<AchievementItem> achievements;
 
     public AchievementAdapter(List<AchievementItem> achievements) {
-        this.achievements = achievements;
+        this.achievements = new ArrayList<>(achievements);
+    }
+
+    public void updateData(List<AchievementItem> newItems) {
+        List<AchievementItem> oldItems = new ArrayList<>(achievements);
+        List<AchievementItem> nextItems = newItems != null ? new ArrayList<>(newItems) : new ArrayList<>();
+
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return oldItems.size();
+            }
+
+            @Override
+            public int getNewListSize() {
+                return nextItems.size();
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                AchievementItem oldItem = oldItems.get(oldItemPosition);
+                AchievementItem newItem = nextItems.get(newItemPosition);
+                return oldItem.getTitle().equals(newItem.getTitle());
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                AchievementItem oldItem = oldItems.get(oldItemPosition);
+                AchievementItem newItem = nextItems.get(newItemPosition);
+                return oldItem.getDescription().equals(newItem.getDescription())
+                        && oldItem.getIcon().equals(newItem.getIcon())
+                        && oldItem.isUnlocked() == newItem.isUnlocked()
+                        && oldItem.getCurrentValue() == newItem.getCurrentValue()
+                        && oldItem.getTargetValue() == newItem.getTargetValue();
+            }
+        });
+
+        achievements.clear();
+        achievements.addAll(nextItems);
+        diffResult.dispatchUpdatesTo(this);
     }
 
     @NonNull

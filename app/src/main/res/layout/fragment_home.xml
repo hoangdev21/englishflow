@@ -103,16 +103,15 @@
                 android:layout_marginTop="8dp"
                 android:orientation="horizontal">
 
-                <!-- Streak Badge -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
                     android:layout_height="54dp"
                     android:layout_marginEnd="12dp"
                     android:layout_weight="1"
-                    app:cardCornerRadius="18dp"
-                    app:cardElevation="12dp"
-                    app:strokeWidth="3dp"
-                    app:strokeColor="#FFFFFF">
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="6dp"
+                    app:strokeWidth="1.5dp"
+                    app:strokeColor="#EEFFFFFF">
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -141,7 +140,7 @@
                         <!-- Bottom Deep Shadow Inside -->
                         <View
                             android:layout_width="match_parent"
-                            android:layout_height="8dp"
+                            android:layout_height="20dp"
                             android:layout_gravity="bottom"
                             android:background="@drawable/bg_inner_shadow_bottom" />
 
@@ -202,10 +201,10 @@
                     android:layout_width="0dp"
                     android:layout_height="54dp"
                     android:layout_weight="1"
-                    app:cardCornerRadius="18dp"
-                    app:cardElevation="12dp"
-                    app:strokeWidth="3dp"
-                    app:strokeColor="#FFFFFF">
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="6dp"
+                    app:strokeWidth="1.5dp"
+                    app:strokeColor="#EEFFFFFF">
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -234,7 +233,7 @@
                         <!-- Bottom Deep Shadow Inside -->
                         <View
                             android:layout_width="match_parent"
-                            android:layout_height="8dp"
+                            android:layout_height="20dp"
                             android:layout_gravity="bottom"
                             android:background="@drawable/bg_inner_shadow_bottom" />
 
@@ -656,9 +655,6 @@
         android:paddingEnd="18dp"
         android:layout_marginBottom="12dp">
 
-        <!-- ═══════════════════════════════════════════ -->
-        <!-- QUICK ACTION SHORTCUTS (Action Cards)       -->
-        <!-- ═══════════════════════════════════════════ -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -1225,12 +1221,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- STUDY REMINDER                              -->
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- STUDY REMINDER (3D REFINED)                 -->
-            <!-- ═══════════════════════════════════════════ -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -1340,9 +1330,12 @@
                     android:layout_height="wrap_content"
                     android:gravity="bottom"
                     android:orientation="horizontal"
-                    android:padding="16dp">
+                    android:paddingTop="20dp"
+                    android:paddingBottom="20dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
 
-                    <!-- Mon -->
+                    <!-- Monday -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -1350,35 +1343,33 @@
                         android:gravity="center_horizontal"
                         android:orientation="vertical">
 
-                        <ProgressBar
-                            android:id="@+id/chartMon"
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="22dp"
-                            android:layout_height="80dp"
-                            android:indeterminate="false"
-                            android:max="60"
-                            android:progress="0"
-                            android:progressDrawable="@drawable/progress_vertical_v2" />
+                        <ImageView
+                            android:id="@+id/streakMon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_fire_streak"
+                            app:tint="@color/ef_text_tertiary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="8dp"
                             android:text="T2"
                             android:textColor="@color/ef_text_tertiary"
-                            android:textSize="10sp"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/chartMonVal"
+                            android:id="@+id/streakMonVal"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="0'"
                             android:textColor="@color/ef_text_secondary"
-                            android:textSize="9sp" />
+                            android:textSize="10sp" />
                     </LinearLayout>
 
-                    <!-- Tue -->
+                    <!-- Tuesday -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -1386,35 +1377,33 @@
                         android:gravity="center_horizontal"
                         android:orientation="vertical">
 
-                        <ProgressBar
-                            android:id="@+id/chartTue"
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="22dp"
-                            android:layout_height="80dp"
-                            android:indeterminate="false"
-                            android:max="60"
-                            android:progress="0"
-                            android:progressDrawable="@drawable/progress_vertical_v2" />
+                        <ImageView
+                            android:id="@+id/streakTue"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_fire_streak"
+                            app:tint="@color/ef_text_tertiary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="8dp"
                             android:text="T3"
                             android:textColor="@color/ef_text_tertiary"
-                            android:textSize="10sp"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/chartTueVal"
+                            android:id="@+id/streakTueVal"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="0'"
                             android:textColor="@color/ef_text_secondary"
-                            android:textSize="9sp" />
+                            android:textSize="10sp" />
                     </LinearLayout>
 
-                    <!-- Wed -->
+                    <!-- Wednesday -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -1422,35 +1411,33 @@
                         android:gravity="center_horizontal"
                         android:orientation="vertical">
 
-                        <ProgressBar
-                            android:id="@+id/chartWed"
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="22dp"
-                            android:layout_height="80dp"
-                            android:indeterminate="false"
-                            android:max="60"
-                            android:progress="0"
-                            android:progressDrawable="@drawable/progress_vertical_v2" />
+                        <ImageView
+                            android:id="@+id/streakWed"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_fire_streak"
+                            app:tint="@color/ef_text_tertiary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="8dp"
                             android:text="T4"
                             android:textColor="@color/ef_text_tertiary"
-                            android:textSize="10sp"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/chartWedVal"
+                            android:id="@+id/streakWedVal"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="0'"
                             android:textColor="@color/ef_text_secondary"
-                            android:textSize="9sp" />
+                            android:textSize="10sp" />
                     </LinearLayout>
 
-                    <!-- Thu -->
+                    <!-- Thursday -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -1458,35 +1445,33 @@
                         android:gravity="center_horizontal"
                         android:orientation="vertical">
 
-                        <ProgressBar
-                            android:id="@+id/chartThu"
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="22dp"
-                            android:layout_height="80dp"
-                            android:indeterminate="false"
-                            android:max="60"
-                            android:progress="0"
-                            android:progressDrawable="@drawable/progress_vertical_v2" />
+                        <ImageView
+                            android:id="@+id/streakThu"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_fire_streak"
+                            app:tint="@color/ef_text_tertiary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="8dp"
                             android:text="T5"
                             android:textColor="@color/ef_text_tertiary"
-                            android:textSize="10sp"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/chartThuVal"
+                            android:id="@+id/streakThuVal"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="0'"
                             android:textColor="@color/ef_text_secondary"
-                            android:textSize="9sp" />
+                            android:textSize="10sp" />
                     </LinearLayout>
 
-                    <!-- Fri -->
+                    <!-- Friday -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -1494,35 +1479,33 @@
                         android:gravity="center_horizontal"
                         android:orientation="vertical">
 
-                        <ProgressBar
-                            android:id="@+id/chartFri"
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="22dp"
-                            android:layout_height="80dp"
-                            android:indeterminate="false"
-                            android:max="60"
-                            android:progress="0"
-                            android:progressDrawable="@drawable/progress_vertical_v2" />
+                        <ImageView
+                            android:id="@+id/streakFri"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_fire_streak"
+                            app:tint="@color/ef_text_tertiary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="8dp"
                             android:text="T6"
                             android:textColor="@color/ef_text_tertiary"
-                            android:textSize="10sp"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/chartFriVal"
+                            android:id="@+id/streakFriVal"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="0'"
                             android:textColor="@color/ef_text_secondary"
-                            android:textSize="9sp" />
+                            android:textSize="10sp" />
                     </LinearLayout>
 
-                    <!-- Sat -->
+                    <!-- Saturday -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -1530,35 +1513,33 @@
                         android:gravity="center_horizontal"
                         android:orientation="vertical">
 
-                        <ProgressBar
-                            android:id="@+id/chartSat"
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="22dp"
-                            android:layout_height="80dp"
-                            android:indeterminate="false"
-                            android:max="60"
-                            android:progress="0"
-                            android:progressDrawable="@drawable/progress_vertical_v2" />
+                        <ImageView
+                            android:id="@+id/streakSat"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_fire_streak"
+                            app:tint="@color/ef_text_tertiary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="8dp"
                             android:text="T7"
                             android:textColor="@color/ef_text_tertiary"
-                            android:textSize="10sp"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/chartSatVal"
+                            android:id="@+id/streakSatVal"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="0'"
                             android:textColor="@color/ef_text_secondary"
-                            android:textSize="9sp" />
+                            android:textSize="10sp" />
                     </LinearLayout>
 
-                    <!-- Sun -->
+                    <!-- Sunday -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -1566,35 +1547,34 @@
                         android:gravity="center_horizontal"
                         android:orientation="vertical">
 
-                        <ProgressBar
-                            android:id="@+id/chartSun"
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="22dp"
-                            android:layout_height="80dp"
-                            android:indeterminate="false"
-                            android:max="60"
-                            android:progress="0"
-                            android:progressDrawable="@drawable/progress_vertical_v2" />
+                        <ImageView
+                            android:id="@+id/streakSun"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_fire_streak"
+                            app:tint="@color/ef_text_tertiary" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="8dp"
                             android:text="CN"
                             android:textColor="@color/ef_text_tertiary"
-                            android:textSize="10sp"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/chartSunVal"
+                            android:id="@+id/streakSunVal"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="0'"
                             android:textColor="@color/ef_text_secondary"
-                            android:textSize="9sp" />
+                            android:textSize="10sp" />
                     </LinearLayout>
                 </LinearLayout>
-            </LinearLayout>
+
+                </LinearLayout>
 
             <!-- ═══════════════════════════════════════════ -->
             <!-- UNLEARNED + CEFR                            -->

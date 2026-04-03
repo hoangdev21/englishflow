@@ -13,10 +13,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.content.res.ColorStateList;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -604,6 +606,15 @@ public class HomeFragment extends Fragment {
             if (weeklyTotalText != null) weeklyTotalText.setText("0 phút");
             if (unlearnedCountText != null) unlearnedCountText.setText("3000 từ");
             if (cefrLevelText != null) cefrLevelText.setText("A1 - Sơ cấp");
+
+            // Reset Weekly Icons
+            int[] streakIconIds = {R.id.streakMon, R.id.streakTue, R.id.streakWed,
+                    R.id.streakThu, R.id.streakFri, R.id.streakSat, R.id.streakSun};
+            int inactiveColor = ContextCompat.getColor(requireContext(), R.color.ef_text_tertiary);
+            for (int id : streakIconIds) {
+                ImageView icon = view.findViewById(id);
+                if (icon != null) icon.setImageTintList(ColorStateList.valueOf(inactiveColor));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -616,33 +627,32 @@ public class HomeFragment extends Fragment {
     private void refreshData() {
         if (!isAdded() || repository == null) return;
         
-        repository.getUserProgressAsync(progress -> {
+        repository.getDashboardSnapshotAsync(snapshot -> {
             if (!isAdded()) return;
             
             View view = getView();
             if (view == null) return;
+
+            com.example.englishflow.data.UserProgress progress = snapshot.userProgress;
             
             Calendar calendar = Calendar.getInstance();
             int hour = calendar.get(Calendar.HOUR_OF_DAY);
             int minute = calendar.get(Calendar.MINUTE);
             
             String emoji = getTimeEmoji(hour);
-            String greeting = buildGreeting(repository.getUserName());
-            int xpGoal = repository.getXpGoal();
-            
-            // Extract from progress object
-            List<Integer> weeklyMinutes = repository.getWeeklyStudyMinutes();
-            int weeklyTotal = weeklyMinutes != null 
-                    ? weeklyMinutes.stream().mapToInt(Integer::intValue).sum() : 0;
+            String greeting = buildGreeting(snapshot.userName);
+            int xpGoal = snapshot.xpGoal;
+            List<Integer> weeklyMinutes = snapshot.weeklyStudyMinutes;
+            int weeklyTotal = snapshot.totalWeeklyMinutes;
             
             updateUIWithData(view, emoji, greeting,
                     hour, minute, progress.totalWordsLearned, progress.currentStreak, 
                     progress.bestStreak, progress.totalWordsScanned, progress.xpTodayEarned, 
                     xpGoal, weeklyTotal, weeklyMinutes, progress.cefrLevel, 
-                    repository.getUnlearnedWordsCount(),
-                    repository.getLastTopicTitle(),
-                    repository.getLastTopicDomain(),
-                    repository.getLastTopicRemainingCount());
+                snapshot.unlearnedWordsCount,
+                snapshot.lastTopicTitle,
+                snapshot.lastTopicDomain,
+                snapshot.lastTopicRemainingCount);
         });
     }
 
@@ -683,7 +693,19 @@ public class HomeFragment extends Fragment {
 
             // Weekly Total
             TextView weeklyTotalText = view.findViewById(R.id.txtWeeklyTotal);
-            if (weeklyTotalText != null) weeklyTotalText.setText(weeklyTotal + " phút");
+            if (weeklyTotalText != null) {
+                if (weeklyTotal >= 60) {
+                    int hours = weeklyTotal / 60;
+                    int mins = weeklyTotal % 60;
+                    if (mins > 0) {
+                        weeklyTotalText.setText(hours + " giờ " + mins + " phút");
+                    } else {
+                        weeklyTotalText.setText(hours + " giờ");
+                    }
+                } else {
+                    weeklyTotalText.setText(weeklyTotal + " phút");
+                }
+            }
 
             // Weekly Chart — update each day's bar dynamically
             updateWeeklyChart(view, weeklyMinutes);
@@ -731,20 +753,32 @@ public class HomeFragment extends Fragment {
     }
 
     private void updateWeeklyChart(View view, List<Integer> weeklyMinutes) {
-        if (weeklyMinutes == null || weeklyMinutes.size() < 7) return;
+        if (weeklyMinutes == null || weeklyMinutes.size() < 7 || !isAdded()) return;
 
-        int[] chartBarIds = {R.id.chartMon, R.id.chartTue, R.id.chartWed,
-                R.id.chartThu, R.id.chartFri, R.id.chartSat, R.id.chartSun};
-        int[] chartValIds = {R.id.chartMonVal, R.id.chartTueVal, R.id.chartWedVal,
-                R.id.chartThuVal, R.id.chartFriVal, R.id.chartSatVal, R.id.chartSunVal};
+        int[] streakIconIds = {R.id.streakMon, R.id.streakTue, R.id.streakWed,
+                R.id.streakThu, R.id.streakFri, R.id.streakSat, R.id.streakSun};
+        int[] streakValIds = {R.id.streakMonVal, R.id.streakTueVal, R.id.streakWedVal,
+                R.id.streakThuVal, R.id.streakFriVal, R.id.streakSatVal, R.id.streakSunVal};
+
+        int activeColor = ContextCompat.getColor(requireContext(), R.color.ef_stat_streak);
+        int inactiveColor = ContextCompat.getColor(requireContext(), R.color.ef_text_tertiary);
 
         for (int i = 0; i < 7; i++) {
-            ProgressBar bar = view.findViewById(chartBarIds[i]);
-            TextView valText = view.findViewById(chartValIds[i]);
+            ImageView icon = view.findViewById(streakIconIds[i]);
+            TextView valText = view.findViewById(streakValIds[i]);
             int minutes = weeklyMinutes.get(i);
 
-            if (bar != null) bar.setProgress(Math.min(minutes, 60));
-            if (valText != null) valText.setText(minutes + "'");
+            if (icon != null) {
+                icon.setImageTintList(ColorStateList.valueOf(minutes > 0 ? activeColor : inactiveColor));
+            }
+            if (valText != null) {
+                if (minutes >= 60) {
+                    valText.setText((minutes / 60) + "h" + (minutes % 60) + "'");
+                } else {
+                    valText.setText(minutes + "'");
+                }
+                valText.setTextColor(minutes > 0 ? activeColor : inactiveColor);
+            }
         }
     }
 

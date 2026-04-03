@@ -499,40 +499,52 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
-                android:orientation="vertical">
+                android:gravity="center"
+                android:orientation="horizontal">
 
-                <!-- Reset Button -->
+                <!-- Reset Button (3D Red) -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnResetProgress"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    app:backgroundTint="@android:color/transparent"
-                    app:cornerRadius="16dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="@color/ef_error"
-                    android:text="Làm mới tiến độ học"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_weight="1.2"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_button_raised_error"
+                    app:backgroundTint="@null"
+                    android:text="Đặt lại học tập"
                     android:textAllCaps="false"
-                    android:textColor="@color/ef_error"
-                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:textSize="13sp"
                     android:textStyle="bold"
-                    android:elevation="0dp" />
+                    app:icon="@drawable/ic_replace"
+                    app:iconPadding="8dp"
+                    app:iconSize="18dp"
+                    app:iconTint="@color/white"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:stateListAnimator="@null" />
 
-                <!-- Logout Button -->
+                <!-- Logout Button (3D White) -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnLogout"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:layout_marginTop="16dp"
-                    app:backgroundTint="@android:color/transparent"
-                    app:cornerRadius="16dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="@color/ef_outline"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_button_raised_white"
+                    app:backgroundTint="@null"
                     android:text="Đăng xuất"
                     android:textAllCaps="false"
                     android:textColor="@color/ef_text_secondary"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold"
-                    android:elevation="0dp" />
+                    app:icon="@drawable/ic_logout"
+                    app:iconPadding="8dp"
+                    app:iconSize="18dp"
+                    app:iconTint="@color/ef_text_secondary"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:stateListAnimator="@null" />
             </LinearLayout>
 
         </LinearLayout>

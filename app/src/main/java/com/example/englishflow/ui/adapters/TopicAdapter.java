@@ -6,12 +6,15 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.TopicItem;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Objects;
 
 public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHolder> {
 
@@ -72,8 +75,7 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
     public void submitTopics(List<TopicItem> topics) {
         originalTopics.clear();
         originalTopics.addAll(topics);
-        filteredTopics = new java.util.ArrayList<>(topics);
-        notifyDataSetChanged();
+        updateFilteredTopics(new ArrayList<>(topics));
     }
 
     public void filter(String query) {
@@ -87,7 +89,7 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
     }
 
     private void applyFilters() {
-        filteredTopics.clear();
+        List<TopicItem> next = new ArrayList<>();
         String q = currentQuery.toLowerCase().trim();
         
         for (TopicItem item : originalTopics) {
@@ -95,10 +97,43 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
             boolean matchesStatus = "Tất cả".equals(currentStatus) || item.getStatus().equals(currentStatus);
             
             if (matchesQuery && matchesStatus) {
-                filteredTopics.add(item);
+                next.add(item);
             }
         }
-        notifyDataSetChanged();
+        updateFilteredTopics(next);
+    }
+
+    private void updateFilteredTopics(List<TopicItem> next) {
+        List<TopicItem> old = new ArrayList<>(filteredTopics);
+        List<TopicItem> updated = next != null ? next : new ArrayList<>();
+
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return old.size();
+            }
+
+            @Override
+            public int getNewListSize() {
+                return updated.size();
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                return Objects.equals(old.get(oldItemPosition).getTitle(), updated.get(newItemPosition).getTitle());
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                TopicItem oldItem = old.get(oldItemPosition);
+                TopicItem newItem = updated.get(newItemPosition);
+                return Objects.equals(oldItem.getTitle(), newItem.getTitle())
+                        && Objects.equals(oldItem.getStatus(), newItem.getStatus());
+            }
+        });
+
+        filteredTopics = new ArrayList<>(updated);
+        diffResult.dispatchUpdatesTo(this);
     }
 
     static class TopicViewHolder extends RecyclerView.ViewHolder {

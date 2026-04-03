@@ -1,6 +1,8 @@
 package com.example.englishflow.ui.adapters;
 
 import android.content.Context;
+import android.text.Html;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,10 +20,14 @@ import com.example.englishflow.database.entity.CustomVocabularyEntity;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private final List<ChatItem> messages;
+    private static final ExecutorService IO_EXECUTOR = Executors.newSingleThreadExecutor();
+    private final LruCache<String, CharSequence> formattedMessageCache = new LruCache<>(200);
 
     public ChatAdapter(List<ChatItem> messages) {
         this.messages = messages;
@@ -94,17 +100,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
             // ── Render message with basic Markdown + HTML ──────────────────
             String rawMessage = item.getMessage() != null ? item.getMessage() : "";
-            String htmlMessage = rawMessage
-                    .replaceAll("\\*\\*(.*?)\\*\\*", "<b>$1</b>")
-                    .replaceAll("\\*(.*?)\\*", "<i>$1</i>")
-                    .replaceAll("\\[color:(.*?)\\](.*?)\\[/color\\]", "<font color='$1'>$2</font>")
-                    .replace("\n", "<br>");
-
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                h.message.setText(android.text.Html.fromHtml(htmlMessage, android.text.Html.FROM_HTML_MODE_COMPACT));
-            } else {
-                h.message.setText(android.text.Html.fromHtml(htmlMessage));
-            }
+            h.message.setText(getFormattedMessage(rawMessage));
 
             // ── Correction block ───────────────────────────────────────────
             if (item.getCorrection() != null && !item.getCorrection().isEmpty()) {
@@ -165,6 +161,29 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
+    private CharSequence getFormattedMessage(String rawMessage) {
+        CharSequence cached = formattedMessageCache.get(rawMessage);
+        if (cached != null) {
+            return cached;
+        }
+
+        String htmlMessage = rawMessage
+                .replaceAll("\\*\\*(.*?)\\*\\*", "<b>$1</b>")
+                .replaceAll("\\*(.*?)\\*", "<i>$1</i>")
+                .replaceAll("\\[color:(.*?)\\](.*?)\\[/color\\]", "<font color='$1'>$2</font>")
+                .replace("\n", "<br>");
+
+        CharSequence formatted;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            formatted = Html.fromHtml(htmlMessage, Html.FROM_HTML_MODE_COMPACT);
+        } else {
+            formatted = Html.fromHtml(htmlMessage);
+        }
+
+        formattedMessageCache.put(rawMessage, formatted);
+        return formatted;
+    }
+
     // ── TTS Speaker ───────────────────────────────────────────────────────────
     private void speakWord(String word, Context context) {
         if (word == null || word.isEmpty()) return;
@@ -190,7 +209,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         String word = item.getVocabWord();
         if (word == null || word.isEmpty()) return;
 
-        new Thread(() -> {
+        IO_EXECUTOR.execute(() -> {
             EnglishFlowDatabase db = EnglishFlowDatabase.getInstance(context.getApplicationContext());
 
             // Check if already saved
@@ -224,7 +243,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                         "Đã lưu \"" + word + "\" vào từ điển!",
                         Toast.LENGTH_SHORT).show();
             });
-        }).start();
+            });
     }
 
     @Override

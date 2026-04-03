@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
@@ -18,8 +19,8 @@ import com.example.englishflow.data.DomainItem;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class DomainAdapter extends RecyclerView.Adapter<DomainAdapter.DomainViewHolder> {
@@ -54,34 +55,72 @@ public class DomainAdapter extends RecyclerView.Adapter<DomainAdapter.DomainView
     public void submitDomains(List<DomainItem> domains) {
         originalDomains.clear();
         originalDomains.addAll(domains);
-        filteredDomains = new ArrayList<>(domains);
-        notifyDataSetChanged();
+        updateFilteredDomains(new ArrayList<>(domains));
     }
 
     public void filter(String query) {
+        List<DomainItem> next;
         if (query.isEmpty()) {
-            filteredDomains = new ArrayList<>(originalDomains);
+            next = new ArrayList<>(originalDomains);
         } else {
             String lowercaseQuery = query.toLowerCase().trim();
-            filteredDomains = originalDomains.stream()
+            next = originalDomains.stream()
                     .filter(item -> item.getName().toLowerCase().contains(lowercaseQuery))
                     .collect(Collectors.toList());
         }
-        notifyDataSetChanged();
+        updateFilteredDomains(next);
     }
 
     public void sort(boolean ascending) {
-        filteredDomains.sort((a, b) -> ascending ? 
+        List<DomainItem> next = new ArrayList<>(filteredDomains);
+        next.sort((a, b) -> ascending ?
             a.getName().compareToIgnoreCase(b.getName()) : 
             b.getName().compareToIgnoreCase(a.getName()));
-        notifyDataSetChanged();
+        updateFilteredDomains(next);
     }
     
     public void sortByProgress(boolean ascending) {
-        filteredDomains.sort((a, b) -> ascending ? 
+        List<DomainItem> next = new ArrayList<>(filteredDomains);
+        next.sort((a, b) -> ascending ?
             Integer.compare(a.getProgress(), b.getProgress()) : 
             Integer.compare(b.getProgress(), a.getProgress()));
-        notifyDataSetChanged();
+        updateFilteredDomains(next);
+    }
+
+    private void updateFilteredDomains(List<DomainItem> next) {
+        List<DomainItem> old = new ArrayList<>(filteredDomains);
+        List<DomainItem> updated = next != null ? next : new ArrayList<>();
+
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return old.size();
+            }
+
+            @Override
+            public int getNewListSize() {
+                return updated.size();
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                return old.get(oldItemPosition).getName().equals(updated.get(newItemPosition).getName());
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                DomainItem oldItem = old.get(oldItemPosition);
+                DomainItem newItem = updated.get(newItemPosition);
+                return oldItem.getProgress() == newItem.getProgress()
+                    && Objects.equals(oldItem.getEmoji(), newItem.getEmoji())
+                    && Objects.equals(oldItem.getGradientStart(), newItem.getGradientStart())
+                    && Objects.equals(oldItem.getGradientEnd(), newItem.getGradientEnd())
+                        && oldItem.getBackgroundImageRes() == newItem.getBackgroundImageRes();
+            }
+        });
+
+        filteredDomains = new ArrayList<>(updated);
+        diffResult.dispatchUpdatesTo(this);
     }
 
     @Override
