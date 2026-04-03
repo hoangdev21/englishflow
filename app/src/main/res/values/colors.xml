@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="ef_primary">#1A7A5E</color>
+    <color name="ef_on_primary">#FFFFFF</color>
+    <color name="ef_primary_container">#D8EFE6</color>
+    <color name="ef_on_primary_container">#0E3C2E</color>
+
+    <color name="ef_secondary">#4D6F63</color>
+    <color name="ef_secondary_container">#CFE8DF</color>
+    <color name="ef_on_secondary_container">#0C2B24</color>
+    <color name="ef_tertiary">#6D6F57</color>
+    <color name="ef_tertiary_container">#F2F5E1</color>
+    <color name="ef_on_tertiary_container">#22231B</color>
+
+    <color name="ef_background">#F4F7F5</color>
+    <color name="ef_surface">#FFFFFF</color>
+    <color name="ef_surface_variant">#EAF1ED</color>
+    <color name="ef_outline">#D0DDD7</color>
+    <color name="ef_warning_bg">#FFF3CD</color>
+    <color name="ef_warning_text">#7A5A00</color>
+
+    <color name="nav_item_checked">#1A7A5E</color>
+    <color name="nav_item_unchecked">#6D837A</color>
+
+    <color name="ef_success">#2E8F6C</color>
+    <color name="ef_info">#4A8DFF</color>
+    <color name="ef_text_primary">#173228</color>
+    <color name="ef_text_secondary">#5D746B</color>
+</resources>
