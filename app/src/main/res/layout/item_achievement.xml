@@ -34,6 +34,19 @@
                 android:paddingBottom="4dp"
                 android:text="⭐"
                 android:textSize="26sp" />
+
+            <ImageView
+                android:id="@+id/achievementLock"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="bottom|end"
+                android:layout_marginEnd="2dp"
+                android:layout_marginBottom="2dp"
+                android:background="@drawable/bg_achievement_lock_chip"
+                android:padding="4dp"
+                android:src="@drawable/ic_lock_closed"
+                android:tint="@color/ef_text_secondary"
+                android:visibility="gone" />
         </FrameLayout>
 
         <LinearLayout
@@ -65,28 +78,35 @@
                 android:textColor="@color/ef_text_secondary"
                 android:textSize="12sp"
                 android:lineSpacingExtra="1dp" />
-        </LinearLayout>
 
-        <!-- Status Chip (3D Glassmorphism / Silver) -->
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp">
-
-            <TextView
-                android:id="@+id/achievementState"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_3d_badge_silver"
-                android:paddingStart="14dp"
-                android:paddingTop="6dp"
-                android:paddingEnd="14dp"
-                android:paddingBottom="8dp"
-                android:textColor="@color/ef_primary_dark"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.04" />
-        </FrameLayout>
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/achievementProgress"
+                    android:layout_width="0dp"
+                    android:layout_height="8dp"
+                    android:layout_weight="1"
+                    app:indicatorColor="@color/ef_primary"
+                    app:trackColor="@color/ef_outline_light"
+                    app:trackCornerRadius="4dp"
+                    app:trackThickness="8dp" />
+
+                <TextView
+                    android:id="@+id/achievementProgressText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="0/100"
+                    android:textColor="@color/ef_text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
 
     </LinearLayout>
 
