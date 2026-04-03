@@ -6,6 +6,7 @@ import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
+import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.ChatItem;
 import com.example.englishflow.database.EnglishFlowDatabase;
 import com.example.englishflow.database.entity.CustomVocabularyEntity;
@@ -28,6 +30,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final List<ChatItem> messages;
     private static final ExecutorService IO_EXECUTOR = Executors.newSingleThreadExecutor();
     private final LruCache<String, CharSequence> formattedMessageCache = new LruCache<>(200);
+    private AppSettingsStore settingsStore;
 
     public ChatAdapter(List<ChatItem> messages) {
         this.messages = messages;
@@ -93,7 +96,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         ChatItem item = messages.get(position);
 
         if (holder instanceof UserViewHolder) {
-            ((UserViewHolder) holder).message.setText(item.getMessage());
+            UserViewHolder userHolder = (UserViewHolder) holder;
+            userHolder.message.setText(item.getMessage());
+
+            // SYNC AVATAR FROM PROFILE
+            if (settingsStore == null) {
+                settingsStore = new AppSettingsStore(holder.itemView.getContext());
+            }
+            userHolder.avatar.setImageResource(settingsStore.getAvatarResId());
 
         } else if (holder instanceof AiViewHolder) {
             AiViewHolder h = (AiViewHolder) holder;
@@ -255,10 +265,12 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     static class UserViewHolder extends RecyclerView.ViewHolder {
         final TextView message;
+        final ImageView avatar;
 
         UserViewHolder(@NonNull View itemView) {
             super(itemView);
             message = itemView.findViewById(R.id.chatUserMessage);
+            avatar = itemView.findViewById(R.id.chatUserAvatar);
         }
     }
 
