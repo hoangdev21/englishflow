@@ -18,6 +18,7 @@ coroutines = "1.7.3"
 googleServices = "4.4.4"
 firebaseBom = "34.3.0"
 dotlottie = "0.12.7"
+playServicesAuth = "21.4.0"
 
 
 [libraries]
@@ -44,6 +45,7 @@ firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
 firebase-common = { group = "com.google.firebase", name = "firebase-common" }
 dotlottie-android = { group = "com.github.LottieFiles", name = "dotlottie-android", version.ref = "dotlottie" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
 
 [plugins]

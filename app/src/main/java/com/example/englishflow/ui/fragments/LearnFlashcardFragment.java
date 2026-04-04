@@ -301,7 +301,7 @@ public class LearnFlashcardFragment extends Fragment {
 
     private void finishSession() {
         AppRepository repo = AppRepository.getInstance(requireContext());
-        int sessionXp = earnedXp > 0 ? earnedXp : 20;
+        int sessionXp = Math.max(0, earnedXp);
 
         for (FlashcardItem card : flashcards) {
             String normalizedWord = card.getWord() != null ? card.getWord().trim().toLowerCase(Locale.US) : "";
@@ -333,11 +333,14 @@ public class LearnFlashcardFragment extends Fragment {
         boolean isTopicCompleted = repo.getFlashcardsForTopic(currentTopic).isEmpty();
         repo.updateTopicStatus(currentTopic, isTopicCompleted ? TopicItem.STATUS_COMPLETED : TopicItem.STATUS_LEARNING);
 
-        boolean isSessionProductive = learnedWordsInSession.size() > 0 || earnedXp > 0;
-        
         Fragment parent = getParentFragment();
-        if (parent instanceof LearnFlowNavigator && isSessionProductive) {
-            ((LearnFlowNavigator) parent).openCelebration(earnedXp > 0 ? earnedXp : 20);
+        if (parent instanceof LearnFlowNavigator) {
+            ((LearnFlowNavigator) parent).openCelebration(
+                    sessionXp,
+                    currentTopic,
+                    currentDomain,
+                    learnedWordsInSession.size()
+            );
         } else {
             Toast.makeText(requireContext(), "Đã lưu hoàn tất bài học.", Toast.LENGTH_SHORT).show();
             getParentFragmentManager().popBackStack();

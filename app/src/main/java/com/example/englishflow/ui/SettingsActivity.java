@@ -1,9 +1,12 @@
 package com.example.englishflow.ui;
 
+import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Patterns;
@@ -11,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -32,26 +36,31 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.AppSettingsStore;
-import com.example.englishflow.data.LocalAuthStore;
-import com.example.englishflow.database.entity.LocalUserEntity;
+import com.example.englishflow.data.FirebaseUserStore;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import androidx.core.content.ContextCompat;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
 public class SettingsActivity extends AppCompatActivity {
 
     private static final String TERMS_URL = "https://example.com/terms";
     private static final String PRIVACY_URL = "https://example.com/privacy";
+    private static final int REQUEST_SETTINGS_NOTIFICATION_PERMISSION = 9201;
 
-    private LocalAuthStore localAuthStore;
+    private FirebaseUserStore firebaseUserStore;
     private AppRepository repository;
     private AppSettingsStore settingsStore;
 
     private ImageView avatarPreview;
     private EditText inputDisplayName;
     private EditText inputProfileEmail;
+    private SwitchMaterial switchAdminNotifications;
 
     private String selectedAvatarKey = AppSettingsStore.AVATAR_DEFAULT;
 
@@ -61,7 +70,7 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        localAuthStore = new LocalAuthStore(this);
+        firebaseUserStore = new FirebaseUserStore();
         repository = AppRepository.getInstance(this);
         settingsStore = new AppSettingsStore(this);
 
@@ -75,6 +84,7 @@ public class SettingsActivity extends AppCompatActivity {
         avatarPreview = findViewById(R.id.settingsAvatarPreview);
         inputDisplayName = findViewById(R.id.inputDisplayName);
         inputProfileEmail = findViewById(R.id.inputProfileEmail);
+        switchAdminNotifications = findViewById(R.id.switchAdminNotifications);
     }
 
     private void setupInsets() {
@@ -102,9 +112,13 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void bindCurrentSettings() {
-        LocalUserEntity currentUser = localAuthStore.getCurrentUser();
-        String fallbackName = currentUser != null ? currentUser.displayName : repository.getUserName();
-        String fallbackEmail = currentUser != null ? currentUser.email : "";
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        String fallbackName = currentUser != null && !TextUtils.isEmpty(currentUser.getDisplayName())
+            ? currentUser.getDisplayName()
+            : repository.getUserName();
+        String fallbackEmail = currentUser != null && currentUser.getEmail() != null
+            ? currentUser.getEmail()
+            : "";
 
         if (inputDisplayName != null) {
             inputDisplayName.setText(fallbackName);
@@ -140,6 +154,10 @@ public class SettingsActivity extends AppCompatActivity {
         if (btnSlow != null && btnNormal != null) {
             btnSlow.setChecked(AppSettingsStore.VOICE_MODE_SLOW.equals(voiceSpeed));
             btnNormal.setChecked(AppSettingsStore.VOICE_MODE_NORMAL.equals(voiceSpeed));
+        }
+
+        if (switchAdminNotifications != null) {
+            switchAdminNotifications.setChecked(settingsStore.isAdminNotificationsEnabled());
         }
     }
 
@@ -202,6 +220,15 @@ public class SettingsActivity extends AppCompatActivity {
         if (btnVoiceSlow != null) btnVoiceSlow.setOnClickListener(voiceListener);
         if (btnVoiceNormal != null) btnVoiceNormal.setOnClickListener(voiceListener);
 
+        if (switchAdminNotifications != null) {
+            switchAdminNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                settingsStore.setAdminNotificationsEnabled(isChecked);
+                if (isChecked) {
+                    ensureNotificationPermissionForSettings();
+                }
+            });
+        }
+
         View feedbackButton = findViewById(R.id.btnFeedback);
         View rateButton = findViewById(R.id.btnRateApp);
         View termsButton = findViewById(R.id.btnTerms);
@@ -217,27 +244,24 @@ public class SettingsActivity extends AppCompatActivity {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         View v = getLayoutInflater().inflate(R.layout.dialog_avatar_picker, null);
         RecyclerView rv = v.findViewById(R.id.rvAvatarGrid);
+        TextView xpBalanceText = v.findViewById(R.id.tvAvatarXpBalance);
 
         if (rv == null) {
             Toast.makeText(this, "Không thể mở danh sách ảnh đại diện", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Dùng 3 cột để ảnh hiển thị to rõ hơn
+        if (xpBalanceText != null) {
+            xpBalanceText.setText(getString(R.string.avatar_picker_balance_loading));
+        }
+
         rv.setLayoutManager(new GridLayoutManager(this, 3));
         rv.setHasFixedSize(true);
 
-        String[] keys = new String[]{
-                AppSettingsStore.AVATAR_DEFAULT, AppSettingsStore.AVATAR_DOLPHIN, AppSettingsStore.AVATAR_GRADUATE,
-                AppSettingsStore.AVATAR_CA, AppSettingsStore.AVATAR_CAHEOBA, AppSettingsStore.AVATAR_CAHOACHA,
-                AppSettingsStore.AVATAR_CAHEOCON, AppSettingsStore.AVATAR_CAHEOCONN, AppSettingsStore.AVATAR_CAHEOONG,
-                AppSettingsStore.AVATAR_CAHEOSOSINH, AppSettingsStore.AVATAR_CHO, AppSettingsStore.AVATAR_GA,
-                AppSettingsStore.AVATAR_HO, AppSettingsStore.AVATAR_HUOU, AppSettingsStore.AVATAR_KHI,
-                AppSettingsStore.AVATAR_KYSI, AppSettingsStore.AVATAR_NATA, AppSettingsStore.AVATAR_NGOKHONG,
-                AppSettingsStore.AVATAR_RAN, AppSettingsStore.AVATAR_RONG
-        };
+        String[] keys = AppSettingsStore.getAvatarCatalogKeys();
+        final int[] currentXp = {0};
 
-        rv.setAdapter(new RecyclerView.Adapter<AvatarViewHolder>() {
+        RecyclerView.Adapter<AvatarViewHolder> adapter = new RecyclerView.Adapter<AvatarViewHolder>() {
             @NonNull
             @Override
             public AvatarViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -248,32 +272,101 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onBindViewHolder(@NonNull AvatarViewHolder holder, int position) {
                 String key = keys[position];
-                
-                // Dùng Glide để load ảnh siêu nhỏ (Thumbnail) giúp máy ảo không bị treo
+                int price = AppSettingsStore.avatarPriceFromKey(key);
+                boolean unlocked = settingsStore.isAvatarUnlocked(key);
+                boolean selected = key.equals(selectedAvatarKey);
+
                 Glide.with(holder.itemView.getContext())
                      .load(AppSettingsStore.avatarResFromKey(key))
-                     .override(150, 150) 
+                     .override(180, 180)
                      .centerCrop()
                      .diskCacheStrategy(DiskCacheStrategy.ALL)
                      .into(holder.img);
 
-                if (key.equals(selectedAvatarKey)) {
+                if (selected) {
                     holder.img.setStrokeWidth(6f);
                     holder.img.setStrokeColor(ColorStateList.valueOf(getColor(R.color.ef_primary)));
+                    holder.priceBadge.setBackgroundResource(R.drawable.bg_avatar_price_chip_selected);
+                    holder.priceBadge.setText(getString(R.string.avatar_price_in_use));
+                } else if (unlocked) {
+                    holder.img.setStrokeWidth(2f);
+                    holder.img.setStrokeColor(ColorStateList.valueOf(getColor(R.color.ef_outline)));
+                    holder.priceBadge.setBackgroundResource(R.drawable.bg_avatar_price_chip_unlocked);
+                    if (price <= 0) {
+                        holder.priceBadge.setText(getString(R.string.avatar_price_free));
+                    } else {
+                        holder.priceBadge.setText(getString(R.string.avatar_price_unlocked));
+                    }
                 } else {
-                    holder.img.setStrokeWidth(0f);
+                    holder.img.setStrokeWidth(1.5f);
+                    holder.img.setStrokeColor(ColorStateList.valueOf(getColor(R.color.ef_outline)));
+                    holder.priceBadge.setBackgroundResource(R.drawable.bg_avatar_price_chip_locked);
+                    holder.priceBadge.setText(getString(R.string.avatar_price_xp_format, price));
                 }
+                holder.lockIcon.setVisibility(unlocked ? View.GONE : View.VISIBLE);
 
                 holder.itemView.setOnClickListener(view -> {
-                    selectedAvatarKey = key;
-                    settingsStore.setAvatarKey(key);
-                    if (avatarPreview != null) {
+                    if (unlocked) {
+                        applyAvatarSelection(key);
+                        dialog.dismiss();
+                        Toast.makeText(SettingsActivity.this, getString(R.string.avatar_select_success), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (currentXp[0] < price) {
+                        Toast.makeText(
+                                SettingsActivity.this,
+                                getString(R.string.avatar_buy_insufficient_xp, price, currentXp[0]),
+                                Toast.LENGTH_SHORT
+                        ).show();
+                        return;
+                    }
+
+                    View dialogView = getLayoutInflater().inflate(R.layout.dialog_confirm_unlock_avatar, null);
+                    AlertDialog unlockDialog = new MaterialAlertDialogBuilder(SettingsActivity.this, R.style.TransparentDialogTheme)
+                            .setView(dialogView)
+                            .setCancelable(true)
+                            .create();
+
+                    ImageView previewImg = dialogView.findViewById(R.id.dialogAvatarPreview);
+                    TextView titleTxt = dialogView.findViewById(R.id.dialogTitle);
+                    TextView msgTxt = dialogView.findViewById(R.id.dialogMessage);
+                    MaterialButton btnCancel = dialogView.findViewById(R.id.btnDialogCancel);
+                    MaterialButton btnConfirm = dialogView.findViewById(R.id.btnDialogConfirm);
+
+                    if (previewImg != null) {
                         Glide.with(SettingsActivity.this)
                              .load(AppSettingsStore.avatarResFromKey(key))
-                             .into(avatarPreview);
+                             .into(previewImg);
                     }
-                    dialog.dismiss();
-                    Toast.makeText(SettingsActivity.this, "Đã đổi ảnh đại diện", Toast.LENGTH_SHORT).show();
+                    if (msgTxt != null) {
+                        msgTxt.setText(getString(R.string.avatar_buy_dialog_message, price, currentXp[0]));
+                    }
+
+                    btnCancel.setOnClickListener(v3 -> unlockDialog.dismiss());
+                    btnConfirm.setOnClickListener(v3 -> {
+                        unlockDialog.dismiss();
+                        repository.spendXpAsync(price, spendResult -> {
+                            if (!spendResult.success) {
+                                String fallback = getString(R.string.avatar_buy_failed_generic);
+                                String message = spendResult.message == null || spendResult.message.trim().isEmpty()
+                                        ? fallback
+                                        : spendResult.message;
+                                Toast.makeText(SettingsActivity.this, message, Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            currentXp[0] = spendResult.remainingXp;
+                            settingsStore.unlockAvatar(key);
+                            updateAvatarXpBalanceText(xpBalanceText, currentXp[0]);
+                            applyAvatarSelection(key);
+                            notifyDataSetChanged();
+                            dialog.dismiss();
+                            Toast.makeText(SettingsActivity.this, getString(R.string.avatar_buy_success), Toast.LENGTH_SHORT).show();
+                        });
+                    });
+
+                    unlockDialog.show();
                 });
             }
 
@@ -281,18 +374,46 @@ public class SettingsActivity extends AppCompatActivity {
             public int getItemCount() {
                 return keys.length;
             }
+        };
+
+        rv.setAdapter(adapter);
+
+        repository.getDashboardSnapshotAsync(snapshot -> {
+            currentXp[0] = Math.max(0, snapshot.userProgress.totalXpEarned);
+            updateAvatarXpBalanceText(xpBalanceText, currentXp[0]);
+            adapter.notifyDataSetChanged();
         });
 
         dialog.setContentView(v);
         dialog.show();
     }
 
+    private void updateAvatarXpBalanceText(TextView xpBalanceText, int xp) {
+        if (xpBalanceText != null) {
+            xpBalanceText.setText(getString(R.string.avatar_picker_balance_format, Math.max(0, xp)));
+        }
+    }
+
+    private void applyAvatarSelection(@NonNull String avatarKey) {
+        selectedAvatarKey = avatarKey;
+        settingsStore.setAvatarKey(avatarKey);
+        if (avatarPreview != null) {
+            Glide.with(this)
+                    .load(AppSettingsStore.avatarResFromKey(avatarKey))
+                    .into(avatarPreview);
+        }
+    }
+
     static class AvatarViewHolder extends RecyclerView.ViewHolder {
         ShapeableImageView img;
+        ImageView lockIcon;
+        TextView priceBadge;
 
         AvatarViewHolder(View v) {
             super(v);
             img = v.findViewById(R.id.imgAvatarItem);
+            lockIcon = v.findViewById(R.id.imgAvatarLock);
+            priceBadge = v.findViewById(R.id.tvAvatarPrice);
         }
     }
 
@@ -313,7 +434,14 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         repository.setUserName(name);
-        localAuthStore.updateCurrentDisplayName(name);
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            UserProfileChangeRequest request = new UserProfileChangeRequest.Builder()
+                    .setDisplayName(name)
+                    .build();
+            currentUser.updateProfile(request);
+            firebaseUserStore.updateDisplayName(currentUser.getUid(), name);
+        }
         settingsStore.setProfileEmail(email);
         settingsStore.setAvatarKey(selectedAvatarKey);
 
@@ -348,6 +476,34 @@ public class SettingsActivity extends AppCompatActivity {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
         } catch (Exception e) {
             Toast.makeText(this, "Không thể mở liên kết", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void ensureNotificationPermissionForSettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_SETTINGS_NOTIFICATION_PERMISSION);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_SETTINGS_NOTIFICATION_PERMISSION) {
+            boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            if (!granted) {
+                settingsStore.setAdminNotificationsEnabled(false);
+                if (switchAdminNotifications != null) {
+                    switchAdminNotifications.setChecked(false);
+                }
+                Toast.makeText(this, "Bạn cần cấp quyền để nhận thông báo mới", Toast.LENGTH_LONG).show();
+            }
         }
     }
 }

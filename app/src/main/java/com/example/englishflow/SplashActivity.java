@@ -12,25 +12,35 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.englishflow.data.LocalAuthStore;
+import com.example.englishflow.admin.AdminDashboardActivity;
+import com.example.englishflow.data.AppRepository;
+import com.example.englishflow.data.FirebaseUserStore;
 import com.example.englishflow.reminder.StudyReminderScheduler;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class SplashActivity extends AppCompatActivity {
 
     private static final String PREFS = "englishflow_prefs";
     private static final String KEY_FIRST_LAUNCH = "first_launch";
-    private LocalAuthStore localAuthStore;
+    private FirebaseAuth firebaseAuth;
+    private FirebaseUserStore firebaseUserStore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
-        localAuthStore = new LocalAuthStore(getApplicationContext());
+        firebaseAuth = FirebaseAuth.getInstance();
+        firebaseUserStore = new FirebaseUserStore();
+        if (BuildConfig.DEBUG) {
+            com.example.englishflow.data.FirebaseSeeder.createDefaultAdminAccount();
+        }
         StudyReminderScheduler.rescheduleFromPreferences(getApplicationContext());
 
         try {
@@ -86,7 +96,7 @@ public class SplashActivity extends AppCompatActivity {
                     .translationY(0f)
                     .scaleX(1.0f)
                     .scaleY(1.0f)
-                    .setDuration(1500)
+                    .setDuration(950)
                     .setInterpolator(new AccelerateDecelerateInterpolator())
                     .setListener(new AnimatorListenerAdapter() {
                         @Override
@@ -112,21 +122,20 @@ public class SplashActivity extends AppCompatActivity {
             titleView.animate()
                     .alpha(1f)
                     .translationY(0f)
-                    .setStartDelay(600)
-                    .setDuration(1000)
+                    .setStartDelay(280)
+                    .setDuration(600)
                     .setInterpolator(new DecelerateInterpolator())
                     .start();
 
             subtitleView.animate()
                     .alpha(0.8f)
                     .translationY(0f)
-                    .setStartDelay(1000)
-                    .setDuration(1000)
+                    .setStartDelay(520)
+                    .setDuration(550)
                     .setListener(new AnimatorListenerAdapter() {
                         @Override
                         public void onAnimationEnd(Animator animation) {
-                            // Longer wait for the user to enjoy the ocean atmosphere
-                            subtitleView.postDelayed(() -> navigateToNextScreen(), 1500);
+                            subtitleView.postDelayed(() -> navigateToNextScreen(), 350);
                         }
                     })
                     .start();
@@ -161,18 +170,50 @@ public class SplashActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         boolean isFirstLaunch = prefs.getBoolean(KEY_FIRST_LAUNCH, true);
 
-        Intent intent;
         if (isFirstLaunch) {
-            intent = new Intent(this, OnboardingActivity.class);
             prefs.edit().putBoolean(KEY_FIRST_LAUNCH, false).apply();
-        } else if (localAuthStore.hasActiveSession()) {
-            intent = new Intent(this, MainActivity.class);
-        } else {
-            intent = new Intent(this, LoginActivity.class);
+            Intent intent = new Intent(this, OnboardingActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            finish();
+            return;
         }
 
-        startActivity(intent);
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-        finish();
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        if (currentUser == null) {
+            startActivity(new Intent(this, LoginActivity.class));
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            finish();
+            return;
+        }
+
+        String photoUrl = currentUser.getPhotoUrl() != null ? currentUser.getPhotoUrl().toString() : "";
+        firebaseUserStore.getOrCreateProfile(currentUser, currentUser.getDisplayName(), photoUrl, profile -> {
+            if (isFinishing() || isDestroyed()) {
+                return;
+            }
+
+            Intent nextIntent;
+            if (profile == null) {
+                firebaseAuth.signOut();
+                nextIntent = new Intent(this, LoginActivity.class);
+            } else if (profile.isLocked()) {
+                firebaseAuth.signOut();
+                Toast.makeText(this, R.string.auth_account_locked, Toast.LENGTH_LONG).show();
+                nextIntent = new Intent(this, LoginActivity.class);
+            } else {
+                boolean forceAdmin = com.example.englishflow.data.FirebaseSeeder.isAdminEmail(profile.email);
+                com.example.englishflow.data.FirebaseSeeder.seedAdminIfNeeded(profile.uid, profile.email);
+                AppRepository.getInstance(getApplicationContext()).setUserName(profile.displayName);
+                
+                nextIntent = (profile.isAdmin() || forceAdmin)
+                        ? new Intent(this, AdminDashboardActivity.class)
+                        : new Intent(this, MainActivity.class);
+            }
+
+            startActivity(nextIntent);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            finish();
+        });
     }
 }

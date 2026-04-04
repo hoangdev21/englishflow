@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/admin_menu_dashboard"
+        android:icon="@drawable/ic_nav_home"
+        android:title="Dashboard" />
+    <item
+        android:id="@+id/admin_menu_users"
+        android:icon="@drawable/ic_nav_profile"
+        android:title="Người dùng" />
+    <item
+        android:id="@+id/admin_menu_content"
+        android:icon="@drawable/ic_nav_learn"
+        android:title="Nội dung" />
+    <item
+        android:id="@+id/admin_menu_settings"
+        android:icon="@drawable/ic_settings"
+        android:title="Cài đặt" />
+</menu>

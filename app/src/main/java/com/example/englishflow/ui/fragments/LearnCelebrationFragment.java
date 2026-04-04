@@ -7,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.OvershootInterpolator;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -15,8 +14,11 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.englishflow.R;
+import com.example.englishflow.data.DomainItem;
+import com.example.englishflow.data.TopicItem;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import nl.dionsegijn.konfetti.core.Party;
@@ -29,12 +31,21 @@ import nl.dionsegijn.konfetti.xml.KonfettiView;
 public class LearnCelebrationFragment extends Fragment {
 
     private static final String ARG_XP = "arg_xp";
+    private static final String ARG_TOPIC = "arg_topic";
+    private static final String ARG_DOMAIN = "arg_domain";
+    private static final String ARG_LEARNED_WORDS = "arg_learned_words";
     private KonfettiView konfettiView;
 
-    public static LearnCelebrationFragment newInstance(int earnedXp) {
+    public static LearnCelebrationFragment newInstance(int earnedXp,
+                                                       String completedTopic,
+                                                       String completedDomain,
+                                                       int learnedWords) {
         LearnCelebrationFragment fragment = new LearnCelebrationFragment();
         Bundle bundle = new Bundle();
         bundle.putInt(ARG_XP, earnedXp);
+        bundle.putString(ARG_TOPIC, completedTopic);
+        bundle.putString(ARG_DOMAIN, completedDomain);
+        bundle.putInt(ARG_LEARNED_WORDS, learnedWords);
         fragment.setArguments(bundle);
         return fragment;
     }
@@ -52,30 +63,92 @@ public class LearnCelebrationFragment extends Fragment {
         
         konfettiView = view.findViewById(R.id.konfettiView);
         
-        int xp = 20;
+        int xp = 0;
+        String completedTopic = "";
+        String completedDomain = "";
+        int learnedWords = 0;
         if (getArguments() != null) {
-            xp = getArguments().getInt(ARG_XP, 20);
+            xp = getArguments().getInt(ARG_XP, 0);
+            completedTopic = getArguments().getString(ARG_TOPIC, "");
+            completedDomain = getArguments().getString(ARG_DOMAIN, "");
+            learnedWords = getArguments().getInt(ARG_LEARNED_WORDS, 0);
         }
 
         TextView xpText = view.findViewById(R.id.xpText);
-        xpText.setText("+" + xp + " XP");
+        xpText.setText(getString(R.string.flashcard_summary_xp_format, xp));
+
+        TextView titleText = view.findViewById(R.id.tvCelebrationTitle);
+        TextView subTitleText = view.findViewById(R.id.tvCelebrationSubTitle);
+        TextView descText = view.findViewById(R.id.tvCelebrationDesc);
+        titleText.setText(R.string.flashcard_summary_title);
+
+        String safeTopic = completedTopic == null ? "" : completedTopic.trim();
+        if (safeTopic.isEmpty()) {
+            safeTopic = getString(R.string.learn_flashcard);
+        }
+        subTitleText.setText(getString(R.string.flashcard_summary_topic_format, safeTopic));
+
+        String safeDomain = completedDomain == null ? "" : completedDomain.trim();
+        if (safeDomain.isEmpty()) {
+            safeDomain = getString(R.string.status_learning);
+        }
+        descText.setText(getString(
+                R.string.flashcard_summary_desc_format,
+                safeDomain,
+                learnedWords,
+                xp
+        ));
+
+        com.google.android.material.button.MaterialButton actionFillBlank = view.findViewById(R.id.btnCelebrationNext);
+        com.google.android.material.button.MaterialButton actionFlashcard = view.findViewById(R.id.btnCelebrationBackToTopics);
+        com.google.android.material.button.MaterialButton actionHome = view.findViewById(R.id.btnCelebrationHome);
+
+        actionFillBlank.setText(R.string.flashcard_summary_action_fill_blank);
+        actionFlashcard.setText(R.string.flashcard_summary_action_flashcard);
+        actionHome.setText(R.string.nav_home);
 
         setupInitialStates(view);
         startAnimations(view);
 
         // Button Listeners
-        view.findViewById(R.id.btnCelebrationNext).setOnClickListener(v -> {
-            getParentFragmentManager().popBackStack(); // Back to Topics
+        String nextTopic = safeTopic;
+        actionFillBlank.setOnClickListener(v -> {
+            Fragment parent = getParentFragment();
+            if (parent instanceof LearnFlowNavigator) {
+                ((LearnFlowNavigator) parent).openFillBlank(nextTopic);
+                return;
+            }
+            getParentFragmentManager().popBackStack();
         });
 
-        view.findViewById(R.id.btnCelebrationBackToTopics).setOnClickListener(v -> {
-            getParentFragmentManager().popBackStack(); // Back to Topics
+        String restartDomain = safeDomain;
+        String restartTopic = safeTopic;
+        actionFlashcard.setOnClickListener(v -> {
+            Fragment parent = getParentFragment();
+            if (parent instanceof LearnFlowNavigator) {
+                DomainItem domainItem = new DomainItem(
+                        "",
+                        restartDomain,
+                        0,
+                        "",
+                        "",
+                        0,
+                        Collections.emptyList()
+                );
+                TopicItem topicItem = new TopicItem(restartTopic, TopicItem.STATUS_LEARNING);
+                ((LearnFlowNavigator) parent).openFlashcards(domainItem, topicItem);
+                return;
+            }
+            getParentFragmentManager().popBackStack();
         });
 
-        view.findViewById(R.id.btnCelebrationHome).setOnClickListener(v -> {
+        actionHome.setOnClickListener(v -> {
             if (getActivity() != null) {
                 ((com.example.englishflow.MainActivity) getActivity()).setCurrentTab(0);
-                getParentFragmentManager().popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                getParentFragmentManager().popBackStack(
+                        null,
+                        androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE
+                );
             }
         });
     }

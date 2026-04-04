@@ -1,13 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.imageview.ShapeableImageView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/imgAvatarItem"
     android:layout_width="match_parent"
-    android:layout_height="80dp"
+    android:layout_height="104dp"
     android:layout_margin="8dp"
-    android:padding="2dp"
-    android:scaleType="centerCrop"
-    android:background="?attr/selectableItemBackground"
-    app:shapeAppearanceOverlay="@style/RoundedAvatarStyle"
-    app:strokeColor="@color/ef_outline"
-    app:strokeWidth="1dp" />
+    android:foreground="?attr/selectableItemBackgroundBorderless">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/imgAvatarItem"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="2dp"
+        android:scaleType="centerCrop"
+        app:shapeAppearanceOverlay="@style/RoundedAvatarStyle"
+        app:strokeColor="@color/ef_outline"
+        app:strokeWidth="1dp" />
+
+    <ImageView
+        android:id="@+id/imgAvatarLock"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="6dp"
+        android:background="@drawable/bg_avatar_lock_chip"
+        android:padding="3dp"
+        android:src="@drawable/ic_lock_closed"
+        android:tint="@android:color/white"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvAvatarPrice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_margin="6dp"
+        android:background="@drawable/bg_avatar_price_chip_locked"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="4dp"
+        android:text="700 XP"
+        android:textColor="@android:color/white"
+        android:textSize="10sp"
+        android:textStyle="bold" />
+
+</FrameLayout>

@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_learn_gradient_premium">
+
+    <LinearLayout
+        android:id="@+id/fillBlankRootContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp">
+
+        <LinearLayout
+            android:id="@+id/fillBlankHeaderCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_fill_blank_top_header"
+            android:orientation="vertical"
+            android:paddingStart="12dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="10dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnBackFillBlank"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="@drawable/bg_back_button_premium"
+                    android:contentDescription="@string/fill_blank_title"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_back_arrow"
+                    android:tint="@color/ef_text_primary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/nunito"
+                        android:text="@string/fill_blank_title"
+                        android:textColor="@color/ef_text_primary"
+                        android:textSize="21sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/fillBlankTopicMeta"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/nunito"
+                        android:text="@string/fill_blank_topic_default"
+                        android:textColor="@color/ef_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/fillBlankSessionXp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_chip_soft"
+                    android:fontFamily="@font/nunito"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="5dp"
+                    android:text="@string/fill_blank_session_xp_placeholder"
+                    android:textColor="@color/ef_text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/fillBlankTopicTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/nunito"
+                    android:maxLines="1"
+                    android:text="@string/fill_blank_topic_default"
+                    android:textColor="@color/ef_text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="10dp">
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_fill_blank_button_primary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnChangeFillBlankTopic"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="2dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp"
+                        android:text="@string/fill_blank_topic_change"
+                        android:textAllCaps="false"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:background="@android:color/transparent"
+                        app:backgroundTint="@android:color/transparent"
+                        app:cornerRadius="18dp"
+                        app:iconPadding="0dp" />
+
+
+                </FrameLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/fillBlankComboIndicator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_chip_soft"
+                    android:fontFamily="@font/nunito"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:text="@string/fill_blank_combo_placeholder"
+                    android:textColor="@color/ef_text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+
+            </LinearLayout>
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="12dp"
+            android:layout_weight="1">
+
+            <ScrollView
+                android:id="@+id/fillBlankScroll"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:overScrollMode="ifContentScrolls"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/fillBlankContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/fillBlankProgress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_chip_soft"
+                        android:fontFamily="@font/nunito"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:text="@string/fill_blank_progress_initial"
+                        android:textColor="@color/ef_text_secondary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:cardBackgroundColor="@android:color/transparent"
+                        app:cardCornerRadius="24dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="@android:color/transparent"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_fill_blank_question_hero"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:id="@+id/fillBlankQuestionLabel"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_chip_soft"
+                                android:fontFamily="@font/nunito"
+                                android:paddingStart="10dp"
+                                android:paddingTop="4dp"
+                                android:paddingEnd="10dp"
+                                android:paddingBottom="4dp"
+                                android:text="@string/fill_blank_question_label"
+                                android:textColor="@color/ef_primary_dark"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/fillBlankSentence"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:fontFamily="@font/nunito"
+                                android:lineSpacingExtra="1dp"
+                                android:textColor="@color/ef_text_primary"
+                                android:textSize="23sp"
+                                android:textStyle="bold"
+                                tools:text="She opens the _____ before cooking dinner." />
+
+                            <TextView
+                                android:id="@+id/fillBlankSentenceVi"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:fontFamily="@font/nunito"
+                                android:lineSpacingExtra="1dp"
+                                android:textColor="@color/ef_text_primary"
+                                android:textSize="13sp"
+                                tools:text="Dich: Cô ay mo nha bep truoc khi nau bua toi." />
+
+                            <TextView
+                                android:id="@+id/fillBlankMeaning"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="@font/nunito"
+                                android:textColor="@color/ef_text_secondary"
+                                android:textSize="12sp"
+                                tools:text="Tu muc tieu: nha bep" />
+
+                            <TextView
+                                android:id="@+id/fillBlankLetterGuide"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:fontFamily="@font/nunito"
+                                android:text="@string/fill_blank_slots_label"
+                                android:textColor="@color/ef_text_secondary"
+                                android:textSize="11sp" />
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/fillBlankSlotsInputCard"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:cardBackgroundColor="@android:color/white"
+                                app:cardCornerRadius="14dp"
+                                app:cardElevation="2dp"
+                                app:strokeColor="@color/ef_primary_light"
+                                app:strokeWidth="1dp">
+
+                                <HorizontalScrollView
+                                    android:id="@+id/fillBlankSlotsScroll"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:fillViewport="true"
+                                    android:padding="8dp"
+                                    android:scrollbars="none">
+
+                                    <LinearLayout
+                                        android:id="@+id/fillBlankSlotsContainer"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center"
+                                        android:minHeight="38dp"
+                                        android:orientation="horizontal" />
+
+                                </HorizontalScrollView>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <TextView
+                                android:id="@+id/fillBlankTapHint"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="5dp"
+                                android:fontFamily="@font/nunito"
+                                android:text="@string/fill_blank_tap_slots_hint"
+                                android:textColor="@color/ef_text_secondary"
+                                android:textSize="11sp" />
+
+                            <EditText
+                                android:id="@+id/fillBlankAnswerInput"
+                                android:layout_width="1dp"
+                                android:layout_height="1dp"
+                                android:alpha="0"
+                                android:autofillHints=""
+                                android:background="@null"
+                                android:cursorVisible="false"
+                                android:gravity="center"
+                                android:imeOptions="actionDone"
+                                android:importantForAutofill="no"
+                                android:inputType="textVisiblePassword|textNoSuggestions"
+                                android:maxLines="1"
+                                android:textColor="@android:color/transparent"
+                                android:textColorHint="@android:color/transparent" />
+
+                            <LinearLayout
+                                android:id="@+id/fillBlankHintContainer"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:background="@drawable/bg_fill_blank_hint_box"
+                                android:orientation="vertical"
+                                android:padding="12dp"
+                                android:visibility="gone">
+
+                                <TextView
+                                    android:id="@+id/fillBlankHintLabel"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginBottom="2dp"
+                                    android:fontFamily="@font/nunito"
+                                    android:text="@string/fill_blank_hint_label"
+                                    android:textColor="@color/ef_hint_border"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/fillBlankHint"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/nunito"
+                                    android:text="@string/fill_blank_hint_default"
+                                    android:textColor="@color/ef_text_primary"
+                                    android:textSize="14sp" />
+                            </LinearLayout>
+
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:orientation="horizontal">
+
+                                <FrameLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="38dp"
+                                    android:layout_marginEnd="8dp"
+                                    android:layout_weight="1">
+
+                                    <View
+                                        android:layout_width="match_parent"
+                                        android:layout_height="38dp"
+                                        android:background="@drawable/bg_fill_blank_button_neutral" />
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/btnHintFirst"
+                                        style="@style/Widget.Material3.Button"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="38dp"
+                                        android:paddingBottom="5dp"
+                                        android:text="@string/fill_blank_btn_hint_first"
+                                        android:textAllCaps="false"
+                                        android:textColor="@color/ef_text_primary"
+                                        android:textSize="11sp"
+                                        android:background="@android:color/transparent"
+                                        app:backgroundTint="@android:color/transparent"
+                                        app:cornerRadius="19dp" />
+
+
+                                </FrameLayout>
+
+                                <FrameLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="38dp"
+                                    android:layout_weight="1">
+
+                                    <View
+                                        android:layout_width="match_parent"
+                                        android:layout_height="38dp"
+                                        android:background="@drawable/bg_fill_blank_button_neutral" />
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/btnHintLast"
+                                        style="@style/Widget.Material3.Button"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="38dp"
+                                        android:paddingBottom="5dp"
+                                        android:text="@string/fill_blank_btn_hint_last"
+                                        android:textAllCaps="false"
+                                        android:textColor="@color/ef_text_primary"
+                                        android:textSize="11sp"
+                                        android:background="@android:color/transparent"
+                                        app:backgroundTint="@android:color/transparent"
+                                        app:cornerRadius="19dp" />
+
+
+                                </FrameLayout>
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:orientation="horizontal">
+
+                                <FrameLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="42dp"
+                                    android:layout_marginEnd="8dp"
+                                    android:layout_weight="1">
+
+                                    <View
+                                        android:layout_width="match_parent"
+                                        android:layout_height="42dp"
+                                        android:background="@drawable/bg_fill_blank_button_primary" />
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/btnCheckFillBlank"
+                                        style="@style/Widget.Material3.Button"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="42dp"
+                                        android:paddingBottom="6dp"
+                                        android:text="@string/fill_blank_btn_check"
+                                        android:textAllCaps="false"
+                                        android:textColor="@android:color/white"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold"
+                                        android:background="@android:color/transparent"
+                                        app:backgroundTint="@android:color/transparent"
+                                        app:cornerRadius="21dp" />
+
+
+                                </FrameLayout>
+
+                                <FrameLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="42dp"
+                                    android:layout_weight="1">
+
+                                    <View
+                                        android:layout_width="match_parent"
+                                        android:layout_height="42dp"
+                                        android:background="@drawable/bg_fill_blank_button_deep_blue" />
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/btnNextFillBlank"
+                                        style="@style/Widget.Material3.Button"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="42dp"
+                                        android:enabled="false"
+                                        android:paddingBottom="6dp"
+                                        android:text="@string/fill_blank_btn_next"
+                                        android:textAllCaps="false"
+                                        android:textColor="@color/white"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold"
+                                        android:background="@android:color/transparent"
+                                        app:backgroundTint="@android:color/transparent"
+                                        app:cornerRadius="21dp" />
+
+
+
+                                </FrameLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+            </ScrollView>
+
+            <LinearLayout
+                android:id="@+id/fillBlankEmptyState"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="20dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/nunito"
+                    android:gravity="center"
+                    android:text="@string/fill_blank_empty_title"
+                    android:textColor="@color/ef_text_primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/fillBlankEmptyMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:fontFamily="@font/nunito"
+                    android:gravity="center"
+                    android:text="@string/fill_blank_empty_message"
+                    android:textColor="@color/ef_text_secondary"
+                    android:textSize="14sp" />
+
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="16dp">
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_fill_blank_button_primary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFillBlankGoFlashcard"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="44dp"
+                        android:paddingStart="16dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="8dp"
+                        android:text="@string/fill_blank_empty_action"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"
+                        android:background="@android:color/transparent"
+                        app:backgroundTint="@android:color/transparent"
+                        app:cornerRadius="22dp" />
+                </FrameLayout>
+
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/fillBlankLoading"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <ProgressBar
+                    android:layout_width="42dp"
+                    android:layout_height="42dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:fontFamily="@font/nunito"
+                    android:text="@string/fill_blank_loading"
+                    android:textColor="@color/ef_text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+</FrameLayout>

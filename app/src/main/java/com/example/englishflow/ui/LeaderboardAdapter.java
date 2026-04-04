@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.englishflow.R;
 import com.example.englishflow.data.LeaderboardItem;
 
@@ -80,7 +81,20 @@ public class LeaderboardAdapter extends RecyclerView.Adapter<LeaderboardAdapter.
         holder.txtName.setText(item.name);
         holder.txtEmail.setText(item.email);
         holder.txtScore.setText(scoreFormatter.format(item.score));
-        holder.txtInitial.setText(item.name != null && !item.name.isEmpty() ? item.name.substring(0, 1).toUpperCase() : "?");
+        
+        if (item.avatarPath != null && !item.avatarPath.isEmpty()) {
+            holder.imgAvatar.setVisibility(View.VISIBLE);
+            holder.txtInitial.setVisibility(View.GONE);
+            Glide.with(holder.itemView.getContext())
+                .load(item.avatarPath)
+                .placeholder(R.drawable.user_avatar)
+                .circleCrop()
+                .into(holder.imgAvatar);
+        } else {
+            holder.imgAvatar.setVisibility(View.GONE);
+            holder.txtInitial.setVisibility(View.VISIBLE);
+            holder.txtInitial.setText(item.name != null && !item.name.isEmpty() ? item.name.substring(0, 1).toUpperCase() : "?");
+        }
 
         // Highlight current user
         if (currentUserEmail != null && currentUserEmail.equals(item.email)) {
@@ -99,6 +113,7 @@ public class LeaderboardAdapter extends RecyclerView.Adapter<LeaderboardAdapter.
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView txtRank, txtName, txtEmail, txtScore, txtInitial;
+        android.widget.ImageView imgAvatar;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -107,6 +122,7 @@ public class LeaderboardAdapter extends RecyclerView.Adapter<LeaderboardAdapter.
             txtEmail = itemView.findViewById(R.id.txtEmail);
             txtScore = itemView.findViewById(R.id.txtScore);
             txtInitial = itemView.findViewById(R.id.txtAvatarInitial);
+            imgAvatar = itemView.findViewById(R.id.imgAvatar);
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.example.englishflow;
 
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,12 +10,16 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.example.englishflow.data.LocalAuthStore;
+import com.example.englishflow.admin.AdminDashboardActivity;
+import com.example.englishflow.data.FirebaseUserStore;
 import com.example.englishflow.ui.MainPagerAdapter;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
+    private boolean isKeyboardVisible;
+    private int currentNavPosition = -1;
 
     public void setCurrentTab(int index) {
         smoothScrollTo(index);
@@ -25,11 +30,28 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
-        if (!new LocalAuthStore(getApplicationContext()).hasActiveSession()) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             startActivity(new android.content.Intent(this, LoginActivity.class));
             finish();
             return;
         }
+
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        new FirebaseUserStore().fetchProfile(uid, profile -> {
+            if (profile == null) {
+                return;
+            }
+            if (profile.isLocked()) {
+                FirebaseAuth.getInstance().signOut();
+                startActivity(new android.content.Intent(this, LoginActivity.class));
+                finish();
+                return;
+            }
+            if (profile.isAdmin() || com.example.englishflow.data.FirebaseSeeder.isAdminEmail(profile.email)) {
+                startActivity(new android.content.Intent(this, AdminDashboardActivity.class));
+                finish();
+            }
+        });
         try {
             setContentView(R.layout.activity_main);
 
@@ -73,18 +95,28 @@ public class MainActivity extends AppCompatActivity {
             handleKeyboardVisibility();
 
             // ══ Window Insets Handling (Edge-to-Edge) ══
-            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.mainRoot), (v, windowInsets) -> {
-                Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-                
-                // Keep the bottom nav above the system navigation bar
-                ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.bottomAppBar), (nav, navInsets) -> {
+            View bottomAppBar = findViewById(R.id.bottomAppBar);
+            if (bottomAppBar != null) {
+                ViewCompat.setOnApplyWindowInsetsListener(bottomAppBar, (nav, navInsets) -> {
                     Insets navSystemBars = navInsets.getInsets(WindowInsetsCompat.Type.systemBars());
                     nav.setPadding(0, 0, 0, navSystemBars.bottom);
                     return navInsets;
                 });
+            }
 
-                return windowInsets;
-            });
+            View root = findViewById(R.id.mainRoot);
+            if (root != null) {
+                ViewCompat.setOnApplyWindowInsetsListener(root, (v, windowInsets) -> {
+                    Insets imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
+                    boolean keyboardNowVisible = imeInsets.bottom > 0;
+                    if (keyboardNowVisible != isKeyboardVisible) {
+                        isKeyboardVisible = keyboardNowVisible;
+                        applyKeyboardState(isKeyboardVisible);
+                    }
+                    return windowInsets;
+                });
+                ViewCompat.requestApplyInsets(root);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -93,46 +125,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleKeyboardVisibility() {
-        final android.view.View rootView = findViewById(R.id.mainRoot);
+        applyKeyboardState(false);
+    }
+
+    private void applyKeyboardState(boolean keyboardVisible) {
         final android.view.View navBar = findViewById(R.id.bottomAppBar);
         final android.view.View fab = findViewById(R.id.fabScan);
+        if (navBar == null || fab == null) {
+            return;
+        }
 
-        if (rootView == null || navBar == null || fab == null) return;
-
-        rootView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
-            android.graphics.Rect r = new android.graphics.Rect();
-            rootView.getWindowVisibleDisplayFrame(r);
-            int screenHeight = rootView.getRootView().getHeight();
-            int keypadHeight = screenHeight - r.bottom;
-
-            // Threshold: if keypad takes up more than 15% of the screen
-            if (keypadHeight > screenHeight * 0.15) {
-                if (navBar.getVisibility() == android.view.View.VISIBLE) {
-                    navBar.setVisibility(android.view.View.GONE);
-                    fab.setVisibility(android.view.View.GONE);
-                    if (viewPager != null && viewPager.getLayoutParams() instanceof android.view.ViewGroup.MarginLayoutParams) {
-                        android.view.ViewGroup.MarginLayoutParams params = (android.view.ViewGroup.MarginLayoutParams) viewPager.getLayoutParams();
-                        params.bottomMargin = 0;
-                        viewPager.requestLayout();
-                    }
-                }
-            } else {
-                if (navBar.getVisibility() == android.view.View.GONE) {
-                    navBar.setVisibility(android.view.View.VISIBLE);
-                    fab.setVisibility(android.view.View.VISIBLE);
-                    if (viewPager != null && viewPager.getLayoutParams() instanceof android.view.ViewGroup.MarginLayoutParams) {
-                        android.view.ViewGroup.MarginLayoutParams params = (android.view.ViewGroup.MarginLayoutParams) viewPager.getLayoutParams();
-                        params.bottomMargin = 0;
-                        viewPager.requestLayout();
-                    }
-                }
-            }
-        });
+        int targetVisibility = keyboardVisible ? android.view.View.GONE : android.view.View.VISIBLE;
+        if (navBar.getVisibility() != targetVisibility) {
+            navBar.setVisibility(targetVisibility);
+        }
+        if (fab.getVisibility() != targetVisibility) {
+            fab.setVisibility(targetVisibility);
+        }
     }
 
     private void smoothScrollTo(int target) {
         if (viewPager == null) return;
         int current = viewPager.getCurrentItem();
+        if (current == target) {
+            return;
+        }
         if (Math.abs(target - current) <= 1) {
             viewPager.setCurrentItem(target, true);
         } else {
@@ -142,6 +159,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateNavUI(int position) {
+        if (position == currentNavPosition) {
+            return;
+        }
+        currentNavPosition = position;
+
         com.google.android.material.card.MaterialCardView[] buttons = {
                 findViewById(R.id.nav_home_btn),
                 findViewById(R.id.nav_learn_btn),
@@ -163,6 +185,10 @@ public class MainActivity extends AppCompatActivity {
             if (buttons[i] == null) continue;
             boolean isActive = (i == position);
             buttons[i].setSelected(isActive);
+            buttons[i].animate().cancel();
+            if (icons[i] != null) {
+                icons[i].animate().cancel();
+            }
 
             if (isActive) {
                 // Pop up animation
@@ -190,6 +216,7 @@ public class MainActivity extends AppCompatActivity {
         // Handle FAB state if needed (always glossy)
         android.view.View fab = findViewById(R.id.fabScan);
         if (fab != null) {
+            fab.animate().cancel();
             fab.animate()
                 .scaleX(position == 2 ? 1.2f : 1.0f)
                 .scaleY(position == 2 ? 1.2f : 1.0f)

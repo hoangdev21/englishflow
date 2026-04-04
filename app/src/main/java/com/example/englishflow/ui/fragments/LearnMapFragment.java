@@ -129,6 +129,7 @@ public class LearnMapFragment extends Fragment {
     }
 
     private void buildNodeRows(List<MapNodeItem> nodes) {
+        clearRunningAnimators();
         nodeCircleViews.clear();
         mapNodesContainer.removeAllViews();
 
@@ -268,10 +269,14 @@ public class LearnMapFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        clearRunningAnimators();
+        nodeCircleViews.clear();
+    }
+
+    private void clearRunningAnimators() {
         for (Animator animator : runningAnimators) {
             animator.cancel();
         }
         runningAnimators.clear();
-        nodeCircleViews.clear();
     }
 }

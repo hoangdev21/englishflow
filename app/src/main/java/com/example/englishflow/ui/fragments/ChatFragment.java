@@ -53,6 +53,8 @@ import java.util.concurrent.Executors;
 public class ChatFragment extends Fragment {
 
     private static final int REQUEST_RECORD_AUDIO = 101;
+    private static final int TYPEWRITER_LONG_TEXT_THRESHOLD = 360;
+    private static final int TYPEWRITER_DELAY_MS = 42;
 
     // ── UI ────────────────────────────────────────────────────────────────────
     private final List<ChatItem> chatItems = new ArrayList<>();
@@ -418,6 +420,8 @@ public class ChatFragment extends Fragment {
                                            String vocabWord, String vocabIpa, String vocabMeaning,
                                            String vocabExample, String vocabExampleVi,
                                            boolean autoSpeak) {
+        final String responseText = fullText == null ? "" : fullText;
+
         ChatItem item = new ChatItem(ChatItem.ROLE_AI, "", correction, explanation);
         if (vocabWord != null) {
             item.setVocabWord(vocabWord);
@@ -433,12 +437,20 @@ public class ChatFragment extends Fragment {
         // Auto-speak the response if requested (voice mode)
         if (autoSpeak) {
             updateVoiceUI(VoiceFlowEngine.State.SPEAKING);
-            voiceEngine.speakResponse(fullText);
+            voiceEngine.speakResponse(responseText);
             
             // CRITICAL OPTIMIZATION: Disable typewriter for Voice Mode to fix stutter/crackling
-            item.setMessage(fullText);
+            item.setMessage(responseText);
             adapter.notifyItemChanged(position);
             saveMessage(item);
+            return;
+        }
+
+        if (responseText.length() >= TYPEWRITER_LONG_TEXT_THRESHOLD || TextUtils.isEmpty(responseText)) {
+            item.setMessage(responseText);
+            adapter.notifyItemChanged(position);
+            saveMessage(item);
+            recyclerView.scrollToPosition(adapter.getItemCount() - 1);
             return;
         }
 
@@ -449,14 +461,13 @@ public class ChatFragment extends Fragment {
 
         final int[] charIndex = {0};
         final StringBuilder displayedText = new StringBuilder();
-        final Handler handler = new Handler(Looper.getMainLooper());
 
         final Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                if (charIndex[0] < fullText.length()) {
-                    int charsToType = Math.min(fullText.length() > 240 ? 14 : 8, fullText.length() - charIndex[0]);
-                    displayedText.append(fullText.substring(charIndex[0], charIndex[0] + charsToType));
+                if (charIndex[0] < responseText.length()) {
+                    int charsToType = Math.min(responseText.length() > 240 ? 20 : 12, responseText.length() - charIndex[0]);
+                    displayedText.append(responseText.substring(charIndex[0], charIndex[0] + charsToType));
                     charIndex[0] += charsToType;
 
                     item.setMessage(displayedText.toString());
@@ -474,15 +485,15 @@ public class ChatFragment extends Fragment {
                         recyclerView.scrollToPosition(adapter.getItemCount() - 1);
                     }
 
-                    if (charIndex[0] >= fullText.length()) {
+                    if (charIndex[0] >= responseText.length()) {
                         saveMessage(item);
                     } else {
-                        handler.postDelayed(this, 28);
+                        mainHandler.postDelayed(this, TYPEWRITER_DELAY_MS);
                     }
                 }
             }
         };
-        handler.post(runnable);
+        mainHandler.post(runnable);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -704,12 +715,16 @@ public class ChatFragment extends Fragment {
             List<ChatMessageEntity> messages =
                     repository.getDatabase().chatMessageDao().getMessagesBySession(currentSessionId);
             mainHandler.post(() -> {
+                int startIndex = chatItems.size();
                 for (ChatMessageEntity msg : messages) {
                     int role = msg.role.equals("user") ? ChatItem.ROLE_USER : ChatItem.ROLE_AI;
                     chatItems.add(new ChatItem(role, msg.content, msg.correction, msg.explanation));
                 }
-                adapter.notifyDataSetChanged();
-                recyclerView.scrollToPosition(chatItems.size() - 1);
+                int inserted = chatItems.size() - startIndex;
+                if (inserted > 0) {
+                    adapter.notifyItemRangeInserted(startIndex, inserted);
+                    recyclerView.scrollToPosition(chatItems.size() - 1);
+                }
             });
         });
     }

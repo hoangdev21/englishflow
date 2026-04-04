@@ -126,6 +126,19 @@ public class LearnFragment extends Fragment implements LearnFlowNavigator {
         transaction.commit();
     }
 
+    private void showFillBlank(String preferredTopic, boolean addToBackStack) {
+        if (!isAdded()) {
+            return;
+        }
+        androidx.fragment.app.FragmentTransaction transaction = getChildFragmentManager()
+                .beginTransaction()
+                .replace(R.id.learnContainer, LearnFillBlankFragment.newInstance(preferredTopic));
+        if (addToBackStack) {
+            transaction.addToBackStack("fill_blank");
+        }
+        transaction.commit();
+    }
+
     @Override
     public void openDomains() {
         showDomains(true);
@@ -134,6 +147,13 @@ public class LearnFragment extends Fragment implements LearnFlowNavigator {
     @Override
     public void openJourney() {
         showJourney(true);
+    }
+
+    @Override
+    public void openFillBlank(String preferredTopic) {
+        Fragment current = getChildFragmentManager().findFragmentById(R.id.learnContainer);
+        boolean launchedFromFlashcards = current instanceof LearnFlashcardFragment;
+        showFillBlank(preferredTopic, !launchedFromFlashcards);
     }
 
     @Override
@@ -155,10 +175,15 @@ public class LearnFragment extends Fragment implements LearnFlowNavigator {
     }
 
     @Override
-    public void openCelebration(int earnedXp) {
+    public void openCelebration(int earnedXp, String completedTopic, String completedDomain, int learnedWords) {
         getChildFragmentManager()
                 .beginTransaction()
-                .replace(R.id.learnContainer, LearnCelebrationFragment.newInstance(earnedXp))
+                .replace(R.id.learnContainer, LearnCelebrationFragment.newInstance(
+                        earnedXp,
+                        completedTopic,
+                        completedDomain,
+                        learnedWords
+                ))
                 .addToBackStack("celebration")
                 .commit();
     }

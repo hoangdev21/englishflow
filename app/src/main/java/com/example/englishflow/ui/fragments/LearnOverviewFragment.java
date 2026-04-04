@@ -2,6 +2,7 @@ package com.example.englishflow.ui.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LearnOverviewFragment extends Fragment {
+
+    private static final long UI_REFRESH_MIN_INTERVAL_MS = 1500L;
 
     private static final int[] DOMAIN_IMAGE_IDS = {
             R.id.domainPreview1Image,
@@ -101,6 +104,7 @@ public class LearnOverviewFragment extends Fragment {
     private TextView[] domainEmojis;
     private TextView[] domainLabels;
     private View[] weekBars;
+    private long lastDashboardRenderedAt = 0L;
 
     @Nullable
     @Override
@@ -117,13 +121,13 @@ public class LearnOverviewFragment extends Fragment {
         bindViews(view);
         setupNavigation(view);
         applyInsets(view);
-        refreshDashboard();
+        refreshDashboard(true);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        refreshDashboard();
+        refreshDashboard(false);
     }
 
     private void bindViews(View view) {
@@ -170,6 +174,7 @@ public class LearnOverviewFragment extends Fragment {
         View actionFlashcards = view.findViewById(R.id.actionFlashcards);
         View actionJourney = view.findViewById(R.id.actionJourney);
         View actionLearnedWords = view.findViewById(R.id.actionLearnedWords);
+        View actionFillBlank = view.findViewById(R.id.actionFillBlank);
         View actionChatPractice = view.findViewById(R.id.actionChatPractice);
 
         if (domainsCard != null) {
@@ -204,6 +209,13 @@ public class LearnOverviewFragment extends Fragment {
             });
         }
 
+        if (actionFillBlank != null) {
+            actionFillBlank.setOnClickListener(v -> {
+                String preferredTopic = repository != null ? repository.getLastTopicTitle() : null;
+                openFillBlank(preferredTopic);
+            });
+        }
+
         if (actionChatPractice != null) {
             actionChatPractice.setOnClickListener(v -> switchToMainTab(3));
         }
@@ -228,8 +240,13 @@ public class LearnOverviewFragment extends Fragment {
         ViewCompat.requestApplyInsets(header);
     }
 
-    private void refreshDashboard() {
+    private void refreshDashboard(boolean forceRefresh) {
         if (!isAdded() || repository == null) {
+            return;
+        }
+
+        long now = SystemClock.elapsedRealtime();
+        if (!forceRefresh && now - lastDashboardRenderedAt < UI_REFRESH_MIN_INTERVAL_MS) {
             return;
         }
 
@@ -237,6 +254,8 @@ public class LearnOverviewFragment extends Fragment {
             if (!isAdded()) {
                 return;
             }
+
+            lastDashboardRenderedAt = SystemClock.elapsedRealtime();
 
             int wordsToday = snapshot.wordsLearnedToday;
             int dailyGoal = snapshot.dailyWordGoal;
@@ -412,6 +431,13 @@ public class LearnOverviewFragment extends Fragment {
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private void openFillBlank(String preferredTopic) {
+        Fragment parent = getParentFragment();
+        if (parent instanceof LearnFlowNavigator) {
+            ((LearnFlowNavigator) parent).openFillBlank(preferredTopic);
+        }
     }
 
     private void switchToMainTab(int tabIndex) {

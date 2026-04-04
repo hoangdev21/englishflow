@@ -7,10 +7,11 @@ public class LeaderboardItem {
     public int rank;
     public String avatarPath; // Mock for now
 
-    public LeaderboardItem(String name, String email, int score, int rank) {
+    public LeaderboardItem(String name, String email, int score, int rank, String avatarPath) {
         this.name = name;
         this.email = email;
         this.score = score;
         this.rank = rank;
+        this.avatarPath = avatarPath;
     }
 }

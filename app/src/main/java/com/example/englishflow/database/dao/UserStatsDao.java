@@ -23,12 +23,18 @@ public interface UserStatsDao {
     
     @Query("SELECT * FROM user_stats WHERE userEmail = :userEmail")
     UserStatsEntity getUserStats(String userEmail);
+
+    @Query("SELECT * FROM user_stats WHERE userEmail = :userEmail")
+    androidx.lifecycle.LiveData<UserStatsEntity> getLiveUserStats(String userEmail);
     
     @Query("UPDATE user_stats SET totalWordsLearned = totalWordsLearned + :count WHERE userEmail = :userEmail")
     void incrementWordsLearned(String userEmail, int count);
     
     @Query("UPDATE user_stats SET totalXpEarned = totalXpEarned + :xp WHERE userEmail = :userEmail")
     void addTotalXp(String userEmail, int xp);
+
+    @Query("UPDATE user_stats SET totalXpEarned = totalXpEarned - :xp WHERE userEmail = :userEmail AND totalXpEarned >= :xp")
+    int spendTotalXp(String userEmail, int xp);
     
     @Query("UPDATE user_stats SET xpTodayEarned = xpTodayEarned + :xp WHERE userEmail = :userEmail")
     void addDailyXp(String userEmail, int xp);

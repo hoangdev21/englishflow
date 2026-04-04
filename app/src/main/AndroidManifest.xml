@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
+        android:name=".EnglishFlowApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -46,6 +47,18 @@
             android:name=".LoginActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".admin.AdminDashboardActivity"
+            android:exported="false"
+            android:label="Admin Dashboard"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".admin.AdminUserDetailActivity"
+            android:exported="false"
+            android:label="Chi tiết người dùng"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
@@ -74,6 +87,15 @@
             android:name=".ui.SettingsActivity"
             android:exported="false"
             android:label="Cài đặt" />
+
+        <activity
+            android:name=".ui.IpaActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.NotificationDetailActivity"
+            android:exported="false"
+            android:label="Chi tiết thông báo" />
 
         <receiver
             android:name=".reminder.StudyReminderReceiver"

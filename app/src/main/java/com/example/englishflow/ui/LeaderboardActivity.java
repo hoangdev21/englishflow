@@ -2,10 +2,16 @@ package com.example.englishflow.ui;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import com.bumptech.glide.Glide;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,14 +39,17 @@ public class LeaderboardActivity extends AppCompatActivity {
     private TextView r3Name, r3Score, r3Initial;
     private View stickyMyRank;
     private TextView myRankTxt, myNameTxt, myScoreTxt, myInitialTxt;
+    private ImageView myAvatarImg, r1AvatarImg, r2AvatarImg, r3AvatarImg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_leaderboard);
 
         repository = AppRepository.getInstance(this);
         initViews();
+        applyWindowInsets();
         loadData("today");
     }
 
@@ -60,14 +69,17 @@ public class LeaderboardActivity extends AppCompatActivity {
         r1Name = findViewById(R.id.rank1Name);
         r1Score = findViewById(R.id.rank1Score);
         r1Initial = findViewById(R.id.rank1Initial);
+        r1AvatarImg = findViewById(R.id.rank1Avatar);
         
         r2Name = findViewById(R.id.rank2Name);
         r2Score = findViewById(R.id.rank2Score);
         r2Initial = findViewById(R.id.rank2Initial);
+        r2AvatarImg = findViewById(R.id.rank2Avatar);
         
         r3Name = findViewById(R.id.rank3Name);
         r3Score = findViewById(R.id.rank3Score);
         r3Initial = findViewById(R.id.rank3Initial);
+        r3AvatarImg = findViewById(R.id.rank3Avatar);
 
         // Period buttons
         btnDay = findViewById(R.id.btnDay);
@@ -84,6 +96,23 @@ public class LeaderboardActivity extends AppCompatActivity {
         myNameTxt = findViewById(R.id.myName);
         myScoreTxt = findViewById(R.id.myScore);
         myInitialTxt = findViewById(R.id.myInitial);
+        myAvatarImg = findViewById(R.id.myAvatar);
+    }
+
+    private void applyWindowInsets() {
+        View header = findViewById(R.id.leaderboardHeader);
+        ViewCompat.setOnApplyWindowInsetsListener(header, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(v.getPaddingLeft(), insets.top + (int)(16 * getResources().getDisplayMetrics().density), v.getPaddingRight(), v.getPaddingBottom());
+            return windowInsets;
+        });
+        
+        View footer = findViewById(R.id.stickyMyRank);
+        ViewCompat.setOnApplyWindowInsetsListener(footer, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(v.getPaddingLeft(), (int)(16 * getResources().getDisplayMetrics().density), v.getPaddingRight(), insets.bottom + (int)(24 * getResources().getDisplayMetrics().density));
+            return windowInsets;
+        });
     }
 
     private void selectPeriod(String period, MaterialButton selectedBtn) {
@@ -128,7 +157,7 @@ public class LeaderboardActivity extends AppCompatActivity {
                 myRankTxt.setText(String.valueOf(item.rank));
                 myNameTxt.setText(item.name);
                 myScoreTxt.setText(scoreFormatter.format(item.score) + " XP");
-                myInitialTxt.setText(getInitial(item.name));
+                loadAvatar(item.avatarPath, myAvatarImg, myInitialTxt, item.name);
                 return;
             }
         }
@@ -143,7 +172,7 @@ public class LeaderboardActivity extends AppCompatActivity {
             LeaderboardItem i = items.get(0);
             r1Name.setText(i.name);
             r1Score.setText(scoreFormatter.format(i.score) + " XP");
-            r1Initial.setText(getInitial(i.name));
+            loadAvatar(i.avatarPath, r1AvatarImg, r1Initial, i.name);
             podium1.setVisibility(View.VISIBLE);
         }
         
@@ -151,7 +180,7 @@ public class LeaderboardActivity extends AppCompatActivity {
             LeaderboardItem i = items.get(1);
             r2Name.setText(i.name);
             r2Score.setText(scoreFormatter.format(i.score) + " XP");
-            r2Initial.setText(getInitial(i.name));
+            loadAvatar(i.avatarPath, r2AvatarImg, r2Initial, i.name);
             podium2.setVisibility(View.VISIBLE);
         }
 
@@ -159,8 +188,24 @@ public class LeaderboardActivity extends AppCompatActivity {
             LeaderboardItem i = items.get(2);
             r3Name.setText(i.name);
             r3Score.setText(scoreFormatter.format(i.score) + " XP");
-            r3Initial.setText(getInitial(i.name));
+            loadAvatar(i.avatarPath, r3AvatarImg, r3Initial, i.name);
             podium3.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void loadAvatar(String path, ImageView img, TextView fallback, String name) {
+        if (path != null && !path.isEmpty()) {
+            img.setVisibility(View.VISIBLE);
+            fallback.setVisibility(View.GONE);
+            Glide.with(this)
+                .load(path)
+                .placeholder(R.drawable.user_avatar)
+                .circleCrop()
+                .into(img);
+        } else {
+            img.setVisibility(View.GONE);
+            fallback.setVisibility(View.VISIBLE);
+            fallback.setText(getInitial(name));
         }
     }
 

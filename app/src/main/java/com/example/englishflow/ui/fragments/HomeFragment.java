@@ -6,6 +6,8 @@ import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.text.format.DateUtils;
 import android.speech.tts.TextToSpeech;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -27,24 +29,39 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
+import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.DictionaryRepository;
 import com.example.englishflow.data.DictionaryResult;
+import com.example.englishflow.data.FirebaseUserStore;
 import com.example.englishflow.data.FreeDictionaryService;
 import com.example.englishflow.data.MyMemoryService;
 import com.example.englishflow.data.WordEntry;
+import com.example.englishflow.reminder.AdminNotificationCenter;
 import com.example.englishflow.reminder.StudyReminderScheduler;
+import com.example.englishflow.ui.IpaActivity;
 import com.example.englishflow.ui.LearnedWordsActivity;
 import com.example.englishflow.ui.LeaderboardActivity;
+import com.example.englishflow.ui.LearnedWordsAdapter;
+import com.example.englishflow.ui.NotificationDetailActivity;
+import com.example.englishflow.ui.views.LightningProgressBar;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.card.MaterialCardView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Date;
 
 import okhttp3.OkHttpClient;
 
@@ -55,11 +72,24 @@ public class HomeFragment extends Fragment {
     private static final String DEFAULT_DICT_TITLE = "Mở tra từ điển";
     private static final String DEFAULT_DICT_HINT = "Nhập từ tiếng Anh hoặc tiếng Việt để tra IPA, nghĩa, ví dụ và từ đồng nghĩa.";
     private static final String DEFAULT_DICT_EXAMPLE = "Bạn có thể bấm vào từ đồng nghĩa trong kết quả để tra tiếp ngay lập tức.";
+    private static final long UI_REFRESH_MIN_INTERVAL_MS = 1500L;
+        private static final int USER_NOTIFICATION_LIMIT = 60;
+        private static final SimpleDateFormat NOTIFICATION_TIME_FORMAT =
+            new SimpleDateFormat("dd/MM HH:mm", Locale.getDefault());
 
     private AppRepository repository;
+        private AppSettingsStore settingsStore;
+        private final FirebaseUserStore userStore = new FirebaseUserStore();
     private DictionaryRepository dictionaryRepository;
     private TextView reminderText;
+        private TextView notificationBadgeText;
+        private View notificationButton;
     private DictionaryResult currentDictionaryResult;
+        private FirebaseUserStore.NotificationSubscription userNotificationSubscription;
+        private String observedNotificationUid = "";
+        private final List<FirebaseUserStore.AdminNotificationEntry> cachedUserNotifications = new ArrayList<>();
+        private boolean notificationSnapshotInitialized = false;
+    private long lastDashboardRenderAt = 0L;
 
     private TextToSpeech textToSpeech;
     private static final float TTS_SPEECH_RATE = 0.9f;
@@ -79,6 +109,7 @@ public class HomeFragment extends Fragment {
         // Initialize repository safely
         try {
             repository = AppRepository.getInstance(requireContext());
+            settingsStore = new AppSettingsStore(requireContext());
             dictionaryRepository = new DictionaryRepository(
                     new FreeDictionaryService(SHARED_HTTP_CLIENT),
                     new MyMemoryService(SHARED_HTTP_CLIENT)
@@ -92,7 +123,9 @@ public class HomeFragment extends Fragment {
         try {
             setupBasicViews(view);
             initTextToSpeech();
-            refreshData();
+            observeUserStats();
+            refreshData(true);
+            AdminNotificationCenter.ensureChannel(requireContext());
 
             // ══ Window Insets Handling (Safe for All Screen Types) ══
             View headerContent = view.findViewById(R.id.headerContent);
@@ -109,6 +142,8 @@ public class HomeFragment extends Fragment {
                 });
                 ViewCompat.requestApplyInsets(headerContent);
             }
+
+            bindNotificationHeroInsets(view);
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(requireContext(), "Lỗi tải dữ liệu trang chủ", Toast.LENGTH_SHORT).show();
@@ -127,6 +162,7 @@ public class HomeFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        stopUserNotificationObserver();
         if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();
@@ -139,7 +175,18 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if (getView() != null && repository != null) {
-            refreshData();
+            refreshData(false);
+        }
+        startUserNotificationObserver();
+    }
+
+    private void observeUserStats() {
+        if (repository != null) {
+            repository.getLiveUserStats().observe(getViewLifecycleOwner(), stats -> {
+                if (stats != null && isAdded()) {
+                    refreshData(true);
+                }
+            });
         }
     }
 
@@ -155,6 +202,7 @@ public class HomeFragment extends Fragment {
 
             // Set up all interactive buttons
             setupQuickActionButtons(view);
+            setupNotificationBell(view);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -166,12 +214,10 @@ public class HomeFragment extends Fragment {
             View quickLearnBtn = view.findViewById(R.id.btnQuickLearn);
             View quickScanBtn = view.findViewById(R.id.btnQuickScan);
             View quickChatBtn = view.findViewById(R.id.btnQuickChat);
-            View quickDictionaryBtn = view.findViewById(R.id.btnQuickDictionary);
 
             if (quickLearnBtn != null) quickLearnBtn.setOnClickListener(v -> navigateToTab(1));
             if (quickScanBtn != null) quickScanBtn.setOnClickListener(v -> navigateToTab(2));
             if (quickChatBtn != null) quickChatBtn.setOnClickListener(v -> navigateToTab(3));
-            if (quickDictionaryBtn != null) quickDictionaryBtn.setOnClickListener(v -> navigateToTab(4));
 
             // Continue Learning button
             MaterialButton continueBtn = view.findViewById(R.id.btnContinue);
@@ -219,6 +265,11 @@ public class HomeFragment extends Fragment {
             }
 
             // Learned Words & Leaderboard
+            View btnIpa = view.findViewById(R.id.btnQuickIpa);
+            if (btnIpa != null) {
+                btnIpa.setOnClickListener(v1 -> startActivity(new Intent(getActivity(), IpaActivity.class)));
+            }
+
             View learnedWordsCard = view.findViewById(R.id.btnLearnedWords);
             if (learnedWordsCard != null) {
                 learnedWordsCard.setOnClickListener(v -> {
@@ -236,6 +287,360 @@ public class HomeFragment extends Fragment {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void setupNotificationBell(@NonNull View view) {
+        notificationButton = view.findViewById(R.id.btnHomeHeroNotification);
+        notificationBadgeText = view.findViewById(R.id.txtHomeHeroNotificationBadge);
+
+        if (notificationButton != null) {
+            notificationButton.setOnClickListener(v -> showNotificationCenterDialog());
+        }
+
+        renderNotificationBadge(0);
+    }
+
+    private void bindNotificationHeroInsets(@NonNull View rootView) {
+        View bell = rootView.findViewById(R.id.btnHomeHeroNotification);
+        if (bell == null) {
+            return;
+        }
+
+        ViewGroup.LayoutParams rawLayoutParams = bell.getLayoutParams();
+        if (!(rawLayoutParams instanceof ViewGroup.MarginLayoutParams)) {
+            return;
+        }
+
+        ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) rawLayoutParams;
+        final int baseTopMargin = marginLayoutParams.topMargin;
+        final int baseEndMargin = marginLayoutParams.getMarginEnd();
+
+        ViewCompat.setOnApplyWindowInsetsListener(bell, (v, windowInsets) -> {
+            Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            ViewGroup.LayoutParams params = v.getLayoutParams();
+            if (params instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup.MarginLayoutParams updatedParams = (ViewGroup.MarginLayoutParams) params;
+                updatedParams.topMargin = baseTopMargin + systemBars.top + dpToPx(4);
+                updatedParams.setMarginEnd(baseEndMargin);
+                v.setLayoutParams(updatedParams);
+            }
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(bell);
+    }
+
+    private void startUserNotificationObserver() {
+        if (!isAdded()) {
+            return;
+        }
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || TextUtils.isEmpty(user.getUid())) {
+            stopUserNotificationObserver();
+            cachedUserNotifications.clear();
+            renderNotificationBadge(0);
+            return;
+        }
+
+        String uid = user.getUid();
+        if (userNotificationSubscription != null && uid.equals(observedNotificationUid)) {
+            return;
+        }
+
+        stopUserNotificationObserver();
+        observedNotificationUid = uid;
+        notificationSnapshotInitialized = false;
+
+        userNotificationSubscription = userStore.observeUserNotifications(uid, USER_NOTIFICATION_LIMIT, entries -> {
+            if (!isAdded()) {
+                return;
+            }
+            requireActivity().runOnUiThread(() -> consumeUserNotifications(entries));
+        });
+    }
+
+    private void stopUserNotificationObserver() {
+        if (userNotificationSubscription != null) {
+            userNotificationSubscription.remove();
+            userNotificationSubscription = null;
+        }
+        observedNotificationUid = "";
+    }
+
+    private void consumeUserNotifications(@NonNull List<FirebaseUserStore.AdminNotificationEntry> entries) {
+        cachedUserNotifications.clear();
+        cachedUserNotifications.addAll(entries);
+
+        long lastReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : 0L;
+        int unreadCount = countUnreadNotifications(entries, lastReadAt);
+        renderNotificationBadge(unreadCount);
+
+        if (settingsStore == null || !settingsStore.isAdminNotificationsEnabled() || entries.isEmpty()) {
+            notificationSnapshotInitialized = true;
+            return;
+        }
+
+        long lastAlertedAt = settingsStore.getLastAdminNotificationAlertedAt();
+        if (!notificationSnapshotInitialized) {
+            notificationSnapshotInitialized = true;
+            if (lastAlertedAt <= 0L) {
+                settingsStore.setLastAdminNotificationAlertedAt(entries.get(0).createdAt);
+            }
+            return;
+        }
+
+        FirebaseUserStore.AdminNotificationEntry latestForAlert = null;
+        for (FirebaseUserStore.AdminNotificationEntry entry : entries) {
+            if (entry.createdAt > lastAlertedAt) {
+                latestForAlert = entry;
+                break;
+            }
+        }
+
+        if (latestForAlert == null) {
+            return;
+        }
+
+        ensureNotificationPermission();
+        AdminNotificationCenter.notifyAdminMessage(
+                requireContext(),
+                nonEmptyText(latestForAlert.title, "Thông báo mới từ Admin"),
+                nonEmptyText(latestForAlert.message, "Bạn vừa nhận thông báo mới."),
+                latestForAlert.createdAt
+        );
+        settingsStore.setLastAdminNotificationAlertedAt(latestForAlert.createdAt);
+        
+        // Refresh local data to reflect any stats changes (e.g., XP grant) mentioned in notification
+        refreshData(true);
+    }
+
+    private void renderNotificationBadge(int unreadCount) {
+        if (notificationBadgeText == null) {
+            return;
+        }
+
+        if (unreadCount <= 0) {
+            notificationBadgeText.setVisibility(View.GONE);
+            return;
+        }
+
+        notificationBadgeText.setVisibility(View.VISIBLE);
+        notificationBadgeText.setText(unreadCount > 99 ? "99+" : String.valueOf(unreadCount));
+    }
+
+    private void showNotificationCenterDialog() {
+        if (!isAdded()) {
+            return;
+        }
+
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.CustomBottomSheetDialogTheme);
+        View content = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_home_notifications, null, false);
+
+        RecyclerView recyclerView = content.findViewById(R.id.homeNotificationRecycler);
+        TextView emptyText = content.findViewById(R.id.homeNotificationEmpty);
+        TextView subtitleText = content.findViewById(R.id.txtHomeNotificationSubtitle);
+        MaterialButton closeButton = content.findViewById(R.id.btnHomeNotificationClose);
+
+        List<FirebaseUserStore.AdminNotificationEntry> items = new ArrayList<>(cachedUserNotifications);
+        long lastReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : 0L;
+        int unreadCount = countUnreadNotifications(items, lastReadAt);
+
+        HomeNotificationAdapter adapter = new HomeNotificationAdapter();
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerView.setAdapter(adapter);
+        adapter.submit(items, lastReadAt);
+
+        if (subtitleText != null) {
+            subtitleText.setText("Mới: " + unreadCount);
+        }
+        if (emptyText != null) {
+            emptyText.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+        }
+        if (closeButton != null) {
+            closeButton.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.setContentView(content);
+        dialog.show();
+
+        if (items.isEmpty()) {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser != null && !TextUtils.isEmpty(currentUser.getUid())) {
+                String uid = currentUser.getUid();
+                userStore.fetchUserNotifications(uid, USER_NOTIFICATION_LIMIT, fetchedEntries -> {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    requireActivity().runOnUiThread(() -> {
+                        if (!dialog.isShowing()) {
+                            return;
+                        }
+
+                        cachedUserNotifications.clear();
+                        cachedUserNotifications.addAll(fetchedEntries);
+
+                        items.clear();
+                        items.addAll(fetchedEntries);
+
+                        long latestReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : 0L;
+                        adapter.submit(items, latestReadAt);
+
+                        if (emptyText != null) {
+                            emptyText.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                        }
+                        if (subtitleText != null) {
+                            subtitleText.setText("Mới: " + countUnreadNotifications(items, latestReadAt));
+                        }
+
+                        markNotificationsAsRead(items);
+                        long updatedReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : latestReadAt;
+                        adapter.submit(items, updatedReadAt);
+                        if (subtitleText != null) {
+                            subtitleText.setText("Mới: " + countUnreadNotifications(items, updatedReadAt));
+                        }
+                    });
+                });
+            }
+        }
+
+        markNotificationsAsRead(items);
+
+        long updatedReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : lastReadAt;
+        adapter.submit(items, updatedReadAt);
+        if (subtitleText != null) {
+            subtitleText.setText("Mới: " + countUnreadNotifications(items, updatedReadAt));
+        }
+    }
+
+    private void markNotificationsAsRead(@NonNull List<FirebaseUserStore.AdminNotificationEntry> entries) {
+        if (settingsStore == null || entries.isEmpty()) {
+            return;
+        }
+
+        long newestCreatedAt = 0L;
+        for (FirebaseUserStore.AdminNotificationEntry entry : entries) {
+            newestCreatedAt = Math.max(newestCreatedAt, entry.createdAt);
+        }
+
+        if (newestCreatedAt <= 0L) {
+            return;
+        }
+
+        if (newestCreatedAt > settingsStore.getLastAdminNotificationReadAt()) {
+            settingsStore.setLastAdminNotificationReadAt(newestCreatedAt);
+            renderNotificationBadge(0);
+        }
+    }
+
+    private int countUnreadNotifications(
+            @NonNull List<FirebaseUserStore.AdminNotificationEntry> entries,
+            long lastReadAt
+    ) {
+        int unread = 0;
+        for (FirebaseUserStore.AdminNotificationEntry entry : entries) {
+            if (entry.createdAt > lastReadAt) {
+                unread++;
+            }
+        }
+        return unread;
+    }
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
+    private String formatNotificationTime(long millis) {
+        if (millis <= 0L) {
+            return "--";
+        }
+        if (DateUtils.isToday(millis)) {
+            return "Hôm nay " + new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(millis));
+        }
+        return NOTIFICATION_TIME_FORMAT.format(new Date(millis));
+    }
+
+    private String nonEmptyText(String value, String fallback) {
+        if (value == null || value.trim().isEmpty()) {
+            return fallback;
+        }
+        return value.trim();
+    }
+
+    private void openNotificationDetail(@NonNull FirebaseUserStore.AdminNotificationEntry entry) {
+        if (!isAdded()) {
+            return;
+        }
+
+        Intent intent = new Intent(requireContext(), NotificationDetailActivity.class);
+        intent.putExtra(NotificationDetailActivity.EXTRA_NOTIFICATION_ID, nonEmptyText(entry.id, ""));
+        intent.putExtra(NotificationDetailActivity.EXTRA_TITLE, nonEmptyText(entry.title, "Thông báo từ Admin"));
+        intent.putExtra(NotificationDetailActivity.EXTRA_MESSAGE, nonEmptyText(entry.message, "Bạn có thông báo mới."));
+        intent.putExtra(NotificationDetailActivity.EXTRA_CREATED_AT, entry.createdAt);
+        intent.putExtra(NotificationDetailActivity.EXTRA_CREATED_BY_NAME, nonEmptyText(entry.createdByName, "Admin"));
+        intent.putExtra(NotificationDetailActivity.EXTRA_TARGET_TYPE, nonEmptyText(entry.targetType, "all"));
+        intent.putExtra(NotificationDetailActivity.EXTRA_TARGET_EMAIL, nonEmptyText(entry.targetEmail, ""));
+        startActivity(intent);
+    }
+
+    private class HomeNotificationAdapter extends RecyclerView.Adapter<HomeNotificationAdapter.NotificationViewHolder> {
+        private final List<FirebaseUserStore.AdminNotificationEntry> items = new ArrayList<>();
+        private long readAt;
+
+        void submit(@NonNull List<FirebaseUserStore.AdminNotificationEntry> values, long lastReadAt) {
+            items.clear();
+            items.addAll(values);
+            readAt = Math.max(0L, lastReadAt);
+            notifyDataSetChanged();
+        }
+
+        @NonNull
+        @Override
+        public NotificationViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_home_notification, parent, false);
+            return new NotificationViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull NotificationViewHolder holder, int position) {
+            FirebaseUserStore.AdminNotificationEntry entry = items.get(position);
+            holder.title.setText(nonEmptyText(entry.title, "Thông báo từ Admin"));
+            holder.message.setText(nonEmptyText(entry.message, "Bạn có thông báo mới."));
+            holder.time.setText(formatNotificationTime(entry.createdAt));
+
+            boolean unread = entry.createdAt > readAt;
+            holder.unreadDot.setVisibility(unread ? View.VISIBLE : View.GONE);
+            int strokeColor = ContextCompat.getColor(
+                    requireContext(),
+                    unread ? R.color.ef_primary : R.color.ef_outline
+            );
+            holder.card.setStrokeColor(strokeColor);
+                holder.card.setOnClickListener(v -> openNotificationDetail(entry));
+        }
+
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+
+        class NotificationViewHolder extends RecyclerView.ViewHolder {
+            final MaterialCardView card;
+            final TextView title;
+            final TextView message;
+            final TextView time;
+            final View unreadDot;
+
+            NotificationViewHolder(@NonNull View itemView) {
+                super(itemView);
+                card = itemView.findViewById(R.id.cardHomeNotification);
+                title = itemView.findViewById(R.id.txtHomeNotificationItemTitle);
+                message = itemView.findViewById(R.id.txtHomeNotificationItemMessage);
+                time = itemView.findViewById(R.id.txtHomeNotificationItemTime);
+                unreadDot = itemView.findViewById(R.id.viewHomeNotificationUnreadDot);
+            }
         }
     }
 
@@ -572,7 +977,7 @@ public class HomeFragment extends Fragment {
         if (requestCode == REQUEST_NOTIFICATION_PERMISSION && isAdded()) {
             boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
             if (!granted) {
-                Toast.makeText(requireContext(), "Bạn cần bật quyền thông báo để nhận nhắc học", Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), "Bạn cần bật quyền thông báo để nhận nhắc học và thông báo từ Admin", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -600,7 +1005,7 @@ public class HomeFragment extends Fragment {
             if (currentStreakText != null) currentStreakText.setText("0");
             if (currentStreakCardText != null) currentStreakCardText.setText("0");
             if (scannedCountText != null) scannedCountText.setText("0");
-            if (xpText != null) xpText.setText("XP hôm nay: 0/120");
+            if (xpText != null) xpText.setText("XP hôm nay: 0 điểm");
             if (xpPercentageText != null) xpPercentageText.setText("0%");
             if (headerXpText != null) headerXpText.setText("0");
             if (weeklyTotalText != null) weeklyTotalText.setText("0 phút");
@@ -624,14 +1029,25 @@ public class HomeFragment extends Fragment {
     // ASYNC DATA LOADING
     // ─────────────────────────────────────────────────────────
 
-    private void refreshData() {
+    private void refreshData(boolean forceRefresh) {
         if (!isAdded() || repository == null) return;
+
+        if (forceRefresh) {
+            repository.syncCurrentUserProgressToCloud();
+        }
+
+        long now = SystemClock.elapsedRealtime();
+        if (!forceRefresh && now - lastDashboardRenderAt < UI_REFRESH_MIN_INTERVAL_MS) {
+            return;
+        }
         
         repository.getDashboardSnapshotAsync(snapshot -> {
             if (!isAdded()) return;
             
             View view = getView();
             if (view == null) return;
+
+            lastDashboardRenderAt = SystemClock.elapsedRealtime();
 
             com.example.englishflow.data.UserProgress progress = snapshot.userProgress;
             
@@ -683,13 +1099,13 @@ public class HomeFragment extends Fragment {
             TextView xpText = view.findViewById(R.id.txtXp);
             TextView xpPercentageText = view.findViewById(R.id.txtXpPercentage);
             TextView headerXpText = view.findViewById(R.id.txtHeaderXp);
-            LinearProgressIndicator xpProgress = view.findViewById(R.id.xpProgress);
+            LightningProgressBar xpProgress = view.findViewById(R.id.xpProgress);
 
-            if (xpText != null) xpText.setText("XP hôm nay: " + xpToday + "/" + xpGoal);
+            if (xpText != null) xpText.setText("XP hôm nay: " + xpToday + " điểm");
             int xpPercent = xpGoal > 0 ? (int) (((float) xpToday / (float) xpGoal) * 100f) : 0;
             if (xpPercentageText != null) xpPercentageText.setText(Math.min(xpPercent, 100) + "%");
             if (headerXpText != null) headerXpText.setText(String.valueOf(xpToday));
-            if (xpProgress != null) xpProgress.setProgressCompat(Math.min(xpPercent, 100), true);
+            if (xpProgress != null) xpProgress.setProgress(Math.min(xpPercent, 100));
 
             // Weekly Total
             TextView weeklyTotalText = view.findViewById(R.id.txtWeeklyTotal);

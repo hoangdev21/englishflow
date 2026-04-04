@@ -13,15 +13,21 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.englishflow.admin.AdminDashboardActivity;
 import com.example.englishflow.data.AppRepository;
-import com.example.englishflow.data.LocalAuthStore;
+import com.example.englishflow.data.FirebaseUserStore;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private LocalAuthStore localAuthStore;
     private AppRepository repository;
+    private FirebaseAuth firebaseAuth;
+    private FirebaseUserStore firebaseUserStore;
 
     private TextInputEditText nameInput;
     private TextInputEditText emailInput;
@@ -41,8 +47,9 @@ public class RegisterActivity extends AppCompatActivity {
             return insets;
         });
 
-        localAuthStore = new LocalAuthStore(getApplicationContext());
         repository = AppRepository.getInstance(getApplicationContext());
+        firebaseAuth = FirebaseAuth.getInstance();
+        firebaseUserStore = new FirebaseUserStore();
 
         nameInput = findViewById(R.id.registerNameInput);
         emailInput = findViewById(R.id.registerEmailInput);
@@ -85,30 +92,95 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        if (localAuthStore.emailExists(email)) {
-            Toast.makeText(this, R.string.auth_email_already_in_use, Toast.LENGTH_SHORT).show();
+        setLoading(true);
+        firebaseAuth.createUserWithEmailAndPassword(email, password)
+                .addOnSuccessListener(result -> onRegisterSuccess(result.getUser(), displayName))
+                .addOnFailureListener(e -> {
+                    setLoading(false);
+                    showRegisterError(e);
+                });
+    }
+
+    private void onRegisterSuccess(FirebaseUser user, String displayName) {
+        if (user == null) {
+            setLoading(false);
+            Toast.makeText(this, R.string.auth_register_failed, Toast.LENGTH_SHORT).show();
             return;
         }
 
-        setLoading(true);
-        boolean created = localAuthStore.register(displayName, email, password);
-        setLoading(false);
-        if (created) {
-            repository.setUserName(displayName);
-            Toast.makeText(this, R.string.auth_register_success, Toast.LENGTH_SHORT).show();
-            startMainActivity();
-        } else {
-            Toast.makeText(this, R.string.auth_register_failed, Toast.LENGTH_SHORT).show();
-        }
+        UserProfileChangeRequest profileRequest = new UserProfileChangeRequest.Builder()
+                .setDisplayName(displayName)
+                .build();
+
+        user.updateProfile(profileRequest)
+                .addOnCompleteListener(task -> {
+                    firebaseUserStore.getOrCreateProfile(user, displayName, "", profile -> {
+                        setLoading(false);
+                        if (profile == null) {
+                            Toast.makeText(this, R.string.auth_register_failed, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        if (profile.isLocked()) {
+                            firebaseAuth.signOut();
+                            Toast.makeText(this, R.string.auth_account_locked, Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        repository.setUserName(profile.displayName);
+                        firebaseUserStore.recordAccessLog(profile, "password");
+                        Toast.makeText(this, R.string.auth_register_success, Toast.LENGTH_SHORT).show();
+                        if (profile.isAdmin()) {
+                            startAdminDashboard();
+                        } else {
+                            startMainActivity();
+                        }
+                    });
+                });
     }
 
     private void setLoading(boolean loading) {
-        registerButton.setEnabled(!loading);
-        registerButton.setText(loading ? R.string.auth_registering : R.string.auth_register);
+        if (registerButton != null) {
+            registerButton.setEnabled(!loading);
+            registerButton.setText(loading ? R.string.auth_registering : R.string.auth_register);
+        }
+    }
+
+    private void showRegisterError(Exception e) {
+        if (e instanceof FirebaseAuthException) {
+            String code = ((FirebaseAuthException) e).getErrorCode();
+            if ("ERROR_INVALID_EMAIL".equals(code)) {
+                Toast.makeText(this, R.string.auth_invalid_email, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if ("ERROR_EMAIL_ALREADY_IN_USE".equals(code)) {
+                Toast.makeText(this, R.string.auth_email_already_in_use, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if ("ERROR_WEAK_PASSWORD".equals(code)) {
+                Toast.makeText(this, R.string.auth_password_short, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if ("ERROR_OPERATION_NOT_ALLOWED".equals(code)) {
+                Toast.makeText(this, R.string.auth_register_method_not_enabled, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if ("ERROR_NETWORK_REQUEST_FAILED".equals(code)) {
+                Toast.makeText(this, R.string.auth_network_error, Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+        Toast.makeText(this, R.string.auth_register_failed, Toast.LENGTH_SHORT).show();
     }
 
     private String valueOf(TextInputEditText input) {
         return input.getText() == null ? "" : input.getText().toString().trim();
+    }
+
+    private void startAdminDashboard() {
+        Intent intent = new Intent(this, AdminDashboardActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     private void startMainActivity() {

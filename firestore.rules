@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function isSeedAdminEmail() {
+      return isSignedIn()
+        && request.auth.token.email is string
+        && request.auth.token.email.matches('(?i)^hoangdev21@gmail[.]com$');
+    }
+
+    function hasAdminRole() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userDoc(request.auth.uid).data.role is string
+        && userDoc(request.auth.uid).data.role.matches('(?i)admin');
+    }
+
+    function isAdmin() {
+      return isSeedAdminEmail() || hasAdminRole();
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function ownerSafeUpdateOnly() {
+      return request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.status == resource.data.status;
+    }
+
+    match /users/{uid} {
+      // Signed-in users can read public profile for leaderboard/community.
+      allow get, list: if isSignedIn();
+
+      // New account can create only its own profile.
+      allow create: if isOwner(uid) && request.resource.data.uid == uid;
+
+      // Owner can edit non-sensitive profile fields only; admin can edit all.
+      allow update: if (isOwner(uid) && ownerSafeUpdateOnly()) || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    match /users/{uid}/learned_words/{wordId} {
+      allow get, list: if isOwner(uid) || isAdmin();
+      allow create, update, delete: if isOwner(uid) || isAdmin();
+    }
+
+    match /users/{uid}/study_sessions/{sessionId} {
+      allow get, list: if isOwner(uid) || isAdmin();
+      allow create, update, delete: if isOwner(uid) || isAdmin();
+    }
+
+    match /custom_vocabulary/{wordId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /access_logs/{logId} {
+      allow create: if isSignedIn();
+      allow get, list: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /admin_notifications/{notificationId} {
+      allow create: if isAdmin()
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.message is string
+        && (
+          request.resource.data.targetType == 'all'
+          || request.resource.data.targetType == 'user'
+        );
+
+      allow get, list: if isSignedIn() && (
+        isAdmin()
+        || resource.data.targetType == 'all'
+        || resource.data.targetUid == request.auth.uid
+      );
+
+      allow update, delete: if isAdmin();
+    }
+  }
+}

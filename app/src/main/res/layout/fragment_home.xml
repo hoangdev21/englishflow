@@ -46,6 +46,49 @@
                 android:src="@drawable/bg_wave_bottom"
                 app:tint="@color/white" />
 
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btnHomeHeroNotification"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="14dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="#2EFFFFFF"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="6dp"
+                app:strokeColor="#7FFFFFFF"
+                app:strokeWidth="1dp">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_notification_bell" />
+
+                    <TextView
+                        android:id="@+id/txtHomeHeroNotificationBadge"
+                        android:layout_width="19dp"
+                        android:layout_height="19dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="3dp"
+                        android:layout_marginEnd="2dp"
+                        android:background="@drawable/bg_notification_badge"
+                        android:gravity="center"
+                        android:paddingBottom="1dp"
+                        android:text="0"
+                        android:textColor="@color/white"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </FrameLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Interactive Content Layer (Always on top) -->
             <LinearLayout
                 android:id="@+id/headerContent"
@@ -577,16 +620,11 @@
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
-                <com.google.android.material.progressindicator.LinearProgressIndicator
+                <com.example.englishflow.ui.views.LightningProgressBar
                     android:id="@+id/xpProgress"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:max="100"
-                    app:indicatorColor="@color/ef_primary"
-                    app:trackColor="@color/ef_xp_track"
-                    app:trackCornerRadius="6dp"
-                    app:trackThickness="12dp" />
+                    android:layout_height="14dp"
+                    android:layout_marginTop="16dp" />
             </LinearLayout>
 
             <!-- Leaderboard Entry (NEW) -->
@@ -779,10 +817,9 @@
                         android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
-
-                <!-- Saved -->
+                <!-- IPA (New) -->
                 <LinearLayout
-                    android:id="@+id/btnQuickDictionary"
+                    android:id="@+id/btnQuickIpa"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -795,16 +832,15 @@
                     android:paddingBottom="14dp">
 
                     <ImageView
-                        android:id="@+id/imgSavedWords"
                         android:layout_width="32dp"
                         android:layout_height="32dp"
-                        android:src="@drawable/ic_bookmark" />
+                        android:src="@drawable/ipa" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Từ lưu"
+                        android:text="IPA"
                         android:textColor="@color/ef_text_primary"
                         android:textSize="12sp"
                         android:textStyle="bold" />

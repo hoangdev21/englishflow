@@ -1,18 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/ef_background"
+    android:fitsSystemWindows="false"
     android:orientation="vertical">
 
     <!-- Header / Top Bar -->
     <RelativeLayout
+        android:id="@+id/leaderboardHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_hero_home_premium"
         android:paddingStart="16dp"
-        android:paddingTop="28dp"
+        android:paddingTop="48dp"
         android:paddingEnd="16dp"
         android:paddingBottom="45dp">
 
@@ -81,6 +82,15 @@
                 android:layout_marginTop="4dp"
                 android:background="@drawable/bg_icon_circle_blue"
                 android:elevation="6dp">
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/rank2Avatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="2dp"
+                    android:scaleType="centerCrop"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"
+                    android:src="@drawable/user_avatar" />
+
                 <TextView
                     android:id="@+id/rank2Initial"
                     android:layout_width="wrap_content"
@@ -89,7 +99,8 @@
                     android:text="B"
                     android:textColor="@color/white"
                     android:textSize="26sp"
-                    android:fontFamily="sans-serif-black" />
+                    android:fontFamily="sans-serif-black"
+                    android:visibility="gone" />
             </FrameLayout>
             <TextView
                 android:id="@+id/rank2Name"
@@ -137,6 +148,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:background="@drawable/bg_icon_circle_amber">
+                     <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/rank1Avatar"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:padding="2dp"
+                        android:scaleType="centerCrop"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"
+                        android:src="@drawable/user_avatar" />
+
                      <TextView
                         android:id="@+id/rank1Initial"
                         android:layout_width="wrap_content"
@@ -145,7 +165,8 @@
                         android:text="A"
                         android:textColor="@color/white"
                         android:textSize="36sp"
-                        android:fontFamily="sans-serif-black" />
+                        android:fontFamily="sans-serif-black"
+                        android:visibility="gone" />
                 </FrameLayout>
             </FrameLayout>
             <TextView
@@ -189,6 +210,15 @@
                 android:layout_marginTop="4dp"
                 android:background="@drawable/bg_icon_circle_rose"
                 android:elevation="5dp">
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/rank3Avatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="2dp"
+                    android:scaleType="centerCrop"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"
+                    android:src="@drawable/user_avatar" />
+
                 <TextView
                     android:id="@+id/rank3Initial"
                     android:layout_width="wrap_content"
@@ -197,7 +227,8 @@
                     android:text="C"
                     android:textColor="@color/white"
                     android:textSize="24sp"
-                    android:fontFamily="sans-serif-black" />
+                    android:fontFamily="sans-serif-black"
+                    android:visibility="gone" />
             </FrameLayout>
             <TextView
                 android:id="@+id/rank3Name"
@@ -378,6 +409,15 @@
                 android:layout_height="48dp"
                 android:layout_marginStart="8dp"
                 android:background="@drawable/bg_3d_badge_silver">
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/myAvatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="2dp"
+                    android:scaleType="centerCrop"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"
+                    android:src="@drawable/user_avatar" />
+
                 <TextView
                     android:id="@+id/myInitial"
                     android:layout_width="wrap_content"
@@ -386,7 +426,8 @@
                     android:text="H"
                     android:textColor="@color/ef_text_primary"
                     android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:visibility="gone" />
             </FrameLayout>
 
             <LinearLayout

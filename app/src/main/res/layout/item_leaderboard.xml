@@ -34,6 +34,14 @@
         android:layout_height="44dp"
         android:layout_marginStart="4dp"
         android:background="@drawable/bg_3d_badge_silver">
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imgAvatar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="2dp"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"
+            android:src="@drawable/user_avatar" />
         <TextView
             android:id="@+id/txtAvatarInitial"
             android:layout_width="wrap_content"
@@ -42,7 +50,8 @@
             android:text="D"
             android:textColor="@color/ef_text_primary"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:visibility="gone" />
     </FrameLayout>
 
     <!-- Name & Info Column -->

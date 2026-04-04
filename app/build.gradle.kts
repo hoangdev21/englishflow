@@ -79,6 +79,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.common)
+    implementation(libs.play.services.auth)
 
     implementation(libs.appcompat)
     implementation(libs.material)
@@ -105,6 +106,7 @@ dependencies {
     // Lifecycle
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.8.7")
     implementation("androidx.lifecycle:lifecycle-livedata:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-process:2.8.7")
     // HTTP + JSON (for Gemini Vision API REST calls)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.airbnb.android:lottie:6.6.4")

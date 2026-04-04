@@ -1,6 +1,7 @@
 package com.example.englishflow.ui.fragments;
 
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.speech.tts.TextToSpeech;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,11 +28,11 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.AppSettingsStore;
-import com.example.englishflow.data.LocalAuthStore;
 import com.example.englishflow.data.WordEntry;
 import com.example.englishflow.ui.SettingsActivity;
 import com.example.englishflow.ui.adapters.AchievementAdapter;
 import com.example.englishflow.ui.adapters.DictionaryAdapter;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -44,9 +45,9 @@ public class ProfileFragment extends Fragment {
 
     private static final float TTS_SPEECH_RATE = 0.9f;
     private static final float TTS_PITCH = 1.0f;
+    private static final long UI_REFRESH_MIN_INTERVAL_MS = 1500L;
 
     private AppRepository repository;
-    private LocalAuthStore localAuthStore;
     private AppSettingsStore settingsStore;
     private TextToSpeech textToSpeech;
 
@@ -59,6 +60,7 @@ public class ProfileFragment extends Fragment {
     private LinearLayout chartContainer;
     private View weeklyEmptyState;
     private AchievementAdapter achievementAdapter;
+    private long lastRenderedAt = 0L;
 
     @Nullable
     @Override
@@ -71,7 +73,6 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         repository = AppRepository.getInstance(requireContext());
-        localAuthStore = new LocalAuthStore(requireContext());
         settingsStore = new AppSettingsStore(requireContext());
 
         nameText = view.findViewById(R.id.profileName);
@@ -109,7 +110,7 @@ public class ProfileFragment extends Fragment {
         achievementAdapter = new AchievementAdapter(new ArrayList<>());
         achievementRecycler.setAdapter(achievementAdapter);
 
-        renderProfile();
+        renderProfile(true);
         
         btnViewDictionary.setOnClickListener(v -> {
             if (getActivity() != null) {
@@ -137,12 +138,12 @@ public class ProfileFragment extends Fragment {
         });
         btnReset.setOnClickListener(v -> {
             repository.resetProgress();
-            renderProfile();
+            renderProfile(true);
             Toast.makeText(requireContext(), "Đã reset toàn bộ tiến độ", Toast.LENGTH_SHORT).show();
         });
 
         btnLogout.setOnClickListener(v -> {
-            localAuthStore.logout();
+            FirebaseAuth.getInstance().signOut();
             if (getActivity() != null) {
                 startActivity(new android.content.Intent(requireContext(), com.example.englishflow.LoginActivity.class));
                 getActivity().finish();
@@ -188,15 +189,21 @@ public class ProfileFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if (isAdded()) {
-            renderProfile();
+            renderProfile(false);
         }
     }
 
-    private void renderProfile() {
+    private void renderProfile(boolean forceRefresh) {
+        long now = SystemClock.elapsedRealtime();
+        if (!forceRefresh && now - lastRenderedAt < UI_REFRESH_MIN_INTERVAL_MS) {
+            return;
+        }
+
         repository.getDashboardSnapshotAsync(snapshot -> {
             if (!isAdded()) {
                 return;
             }
+            lastRenderedAt = SystemClock.elapsedRealtime();
 
             nameText.setText(snapshot.userName);
             levelText.setText(snapshot.userProgress.totalWordsLearned + " từ đã học");
@@ -204,14 +211,26 @@ public class ProfileFragment extends Fragment {
                 levelBadgeText.setText(snapshot.userProgress.cefrLevel);
             }
             if (profileAvatar != null && isAdded()) {
-                Glide.with(requireContext())
-                     .load(settingsStore.getAvatarResId())
-                     .into(profileAvatar);
+                String avatarKey = settingsStore.getAvatarKey();
+                String photoUrl = snapshot.photoUrl;
+
+                if (AppSettingsStore.AVATAR_CLOUD.equals(avatarKey) && photoUrl != null && !photoUrl.trim().isEmpty()) {
+                    Glide.with(this)
+                         .load(photoUrl)
+                         .placeholder(R.drawable.caheocon)
+                         .error(R.drawable.user_avatar)
+                         .circleCrop()
+                         .into(profileAvatar);
+                } else {
+                    Glide.with(this)
+                         .load(settingsStore.getAvatarResId())
+                         .into(profileAvatar);
+                }
             }
 
             tvLearnedCount.setText(String.valueOf(snapshot.userProgress.totalWordsLearned));
             tvStreakCount.setText(String.valueOf(snapshot.userProgress.currentStreak));
-            tvXpCount.setText(String.valueOf(snapshot.userProgress.xpTodayEarned));
+            tvXpCount.setText(String.valueOf(snapshot.userProgress.totalXpEarned));
 
             // Detailed Stats
             tvDetailLearned.setText(String.valueOf(snapshot.userProgress.totalWordsLearned));

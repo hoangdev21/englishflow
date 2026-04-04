@@ -486,7 +486,7 @@
                         </LinearLayout>
 
                         <LinearLayout
-                            android:id="@+id/actionChatPractice"
+                            android:id="@+id/actionFillBlank"
                             android:layout_width="0dp"
                             android:layout_height="108dp"
                             android:layout_weight="1"
@@ -500,14 +500,14 @@
                             <ImageView
                                 android:layout_width="32dp"
                                 android:layout_height="32dp"
-                                android:src="@drawable/chat_bot_avatar" />
+                                android:src="@drawable/input" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="6dp"
                                 android:fontFamily="@font/nunito"
-                                android:text="@string/learn_action_chat"
+                                android:text="@string/learn_action_fill_blank"
                                 android:textColor="@color/ef_text_primary"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
@@ -517,10 +517,51 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:fontFamily="@font/nunito"
-                                android:text="@string/learn_action_chat_sub"
+                                android:text="@string/learn_action_fill_blank_sub"
                                 android:textColor="@color/ef_text_secondary"
                                 android:textSize="11sp" />
                         </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/actionChatPractice"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_learn_quick_action_tile"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="14dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/chat_bot_avatar" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:fontFamily="@font/nunito"
+                            android:text="@string/learn_action_chat"
+                            android:textColor="@color/ef_text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/nunito"
+                            android:text="@string/learn_action_chat_sub"
+                            android:textColor="@color/ef_text_secondary"
+                            android:textSize="11sp" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

@@ -64,6 +64,63 @@
     <string name="learn_action_saved_words_sub">Xem kho cá nhân</string>
     <string name="learn_action_chat">Chat AI</string>
     <string name="learn_action_chat_sub">Luyện hội thoại</string>
+    <string name="learn_action_fill_blank">Điền từ</string>
+    <string name="learn_action_fill_blank_sub">Luyện kiểu Memrise</string>
+    <string name="flashcard_summary_title">Hoàn thành Flashcard</string>
+    <string name="flashcard_summary_topic_format">Chủ đề: %1$s</string>
+    <string name="flashcard_summary_desc_format">Lĩnh vực: %1$s • Từ nắm chắc: %2$d • XP nhận: %3$d</string>
+    <string name="flashcard_summary_xp_format">+%1$d XP</string>
+    <string name="flashcard_summary_action_fill_blank">Luyện điền từ</string>
+    <string name="flashcard_summary_action_flashcard">Học lại flashcard</string>
+
+    <string name="fill_blank_title">Luyện điền từ</string>
+    <string name="fill_blank_topic_default">Chưa chọn chủ đề</string>
+    <string name="fill_blank_topic_change">Đổi chủ đề</string>
+    <string name="fill_blank_topic_meta_format">%1$s • %2$d câu khả dụng</string>
+    <string name="fill_blank_progress_format">Câu %1$d/%2$d</string>
+    <string name="fill_blank_translation_format">Dịch: %1$s</string>
+    <string name="fill_blank_meaning_format">Từ mục tiêu: %1$s</string>
+    <string name="fill_blank_slots_label">Điền từ theo từng ký tự</string>
+    <string name="fill_blank_question_label">Hoàn thành câu tiếng Anh</string>
+    <string name="fill_blank_tap_slots_hint">Chạm vào dãy ô để mở bàn phím và nhập trực tiếp trên ô</string>
+    <string name="fill_blank_answer_hint">Nhập từ tiếng Anh vào chỗ trống</string>
+    <string name="fill_blank_hint_default">Gợi ý: bấm nút đầu/cuối nếu cần</string>
+    <string name="fill_blank_hint_first_format">Chữ đầu: %1$s</string>
+    <string name="fill_blank_hint_last_format">Chữ cuối: %1$s</string>
+    <string name="fill_blank_hint_length_format">Độ dài: %1$d ký tự</string>
+    <string name="fill_blank_hint_label">GỢI Ý TỪ FLOW</string>
+    <string name="fill_blank_btn_hint_first">Gợi ý đầu</string>
+
+    <string name="fill_blank_btn_hint_last">Gợi ý cuối</string>
+    <string name="fill_blank_btn_check">Kiểm tra</string>
+    <string name="fill_blank_btn_next">Tiếp theo</string>
+    <string name="fill_blank_loading">Đang tạo bộ câu điền từ...</string>
+    <string name="fill_blank_empty_title">Chưa có dữ liệu luyện điền từ</string>
+    <string name="fill_blank_empty_message">Hoàn thành ít nhất 1 task flashcard (ví dụ: Nhà cửa cơ bản) để mở câu điền từ chính xác theo chủ đề.</string>
+    <string name="fill_blank_empty_action">Đi học flashcard</string>
+    <string name="fill_blank_no_questions">Chủ đề này chưa có đủ câu ví dụ khả dụng, hãy đổi chủ đề khác.</string>
+    <string name="fill_blank_session_xp_format">XP phiên này: %1$d</string>
+    <string name="fill_blank_session_xp_placeholder">XP phiên này: 0</string>
+    <string name="fill_blank_combo_format">Combo: %1$d/%2$d</string>
+    <string name="fill_blank_combo_placeholder">Combo: 0/5</string>
+    <string name="fill_blank_progress_initial">Câu 0/0</string>
+
+    <string name="fill_blank_feedback_correct">Chính xác: %1$s • Đang chuyển câu tiếp theo...</string>
+    <string name="fill_blank_feedback_try_again">Chưa đúng, thử lại nhé.</string>
+    <string name="fill_blank_feedback_incorrect">Sai rồi, nhập lại từ đúng.</string>
+    <string name="fill_blank_reward_toast">+10 XP cho câu đúng</string>
+    <string name="fill_blank_combo_bonus_toast">Combo %1$d! +%2$d XP bonus</string>
+    <string name="fill_blank_select_topic_title">Chọn chủ đề điền từ</string>
+    <string name="fill_blank_topic_picker_subtitle">Chọn để luyện lại theo bộ từ đã học</string>
+    <string name="fill_blank_topic_picker_subtitle_format">%1$d chủ đề khả dụng để học lại</string>
+    <string name="fill_blank_topic_picker_item">%1$s (%2$d câu)</string>
+    <string name="fill_blank_topic_domain_format">%1$s • %2$d từ đã học</string>
+    <string name="fill_blank_topic_question_count_short">%1$d câu</string>
+    <string name="fill_blank_topic_current">ĐANG HỌC</string>
+    <string name="fill_blank_done_title">Hoàn thành vòng luyện</string>
+    <string name="fill_blank_done_message">Bạn đã hoàn thành %1$d câu trong chủ đề này, nhận %2$d XP và combo cao nhất %3$d.</string>
+    <string name="fill_blank_done_retry">Làm lại chủ đề</string>
+    <string name="fill_blank_done_change_topic">Đổi chủ đề</string>
     <string name="learn_domains_title">Lĩnh vực học</string>
     <string name="learn_domains_subtitle">Chọn chủ đề theo lĩnh vực bạn yêu thích</string>
     <string name="learn_domains_count_format">%1$d lĩnh vực</string>
@@ -98,6 +155,22 @@
     <string name="scan_preview_desc">Hình ảnh xem trước để quét</string>
     <string name="chat_title">Chat luyện nói AI</string>
     <string name="profile_title">Hồ sơ học tập</string>
+    <string name="profile_xp_current">XP hiện có</string>
+
+    <string name="avatar_picker_balance_loading">Đang tải XP...</string>
+    <string name="avatar_picker_balance_format">XP hiện có: %1$d</string>
+    <string name="avatar_price_free">Miễn phí</string>
+    <string name="avatar_price_unlocked">Đã mở</string>
+    <string name="avatar_price_in_use">Đang dùng</string>
+    <string name="avatar_price_xp_format">%1$d XP</string>
+    <string name="avatar_select_success">Đã đổi ảnh đại diện</string>
+    <string name="avatar_buy_dialog_title">Mở ảnh đại diện mới</string>
+    <string name="avatar_buy_dialog_message">Bạn muốn đổi %1$d XP để mở ảnh này?\nXP hiện có: %2$d</string>
+    <string name="avatar_buy_dialog_confirm">Đổi XP</string>
+    <string name="avatar_buy_dialog_cancel">Hủy</string>
+    <string name="avatar_buy_success">Đổi ảnh thành công, XP đã được cập nhật</string>
+    <string name="avatar_buy_failed_generic">Không thể mở ảnh đại diện lúc này</string>
+    <string name="avatar_buy_insufficient_xp">Không đủ XP. Cần %1$d XP, bạn hiện có %2$d XP</string>
 
     <string name="btn_pronounce">Phát âm</string>
     <string name="btn_save_word">Lưu từ</string>
@@ -129,10 +202,27 @@
     <string name="auth_reset_sent">Đã gửi email đặt lại mật khẩu</string>
     <string name="auth_reset_failed">Không gửi được email đặt lại mật khẩu</string>
     <string name="auth_reset_not_supported_local">Bản local SQLite chưa hỗ trợ quên mật khẩu qua email</string>
+    <string name="auth_google_sign_in">Tiếp tục với Google</string>
+    <string name="auth_google_failed">Đăng nhập Google thất bại</string>
+    <string name="auth_google_not_configured">Google Sign-In chưa được cấu hình trên Firebase project</string>
+    <string name="auth_account_locked">Tài khoản của bạn đang bị khóa. Vui lòng liên hệ quản trị viên.</string>
 
     <string name="status_not_started">Chưa học</string>
     <string name="status_learning">Đang học</string>
     <string name="status_completed">Hoàn thành</string>
+
+    <string name="admin_content_title">Kho từ vựng hệ thống</string>
+    <string name="admin_content_subtitle">Toàn bộ từ flashcard hiện có, lọc theo lĩnh vực để quản trị chính xác.</string>
+    <string name="admin_content_stat_words">Tổng từ</string>
+    <string name="admin_content_stat_domains">Lĩnh vực</string>
+    <string name="admin_content_stat_topics">Chủ đề</string>
+    <string name="admin_content_stat_locked">Đang khóa</string>
+    <string name="admin_content_search_hint">Tìm từ, nghĩa, nguồn...</string>
+    <string name="admin_content_domain_filter_hint">Lọc theo lĩnh vực</string>
+    <string name="admin_content_domain_filter_all">Tất cả lĩnh vực</string>
+    <string name="admin_content_result_count">Hiển thị %1$d / %2$d từ</string>
+    <string name="admin_content_empty">Không có từ phù hợp bộ lọc hiện tại</string>
+    <string name="admin_content_open_advanced_manager">Mở trình chỉnh sửa nâng cao</string>
 
     <string name="reminder_notification_title">Đến giờ học rồi!</string>
     <string name="reminder_notification_message">Mở EnglishFlow để tiếp tục bài học hôm nay🐳.</string>

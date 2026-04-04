@@ -19,6 +19,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ScrollView;
+import android.view.ScaleGestureDetector;
+import android.view.MotionEvent;
+import androidx.camera.core.Camera;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -101,6 +104,8 @@ public class ScanFragment extends Fragment {
     private int lensFacing = CameraSelector.LENS_FACING_BACK;
     private Handler previewHintHandler;
     private Runnable previewHintRunnable;
+    private Camera camera;
+    private ScaleGestureDetector scaleGestureDetector;
 
     @Nullable
     @Override
@@ -142,6 +147,7 @@ public class ScanFragment extends Fragment {
         observeUiState();
         initTextToSpeech();
         setupButtons(view);
+        setupZoomGesture();
         // startPreviewHintLoop(); // Removed to support user's wish for a cleaner preview without real-time overrides
 
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
@@ -264,7 +270,7 @@ public class ScanFragment extends Fragment {
                         .build();
 
                 cameraProvider.unbindAll();
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture);
+                camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture);
             } catch (Exception e) {
                 if (isAdded()) {
                     Toast.makeText(requireContext(), "Camera failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -278,6 +284,24 @@ public class ScanFragment extends Fragment {
                 ? CameraSelector.LENS_FACING_FRONT
                 : CameraSelector.LENS_FACING_BACK;
         startCamera();
+    }
+
+    private void setupZoomGesture() {
+        scaleGestureDetector = new ScaleGestureDetector(requireContext(), new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            @Override
+            public boolean onScale(ScaleGestureDetector detector) {
+                if (camera == null) return true;
+                float currentZoomRatio = camera.getCameraInfo().getZoomState().getValue().getZoomRatio();
+                float delta = detector.getScaleFactor();
+                camera.getCameraControl().setZoomRatio(currentZoomRatio * delta);
+                return true;
+            }
+        });
+
+        cameraPreview.setOnTouchListener((v, event) -> {
+            scaleGestureDetector.onTouchEvent(event);
+            return true;
+        });
     }
 
     private void analyzeGalleryImage(@NonNull Uri imageUri) {
@@ -376,6 +400,7 @@ public class ScanFragment extends Fragment {
             android.util.Log.d("ScanFragment", "Groq returned full result for: " + result.getWord());
             
             new Handler(Looper.getMainLooper()).post(() -> {
+                repository.increaseScanCount();
                 scanViewModel.completeAnalysis(result, result.getWord(), result.getWord(), 0.98f, "Analysis complete");
                 isProcessing = false;
             });
@@ -398,6 +423,7 @@ public class ScanFragment extends Fragment {
             if (custom != null && !TextUtils.isEmpty(custom.meaning)) {
                 android.util.Log.d("ScanFragment", "Found custom vocabulary: " + custom.meaning);
                 ScanResult result = buildCustomScanResult(canonical, custom.meaning);
+                repository.increaseScanCount();
                 scanViewModel.completeAnalysis(result, rawLabel, result.getWord(), confidence, "Word found");
                 isProcessing = false;
                 return;
@@ -560,7 +586,6 @@ public class ScanFragment extends Fragment {
                 currentResult.getCategory(),
                 currentResult.getFunFact()
         ));
-        repository.increaseScanCount();
         Toast.makeText(requireContext(), "Word saved", Toast.LENGTH_SHORT).show();
     }
 

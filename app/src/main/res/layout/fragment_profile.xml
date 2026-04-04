@@ -283,7 +283,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="XP/Tuần"
+                        android:text="@string/profile_xp_current"
                         android:textColor="#64748B"
                         android:textSize="10sp"
                         android:textStyle="bold"
