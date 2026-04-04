@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -11,7 +12,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.englishflow.R;
-import com.airbnb.lottie.LottieAnimationView;
 
 
 public class OnboardingPageFragment extends Fragment {
@@ -48,70 +48,43 @@ public class OnboardingPageFragment extends Fragment {
 
         if (getArguments() == null) return;
 
-        String emoji = getArguments().getString(ARG_EMOJI);
         String title = getArguments().getString(ARG_TITLE);
         String description = getArguments().getString(ARG_DESCRIPTION);
         int position = getArguments().getInt(ARG_POSITION);
 
-        View whaleContainer = view.findViewById(R.id.whaleContainer);
-        LottieAnimationView whaleLottie = view.findViewById(R.id.whaleLottie);
-        android.widget.ImageView waveFront = view.findViewById(R.id.waveFront);
-        android.widget.ImageView waveBack = view.findViewById(R.id.waveBack);
-        
+        ImageView gifView = view.findViewById(R.id.onboardingGifView);
         TextView titleView = view.findViewById(R.id.onboardingTitle);
         TextView descriptionView = view.findViewById(R.id.onboardingDescription);
 
         titleView.setText(title);
         descriptionView.setText(description);
 
-        // Use LottieAnimationView to avoid dotlottie native libs that break 16 KB page-size checks.
-        whaleLottie.setAnimationFromUrl("https://assets4.lottiefiles.com/packages/lf20_kkflmtur.json");
-        whaleLottie.setRepeatCount(com.airbnb.lottie.LottieDrawable.INFINITE);
-        whaleLottie.setSpeed(1.2f);
-        whaleLottie.playAnimation();
+        // Mảng ID các tệp GIF trong thư mục res/raw
+        // Hãy đảm bảo các tệp có tên tương ứng hoặc đổi lại cho đúng ở đây
+        int[] gifResources = {
+            R.raw.onboarding_step1,
+            R.raw.onboarding_step2,
+            R.raw.onboarding_step3,
+            R.raw.onboarding_step4
+        };
 
-        // Still keep wave swaying for depth effect
-        startWaveAnimation(waveFront, waveBack);
+        if (position < gifResources.length) {
+            // Sử dụng Glide để load GIF cực kỳ mượt mà từ file raw
+            com.bumptech.glide.Glide.with(this)
+                .asGif()
+                .load(gifResources[position])
+                .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE) // File nội bộ không cần cache đĩa
+                .into(gifView);
+        }
 
         // Stagger animation based on position
-        long delay = position * 150L;
+        long delay = position * 100L;
         view.setAlpha(0f);
         view.animate()
             .alpha(1f)
-            .setDuration(600)
+            .setDuration(500)
             .setStartDelay(delay)
             .start();
     }
-
-    private void startWaveAnimation(View frontWave, View backWave) {
-        // Front wave swaying
-        frontWave.animate()
-            .translationX(20f)
-            .setDuration(1500)
-            .setInterpolator(new android.view.animation.LinearInterpolator())
-            .withEndAction(() -> {
-                if (isAdded()) {
-                    frontWave.animate()
-                        .translationX(-20f)
-                        .setDuration(1500)
-                        .withEndAction(() -> { if (isAdded()) startWaveAnimation(frontWave, backWave); })
-                        .start();
-                }
-            }).start();
-            
-        // Back wave swaying (opposite direction)
-        backWave.animate()
-            .translationX(-15f)
-            .setDuration(1800)
-            .setInterpolator(new android.view.animation.LinearInterpolator())
-            .withEndAction(() -> {
-                if (isAdded()) {
-                    backWave.animate()
-                        .translationX(15f)
-                        .setDuration(1800)
-                        .withEndAction(null)
-                        .start();
-                }
-            }).start();
-    }
 }
+

@@ -41,6 +41,18 @@ public interface CustomVocabularyDao {
     @Query("UPDATE custom_vocabulary SET isLocked = :isLocked, updatedAt = :updatedAt WHERE word = :word")
     int setLocked(String word, boolean isLocked, long updatedAt);
 
+    @Query("UPDATE custom_vocabulary SET " +
+            "exampleVi = CASE WHEN exampleVi IS NULL OR TRIM(exampleVi) = '' OR exampleVi = :legacyExamplePlaceholder THEN :exampleVi ELSE exampleVi END, " +
+            "usage = CASE WHEN usage IS NULL OR TRIM(usage) = '' OR usage = :legacyUsagePlaceholder THEN :usage ELSE usage END, " +
+            "updatedAt = :updatedAt " +
+            "WHERE word = :word")
+    int enrichLearningFields(String word,
+                             String exampleVi,
+                             String usage,
+                             String legacyExamplePlaceholder,
+                             String legacyUsagePlaceholder,
+                             long updatedAt);
+
     @Query("DELETE FROM custom_vocabulary WHERE word = :word")
     int deleteByWord(String word);
 

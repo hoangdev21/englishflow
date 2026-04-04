@@ -52,6 +52,11 @@ public class AppRepository {
     private static final String KEY_LAST_TOPIC_REMAINING_CARDS = "last_topic_remaining_cards";
     private static final String KEY_COMPLETED_MAP_NODES = "completed_map_nodes";
     private static final String SEED_FILE_NAME = "vocab_seed_packages.json";
+    private static final String LEGACY_FLASHCARD_EXAMPLE_PLACEHOLDER = "Bản dịch đang được cập nhật...";
+    private static final String LEGACY_FLASHCARD_USAGE_PLACEHOLDER = "Thông tin cách dùng đang được biên soạn cho từ này.";
+    private static final int FLASHCARD_BACKGROUND_ENRICH_LIMIT = 4;
+    private static final int FLASHCARD_TRANSLATION_CONNECT_TIMEOUT_MS = 2500;
+    private static final int FLASHCARD_TRANSLATION_READ_TIMEOUT_MS = 3000;
     private static final long DASHBOARD_CACHE_TTL_MS = 1200L;
     private static final long DOMAINS_CACHE_TTL_MS = 10000L;
 
@@ -61,6 +66,7 @@ public class AppRepository {
     private final EnglishFlowDatabase database;
     private final LocalAuthStore authStore;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final ExecutorService backgroundExecutor = Executors.newFixedThreadPool(2);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Context appContext;
     private final Object cacheLock = new Object();
@@ -716,11 +722,63 @@ public class AppRepository {
     }
 
     public List<FlashcardItem> getFlashcardsForTopic(String topic) {
+        return buildFlashcardsForTopic(topic, false);
+    }
+
+    public void getFlashcardsForTopicAsync(String topic, DataCallback<List<FlashcardItem>> callback) {
+        backgroundExecutor.execute(() -> {
+            // Return local data immediately for smooth first paint.
+            List<FlashcardItem> cards = buildFlashcardsForTopic(topic, false);
+            mainHandler.post(() -> callback.onResult(cards));
+
+            // Enrich missing translations/usages in background for future sessions.
+            enrichFlashcardsForTopicInBackground(topic);
+        });
+    }
+
+    private void enrichFlashcardsForTopicInBackground(String topic) {
+        try {
+            List<CustomVocabularyEntity> topicPool = getTopicVocabularyPool(topic);
+            if (topicPool.isEmpty()) {
+                return;
+            }
+
+            String domain = getDomainFromTopic(topic);
+            Map<String, Integer> wordScores = getTopicWordScores(topic);
+            int remainingBudget = FLASHCARD_BACKGROUND_ENRICH_LIMIT;
+
+            for (CustomVocabularyEntity entity : topicPool) {
+                if (remainingBudget <= 0) {
+                    break;
+                }
+
+                String normalizedWord = normalizeWord(entity.word);
+                int score = wordScores.getOrDefault(normalizedWord, 0);
+                if (score >= 100) {
+                    continue;
+                }
+
+                boolean missingExampleVi = isMissingLearningField(entity.exampleVi);
+                boolean missingUsage = isMissingLearningField(entity.usage);
+                if (!missingExampleVi && !missingUsage) {
+                    continue;
+                }
+
+                toFlashcardItem(entity, domain, true);
+                remainingBudget--;
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private List<FlashcardItem> buildFlashcardsForTopic(String topic, boolean enrichLearningFields) {
         List<FlashcardItem> cards = new ArrayList<>();
+        boolean topicPoolEmpty = true;
         Map<String, Integer> wordScores = getTopicWordScores(topic);
         try {
             List<CustomVocabularyEntity> topicPool = getTopicVocabularyPool(topic);
-            if (!topicPool.isEmpty()) {
+            topicPoolEmpty = topicPool.isEmpty();
+            if (!topicPoolEmpty) {
                 String domain = getDomainFromTopic(topic);
                 for (CustomVocabularyEntity entity : topicPool) {
                     String normalizedWord = normalizeWord(entity.word);
@@ -728,22 +786,7 @@ public class AppRepository {
                     if (score >= 100) {
                         continue;
                     }
-                    String exampleVi = (entity.exampleVi != null && !entity.exampleVi.isEmpty()) 
-                            ? entity.exampleVi 
-                            : "Bản dịch đang được cập nhật...";
-                    String usage = (entity.usage != null && !entity.usage.isEmpty()) 
-                            ? entity.usage 
-                            : "Thông tin cách dùng đang được biên soạn cho từ này.";
-
-                    cards.add(new FlashcardItem(
-                            getEmojiForDomain(domain),
-                            entity.word,
-                            entity.ipa,
-                            entity.meaning,
-                            entity.example,
-                            exampleVi,
-                            usage
-                    ));
+                    cards.add(toFlashcardItem(entity, domain, enrichLearningFields));
                 }
             }
         } catch (Exception e) {
@@ -756,22 +799,383 @@ public class AppRepository {
             updateTopicStatus(topic, TopicItem.STATUS_LEARNING);
         }
 
-        if (cards.isEmpty() && getTopicVocabularyPool(topic).isEmpty()) {
-            // High-quality mock fallback for UI testing
-            cards.add(new FlashcardItem("🍽️", "menu", "/ˈmen.juː/", "thực đơn", "Could I see the menu, please?", "Làm ơn cho tôi xem thực đơn được không?", "Sử dụng khi yêu cầu danh sách các món ăn tại nhà hàng."));
-            cards.add(new FlashcardItem("🥗", "healthy", "/ˈhel.θi/", "lành mạnh", "I try to eat healthy meals every day.", "Tôi cố gắng ăn các bữa ăn lành mạnh mỗi ngày.", "Dùng để mô tả thói quen hoặc thực phẩm có lợi cho sức khỏe."));
-            cards.add(new FlashcardItem("🍳", "fry", "/fraɪ/", "chiên, rán", "Fry the eggs in a little oil.", "Rán trứng trong một ít dầu.", "Hành động chế biến thực phẩm bằng dầu nóng."));
-            cards.add(new FlashcardItem("🥖", "bread", "/bred/", "bánh mì", "He bought a loaf of fresh bread.", "Anh ấy đã mua một ổ bánh mì mới ra lò.", "Danh từ chỉ loại thực phẩm phổ biến làm từ bột mì."));
-            cards.add(new FlashcardItem("🍶", "sauce", "/sɔːs/", "nước sốt", "Add some more soy sauce to the stir-fry.", "Cho thêm một ít nước tương vào món xào.", "Chất lỏng dùng để tăng hương vị cho món ăn."));
+        if (cards.isEmpty() && topicPoolEmpty) {
+            addMockFlashcards(cards);
         }
         return cards;
     }
 
-    public void getFlashcardsForTopicAsync(String topic, DataCallback<List<FlashcardItem>> callback) {
-        executorService.execute(() -> {
-            List<FlashcardItem> cards = getFlashcardsForTopic(topic);
-            mainHandler.post(() -> callback.onResult(cards));
-        });
+    private FlashcardItem toFlashcardItem(CustomVocabularyEntity entity, String domain, boolean enrichLearningFields) {
+        String safeWord = sanitizeWordForFlashcard(entity.word);
+        String safeMeaning = sanitizeMeaningForFlashcard(entity.meaning, safeWord);
+        String safeIpa = sanitizeIpaForFlashcard(entity.ipa);
+        String safeExample = sanitizeExampleForFlashcard(entity.example, safeWord);
+
+        String exampleVi = sanitizeLearningText(entity.exampleVi);
+        String usage = sanitizeLearningText(entity.usage);
+        boolean missingExampleVi = isMissingLearningField(exampleVi);
+        boolean missingUsage = isMissingLearningField(usage);
+
+        if (missingExampleVi) {
+            String translated = enrichLearningFields ? translateEnglishSentenceToVietnamese(safeExample) : "";
+            exampleVi = !isMissingLearningField(translated)
+                    ? translated
+                    : buildExampleTranslationFallback(safeWord, safeMeaning);
+        }
+
+        if (missingUsage) {
+            usage = buildUsageGuidance(safeWord, safeMeaning, domain, safeExample);
+        }
+
+        if (enrichLearningFields && (missingExampleVi || missingUsage)) {
+            persistEnrichedLearningFields(entity.word, exampleVi, usage);
+        }
+
+        return new FlashcardItem(
+                getEmojiForDomain(domain),
+                safeWord,
+                safeIpa,
+                safeMeaning,
+                safeExample,
+                exampleVi,
+                usage
+        );
+    }
+
+    private void persistEnrichedLearningFields(String word, String exampleVi, String usage) {
+        String normalizedWord = sanitizeLearningText(word);
+        String normalizedExampleVi = sanitizeLearningText(exampleVi);
+        String normalizedUsage = sanitizeLearningText(usage);
+        if (normalizedWord.isEmpty() || normalizedExampleVi.isEmpty() || normalizedUsage.isEmpty()) {
+            return;
+        }
+
+        try {
+            database.customVocabularyDao().enrichLearningFields(
+                    normalizedWord,
+                    normalizedExampleVi,
+                    normalizedUsage,
+                    LEGACY_FLASHCARD_EXAMPLE_PLACEHOLDER,
+                    LEGACY_FLASHCARD_USAGE_PLACEHOLDER,
+                    System.currentTimeMillis()
+            );
+        } catch (Exception ignored) {
+        }
+    }
+
+    private String sanitizeWordForFlashcard(String word) {
+        String normalized = sanitizeLearningText(word);
+        return normalized.isEmpty() ? "word" : normalized;
+    }
+
+    private String sanitizeMeaningForFlashcard(String meaning, String word) {
+        String normalized = sanitizeLearningText(meaning);
+        if (!normalized.isEmpty()) {
+            return normalized;
+        }
+        return "nghĩa thường dùng của từ \"" + word + "\"";
+    }
+
+    private String sanitizeIpaForFlashcard(String ipa) {
+        String normalized = sanitizeLearningText(ipa);
+        return normalized.isEmpty() ? "-" : normalized;
+    }
+
+    private String sanitizeExampleForFlashcard(String example, String word) {
+        String normalized = sanitizeLearningText(example);
+        if (!normalized.isEmpty()) {
+            return normalized;
+        }
+        return "People often use \"" + word + "\" in everyday conversation.";
+    }
+
+    private String sanitizeLearningText(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private boolean isMissingLearningField(String value) {
+        String normalized = sanitizeLearningText(value);
+        if (normalized.isEmpty()) {
+            return true;
+        }
+
+        String lowered = normalized.toLowerCase(Locale.US);
+        return lowered.equals(LEGACY_FLASHCARD_EXAMPLE_PLACEHOLDER.toLowerCase(Locale.US))
+                || lowered.equals(LEGACY_FLASHCARD_USAGE_PLACEHOLDER.toLowerCase(Locale.US))
+                || lowered.equals("vd trống")
+                || lowered.equals("translation pending")
+                || lowered.contains("đang được cập nhật")
+                || lowered.contains("đang được biên soạn");
+    }
+
+    private String buildExampleTranslationFallback(String word, String meaning) {
+        return "Câu ví dụ minh họa cách dùng \"" + word + "\" với nghĩa \"" + meaning + "\".";
+    }
+
+    private String buildUsageGuidance(String word, String meaning, String domain, String example) {
+        String role = inferWordRole(word, meaning, example);
+        String domainLabel = sanitizeLearningText(domain);
+        if (domainLabel.isEmpty()) {
+            domainLabel = "giao tiếp";
+        }
+        String usage;
+        switch (role) {
+            case "verb":
+                usage = "Dùng \"" + word + "\" như động từ với nghĩa \"" + meaning + "\". " +
+                        "Hãy chia thì theo chủ ngữ và ngữ cảnh câu.";
+                break;
+            case "adjective":
+                usage = "Dùng \"" + word + "\" như tính từ mang nghĩa \"" + meaning + "\". " +
+                        "Thường đứng trước danh từ hoặc sau động từ to be/look/feel.";
+                break;
+            case "adverb":
+                usage = "Dùng \"" + word + "\" như trạng từ để bổ nghĩa cho động từ hoặc tính từ, " +
+                        "thể hiện ý \"" + meaning + "\".";
+                break;
+            case "noun":
+                usage = "Dùng \"" + word + "\" như danh từ mang nghĩa \"" + meaning + "\". " +
+                        "Thường kết hợp với a/an/the hoặc các lượng từ phù hợp.";
+                break;
+            default:
+                usage = "Dùng \"" + word + "\" để diễn đạt ý \"" + meaning + "\" trong ngữ cảnh " +
+                        domainLabel.toLowerCase(Locale.US) + ".";
+                break;
+        }
+
+        if (!sanitizeLearningText(example).isEmpty()) {
+            usage += " Ví dụ tham chiếu: \"" + shortenText(example, 110) + "\".";
+        }
+        return usage;
+    }
+
+    private String inferWordRole(String word, String meaning, String example) {
+        String lowerWord = sanitizeLearningText(word).toLowerCase(Locale.US);
+        String lowerMeaning = sanitizeLearningText(meaning).toLowerCase(Locale.US);
+        String lowerExample = sanitizeLearningText(example).toLowerCase(Locale.US);
+
+        if (lowerWord.endsWith("ly")) {
+            return "adverb";
+        }
+
+        if (!lowerWord.isEmpty() && lowerExample.startsWith(lowerWord + " ")) {
+            String secondToken = getTokenAt(lowerExample, 1);
+            if (!isBeVerb(secondToken) && !isDeterminer(secondToken)) {
+                return "verb";
+            }
+        }
+
+        if (containsTokenPattern(lowerExample, " is " + lowerWord)
+                || containsTokenPattern(lowerExample, " are " + lowerWord)
+                || containsTokenPattern(lowerExample, " feels " + lowerWord)
+                || containsTokenPattern(lowerExample, " seems " + lowerWord)
+                || containsTokenPattern(lowerExample, " looks " + lowerWord)
+                || containsTokenPattern(lowerExample, " very " + lowerWord)) {
+            return "adjective";
+        }
+
+        if (containsTokenPattern(lowerExample, " a " + lowerWord)
+                || containsTokenPattern(lowerExample, " an " + lowerWord)
+                || containsTokenPattern(lowerExample, " the " + lowerWord)
+                || containsTokenPattern(lowerExample, " some " + lowerWord)
+                || containsTokenPattern(lowerExample, " many " + lowerWord)) {
+            return "noun";
+        }
+
+        if (lowerWord.endsWith("tion") || lowerWord.endsWith("ment") || lowerWord.endsWith("ness")
+                || lowerWord.endsWith("ity") || lowerWord.endsWith("ship")) {
+            return "noun";
+        }
+
+        if (lowerWord.endsWith("ate") || lowerWord.endsWith("ify") || lowerWord.endsWith("ise")
+                || lowerWord.endsWith("ize") || lowerWord.endsWith("ing")) {
+            return "verb";
+        }
+
+        if (lowerWord.endsWith("ous") || lowerWord.endsWith("ive") || lowerWord.endsWith("ful")
+                || lowerWord.endsWith("less") || lowerWord.endsWith("able") || lowerWord.endsWith("al")
+                || lowerWord.endsWith("ic")) {
+            return "adjective";
+        }
+
+        if (lowerMeaning.startsWith("sự ") || lowerMeaning.startsWith("việc ") || lowerMeaning.startsWith("người ")) {
+            return "noun";
+        }
+
+        if (lowerMeaning.startsWith("làm ") || lowerMeaning.startsWith("đi ") || lowerMeaning.startsWith("ăn ")
+                || lowerMeaning.startsWith("uống ") || lowerMeaning.startsWith("nấu ") || lowerMeaning.startsWith("chiên ")
+                || lowerMeaning.startsWith("nướng ") || lowerMeaning.startsWith("gọt ") || lowerMeaning.startsWith("băm ")) {
+            return "verb";
+        }
+
+        return "general";
+    }
+
+    private boolean containsTokenPattern(String text, String pattern) {
+        return text != null && pattern != null && !pattern.isEmpty() && text.contains(pattern);
+    }
+
+    private String getTokenAt(String text, int index) {
+        String normalized = sanitizeLearningText(text);
+        if (normalized.isEmpty()) {
+            return "";
+        }
+        String[] tokens = normalized.split("\\s+");
+        if (index < 0 || index >= tokens.length) {
+            return "";
+        }
+        return tokens[index].replaceAll("[^a-z]", "").trim();
+    }
+
+    private boolean isBeVerb(String token) {
+        return "is".equals(token) || "am".equals(token) || "are".equals(token)
+                || "was".equals(token) || "were".equals(token) || "be".equals(token);
+    }
+
+    private boolean isDeterminer(String token) {
+        return "a".equals(token) || "an".equals(token) || "the".equals(token)
+                || "some".equals(token) || "any".equals(token) || "many".equals(token)
+                || "much".equals(token) || "this".equals(token) || "that".equals(token)
+                || "these".equals(token) || "those".equals(token);
+    }
+
+    private String shortenText(String text, int maxLength) {
+        String normalized = sanitizeLearningText(text);
+        if (normalized.length() <= maxLength) {
+            return normalized;
+        }
+        return normalized.substring(0, Math.max(0, maxLength - 3)).trim() + "...";
+    }
+
+    private String translateEnglishSentenceToVietnamese(String englishText) {
+        String source = sanitizeLearningText(englishText);
+        if (source.isEmpty()) {
+            return "";
+        }
+
+        HttpURLConnection connection = null;
+        try {
+            String query = URLEncoder.encode(source, StandardCharsets.UTF_8.name());
+            String urlString = "https://api.mymemory.translated.net/get?q=" + query + "&langpair=en|vi";
+            URL url = new URL(urlString);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(FLASHCARD_TRANSLATION_CONNECT_TIMEOUT_MS);
+            connection.setReadTimeout(FLASHCARD_TRANSLATION_READ_TIMEOUT_MS);
+
+            int status = connection.getResponseCode();
+            if (status < 200 || status >= 300) {
+                return "";
+            }
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            reader.close();
+
+            JSONObject json = new JSONObject(response.toString());
+            String translated = extractBestTranslationCandidate(json, source);
+            return isValidVietnameseTranslation(source, translated) ? translated : "";
+        } catch (Exception ignored) {
+            return "";
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    private String extractBestTranslationCandidate(JSONObject json, String sourceText) {
+        String bestCandidate = "";
+        int bestScore = Integer.MIN_VALUE;
+
+        JSONArray matches = json.optJSONArray("matches");
+        if (matches != null) {
+            for (int i = 0; i < matches.length(); i++) {
+                JSONObject match = matches.optJSONObject(i);
+                if (match == null) {
+                    continue;
+                }
+
+                String candidate = cleanupTranslatedText(match.optString("translation", ""));
+                int quality = safeParseInt(match.optString("quality", "0"));
+                int usageCount = safeParseInt(match.optString("usage-count", "0"));
+                int score = quality + Math.min(usageCount, 100);
+
+                if (isValidVietnameseTranslation(sourceText, candidate) && score > bestScore) {
+                    bestScore = score;
+                    bestCandidate = candidate;
+                }
+            }
+        }
+
+        if (!bestCandidate.isEmpty()) {
+            return bestCandidate;
+        }
+
+        JSONObject responseData = json.optJSONObject("responseData");
+        if (responseData == null) {
+            return "";
+        }
+        return cleanupTranslatedText(responseData.optString("translatedText", ""));
+    }
+
+    private int safeParseInt(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
+    private String cleanupTranslatedText(String value) {
+        String normalized = sanitizeLearningText(value)
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'")
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replaceAll("\\s+", " ");
+
+        if (normalized.startsWith("\"") && normalized.endsWith("\"") && normalized.length() > 1) {
+            normalized = normalized.substring(1, normalized.length() - 1).trim();
+        }
+        return normalized;
+    }
+
+    private boolean isValidVietnameseTranslation(String sourceText, String translatedText) {
+        String translated = sanitizeLearningText(translatedText);
+        if (translated.isEmpty()) {
+            return false;
+        }
+
+        if (translated.equalsIgnoreCase(sanitizeLearningText(sourceText))) {
+            return false;
+        }
+
+        String lowered = translated.toLowerCase(Locale.US);
+        if (lowered.contains("mymemory warning") || lowered.contains("translated by")) {
+            return false;
+        }
+
+        boolean hasVietnameseDiacritics = lowered.matches(".*[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ].*");
+        if (hasVietnameseDiacritics) {
+            return true;
+        }
+
+        return !(lowered.contains(" the ") || lowered.contains(" is ") || lowered.contains(" are ")
+                || lowered.contains(" to ") || lowered.contains(" of "));
+    }
+
+    private void addMockFlashcards(List<FlashcardItem> cards) {
+        // High-quality mock fallback for UI testing
+        cards.add(new FlashcardItem("🍽️", "menu", "/ˈmen.juː/", "thực đơn", "Could I see the menu, please?", "Làm ơn cho tôi xem thực đơn được không?", "Sử dụng khi yêu cầu danh sách các món ăn tại nhà hàng."));
+        cards.add(new FlashcardItem("🥗", "healthy", "/ˈhel.θi/", "lành mạnh", "I try to eat healthy meals every day.", "Tôi cố gắng ăn các bữa ăn lành mạnh mỗi ngày.", "Dùng để mô tả thói quen hoặc thực phẩm có lợi cho sức khỏe."));
+        cards.add(new FlashcardItem("🍳", "fry", "/fraɪ/", "chiên, rán", "Fry the eggs in a little oil.", "Rán trứng trong một ít dầu.", "Hành động chế biến thực phẩm bằng dầu nóng."));
+        cards.add(new FlashcardItem("🥖", "bread", "/bred/", "bánh mì", "He bought a loaf of fresh bread.", "Anh ấy đã mua một ổ bánh mì mới ra lò.", "Danh từ chỉ loại thực phẩm phổ biến làm từ bột mì."));
+        cards.add(new FlashcardItem("🍶", "sauce", "/sɔːs/", "nước sốt", "Add some more soy sauce to the stir-fry.", "Cho thêm một ít nước tương vào món xào.", "Chất lỏng dùng để tăng hương vị cho món ăn."));
     }
 
     public ScanResult mockScanResult() {
@@ -1010,7 +1414,11 @@ public class AppRepository {
     }
 
     private void importSeedVocabularyIfNeeded() {
-        executorService.execute(() -> {
+        if (preferences.getBoolean(KEY_SEED_IMPORTED, false)) {
+            return;
+        }
+
+        backgroundExecutor.execute(() -> {
             try {
                 String json = readSeedJson();
                 importSeedPackages(json);

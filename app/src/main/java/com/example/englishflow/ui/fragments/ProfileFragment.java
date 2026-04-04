@@ -6,9 +6,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.bumptech.glide.Glide;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -87,7 +90,7 @@ public class ProfileFragment extends Fragment {
         chartContainer = view.findViewById(R.id.chartContainer);
         weeklyEmptyState = view.findViewById(R.id.profileWeeklyEmptyState);
 
-        MaterialButton btnOpenSettings = view.findViewById(R.id.btnOpenSettings);
+        View btnOpenSettings = view.findViewById(R.id.btnOpenSettings);
         MaterialButton btnReset = view.findViewById(R.id.btnResetProgress);
         MaterialButton btnLogout = view.findViewById(R.id.btnLogout);
         MaterialButton btnViewDictionary = view.findViewById(R.id.btnViewSavedDictionary);
@@ -200,8 +203,10 @@ public class ProfileFragment extends Fragment {
             if (levelBadgeText != null) {
                 levelBadgeText.setText(snapshot.userProgress.cefrLevel);
             }
-            if (profileAvatar != null) {
-                profileAvatar.setImageResource(settingsStore.getAvatarResId());
+            if (profileAvatar != null && isAdded()) {
+                Glide.with(requireContext())
+                     .load(settingsStore.getAvatarResId())
+                     .into(profileAvatar);
             }
 
             tvLearnedCount.setText(String.valueOf(snapshot.userProgress.totalWordsLearned));
@@ -224,62 +229,71 @@ public class ProfileFragment extends Fragment {
 
     private void renderWeeklyChart(List<Integer> values) {
         chartContainer.removeAllViews();
-
-        boolean hasStudyData = false;
-        for (Integer value : values) {
-            if (value != null && value > 0) {
-                hasStudyData = true;
-                break;
-            }
-        }
-
-        if (!hasStudyData) {
-            chartContainer.setVisibility(View.GONE);
-            if (weeklyEmptyState != null) {
-                weeklyEmptyState.setVisibility(View.VISIBLE);
-            }
-            return;
-        }
-
         chartContainer.setVisibility(View.VISIBLE);
-        if (weeklyEmptyState != null) {
-            weeklyEmptyState.setVisibility(View.GONE);
-        }
+        if (weeklyEmptyState != null) weeklyEmptyState.setVisibility(View.GONE);
 
-        int max = 1;
-        for (Integer value : values) {
-            if (value > max) {
-                max = value;
-            }
-        }
+        // Ensure 7 days
+        List<Integer> chartValues = (values != null) ? new java.util.ArrayList<>(values) : new java.util.ArrayList<>(java.util.Collections.nCopies(7, 0));
+        while (chartValues.size() < 7) chartValues.add(0);
 
-        for (int i = 0; i < values.size(); i++) {
-            int value = values.get(i);
+        int max = 0;
+        for (Integer val : chartValues) if (val != null && val > max) max = val;
+        if (max < 30) max = 30;
+
+        String[] days = {"T2", "T3", "T4", "T5", "T6", "T7", "CN"};
+        float density = getResources().getDisplayMetrics().density;
+
+        for (int i = 0; i < 7; i++) {
+            final int value = (i < chartValues.size() && chartValues.get(i) != null) ? chartValues.get(i) : 0;
+            String label = days[i];
 
             LinearLayout column = new LinearLayout(requireContext());
             column.setOrientation(LinearLayout.VERTICAL);
             column.setGravity(android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL);
             LinearLayout.LayoutParams columnParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
-            if (i < values.size() - 1) {
-                columnParams.setMarginEnd(6);
-            }
             column.setLayoutParams(columnParams);
 
-            View bar = new View(requireContext());
-            int barHeight = (int) (100f * ((float) value / (float) max));
-            LinearLayout.LayoutParams barParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Math.max(barHeight, 5));
-            bar.setLayoutParams(barParams);
-            bar.setBackgroundResource(R.drawable.bg_bar_premium);
+            TextView tvTime = new TextView(requireContext());
+            tvTime.setText(value + "p");
+            tvTime.setTextSize(11f);
+            tvTime.setTextColor(ContextCompat.getColor(requireContext(), R.color.ef_primary_dark));
+            tvTime.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            tvTime.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+            tvTime.setPadding(0, 0, 0, (int)(6 * density));
+            if (value == 0) tvTime.setAlpha(0.2f);
+            column.addView(tvTime);
 
-            TextView label = new TextView(requireContext());
-            label.setText(String.valueOf(value));
-            label.setTextSize(10f);
-            label.setTextColor(ContextCompat.getColor(requireContext(), R.color.ef_text_secondary));
-            label.setPadding(0, 4, 0, 0);
-            label.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+            FrameLayout barContainer = new FrameLayout(requireContext());
+            LinearLayout.LayoutParams barFrameParams = new LinearLayout.LayoutParams((int)(24 * density), (int)(130 * density)); 
+            barContainer.setLayoutParams(barFrameParams);
+            
+            View track = new View(requireContext());
+            FrameLayout.LayoutParams trackParams = new FrameLayout.LayoutParams((int)(14 * density), FrameLayout.LayoutParams.MATCH_PARENT);
+            trackParams.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+            track.setLayoutParams(trackParams);
+            track.setBackgroundResource(R.drawable.bg_chart_track_premium);
+            barContainer.addView(track);
+            
+            if (value > 0) {
+                View activeBar = new View(requireContext());
+                int barHeightScaled = (int) (130 * density * ((float) value / (float) max));
+                FrameLayout.LayoutParams activeParams = new FrameLayout.LayoutParams((int)(14 * density), Math.min((int)(130 * density), Math.max((int)(12 * density), barHeightScaled)));
+                activeParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
+                activeBar.setLayoutParams(activeParams);
+                activeBar.setBackgroundResource(R.drawable.bg_bar_premium_glow);
+                barContainer.addView(activeBar);
+            }
+            column.addView(barContainer);
 
-            column.addView(bar);
-            column.addView(label);
+            TextView tvDay = new TextView(requireContext());
+            tvDay.setText(label);
+            tvDay.setTextSize(11f);
+            tvDay.setTextColor(ContextCompat.getColor(requireContext(), R.color.ef_text_secondary));
+            tvDay.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+            tvDay.setPadding(0, (int)(8 * density), 0, 0);
+            tvDay.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            column.addView(tvDay);
+
             chartContainer.addView(column);
         }
     }
@@ -292,7 +306,4 @@ public class ProfileFragment extends Fragment {
             }
         }
     }
-
-
-
 }

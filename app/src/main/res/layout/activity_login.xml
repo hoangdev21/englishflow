@@ -1,35 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/authLoginRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_splash_gradient">
-
-    <!-- Decorative Orbs -->
-    <View
-        android:layout_width="220dp"
-        android:layout_height="220dp"
-        android:layout_gravity="top|end"
-        android:layout_marginTop="-64dp"
-        android:layout_marginEnd="-36dp"
-        android:background="@drawable/bg_auth_orb_top"
-        android:importantForAccessibility="no" />
-
-    <View
-        android:layout_width="260dp"
-        android:layout_height="260dp"
-        android:layout_gravity="bottom|start"
-        android:layout_marginStart="-80dp"
-        android:layout_marginBottom="-80dp"
-        android:background="@drawable/bg_auth_orb_bottom"
-        android:importantForAccessibility="no" />
+    android:background="@color/white">
 
     <ScrollView
+        android:id="@+id/loginScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
         android:paddingStart="24dp"
-        android:paddingTop="28dp"
+        android:paddingTop="60dp"
         android:paddingEnd="24dp"
         android:paddingBottom="24dp">
 
@@ -39,171 +22,180 @@
             android:gravity="center_horizontal"
             android:orientation="vertical">
 
-            <!-- Brand Badge -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_auth_brand_chip"
-                android:paddingStart="16dp"
-                android:paddingTop="8dp"
-                android:paddingEnd="16dp"
-                android:paddingBottom="8dp"
-                android:text="ENGLISHFLOW"
-                android:textColor="@color/white"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.15" />
+            <!-- App Logo -->
+            <ImageView
+                android:layout_width="200dp"
+                android:layout_height="120dp"
+                android:src="@drawable/english_flow"
+                android:padding="0dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="EnglishFlow Logo" />
 
-            <!-- Welcome Text -->
+            <!-- Main Title -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="32dp"
                 android:fontFamily="@font/nunito"
                 android:gravity="center"
-                android:text="Chào mừng\nbạn quay lại"
-                android:textColor="@color/white"
+                android:text="Đăng nhập"
+                android:textColor="@color/ef_text_primary"
                 android:textSize="32sp"
                 android:textStyle="bold"
-                android:lineSpacingExtra="4dp"
                 android:letterSpacing="-0.02" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:alpha="0.85"
-                android:gravity="center"
-                android:text="Đăng nhập để tiếp tục hành trình học thông minh cùng AI"
-                android:textColor="@color/white"
-                android:textSize="14sp"
-                android:lineSpacingExtra="2dp" />
 
             <!-- Form Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="40dp"
+                android:layout_marginHorizontal="8dp"
                 android:orientation="vertical">
+
+                <!-- Email Label -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/nunito"
+                    android:text="Email"
+                    android:textColor="@color/ef_text_secondary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <!-- Email Field -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Email"
-                    android:textColorHint="#8892B0"
-                    app:boxBackgroundColor="@color/white"
+                    app:hintEnabled="false"
+                    app:boxBackgroundColor="@color/ef_surface_variant"
                     app:boxBackgroundMode="outline"
-                    app:boxCornerRadiusBottomEnd="16dp"
-                    app:boxCornerRadiusBottomStart="16dp"
-                    app:boxCornerRadiusTopEnd="16dp"
-                    app:boxCornerRadiusTopStart="16dp"
-                    app:boxStrokeColor="@color/ef_primary"
+                    app:boxCornerRadiusBottomEnd="28dp"
+                    app:boxCornerRadiusBottomStart="28dp"
+                    app:boxCornerRadiusTopEnd="28dp"
+                    app:boxCornerRadiusTopStart="28dp"
                     app:boxStrokeWidth="0dp"
-                    app:boxStrokeWidthFocused="2dp"
-                    app:hintTextColor="@color/ef_primary"
-                    app:startIconDrawable="@android:drawable/ic_dialog_email"
-                    app:startIconTint="#8892B0">
+                    app:boxStrokeWidthFocused="1dp"
+                    app:startIconDrawable="@drawable/ic_mail"
+                    app:startIconTint="@color/ef_info"
+                    app:startIconMinSize="44dp"
+                    app:startIconScaleType="centerInside">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/loginEmailInput"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="60dp"
+                        android:hint="Nhập email của bạn"
+                        android:textColorHint="@color/ef_text_tertiary"
                         android:inputType="textEmailAddress"
                         android:textColor="@color/ef_text_primary"
-                        android:textColorHint="#A0AABF"
-                        android:textSize="15sp" />
+                        android:textSize="16sp"
+                        android:gravity="center_vertical"
+                        android:paddingTop="0dp"
+                        android:paddingBottom="0dp" />
                 </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Password Label -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/nunito"
+                    android:text="Mật khẩu"
+                    android:textColor="@color/ef_text_secondary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <!-- Password Field -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:hint="Mật khẩu"
-                    android:textColorHint="#8892B0"
-                    app:boxBackgroundColor="@color/white"
+                    app:hintEnabled="false"
+                    app:boxBackgroundColor="@color/ef_surface_variant"
                     app:boxBackgroundMode="outline"
-                    app:boxCornerRadiusBottomEnd="16dp"
-                    app:boxCornerRadiusBottomStart="16dp"
-                    app:boxCornerRadiusTopEnd="16dp"
-                    app:boxCornerRadiusTopStart="16dp"
-                    app:boxStrokeColor="@color/ef_primary"
+                    app:boxCornerRadiusBottomEnd="28dp"
+                    app:boxCornerRadiusBottomStart="28dp"
+                    app:boxCornerRadiusTopEnd="28dp"
+                    app:boxCornerRadiusTopStart="28dp"
                     app:boxStrokeWidth="0dp"
-                    app:boxStrokeWidthFocused="2dp"
+                    app:boxStrokeWidthFocused="1dp"
                     app:endIconMode="password_toggle"
-                    app:endIconTint="#8892B0"
-                    app:hintTextColor="@color/ef_primary"
-                    app:startIconDrawable="@android:drawable/ic_lock_lock"
-                    app:startIconTint="#8892B0">
+                    app:endIconTint="@color/ef_text_tertiary"
+                    app:startIconDrawable="@drawable/ic_lock_closed"
+                    app:startIconTint="@color/ef_info"
+                    app:startIconMinSize="44dp"
+                    app:startIconScaleType="centerInside">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/loginPasswordInput"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="60dp"
+                        android:hint="Nhập mật khẩu"
+                        android:textColorHint="@color/ef_text_tertiary"
                         android:inputType="textPassword"
                         android:textColor="@color/ef_text_primary"
-                        android:textColorHint="#A0AABF"
-                        android:textSize="15sp" />
+                        android:textSize="16sp"
+                        android:gravity="center_vertical"
+                        android:paddingTop="0dp"
+                        android:paddingBottom="0dp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Forgot Password -->
                 <TextView
                     android:id="@+id/btnForgotPassword"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="8dp"
                     android:text="Quên mật khẩu?"
-                    android:textColor="#E0FFFFFF"
-                    android:textSize="13sp"
+                    android:textColor="@color/ef_primary"
+                    android:textSize="14sp"
                     android:textStyle="bold"
-                    android:paddingVertical="4dp" />
+                    android:paddingVertical="8dp" />
 
                 <!-- Login Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnLogin"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:layout_marginTop="28dp"
-                    android:background="@drawable/bg_3d_badge_silver"
+                    android:layout_height="62dp"
+                    android:layout_marginTop="32dp"
+                    android:background="@drawable/bg_button_raised_primary"
                     app:backgroundTint="@null"
                     android:text="@string/auth_login"
                     android:textAllCaps="false"
-                    android:textColor="@color/ef_primary_dark"
-                    android:textSize="16sp"
+                    android:textColor="@color/white"
+                    android:textSize="18sp"
                     android:textStyle="bold"
-                    android:elevation="6dp"
-                    android:letterSpacing="0.02" />
+                    android:elevation="4dp" />
 
                 <!-- Register Link -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_marginTop="20dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:layout_marginTop="36dp"
+                    android:orientation="horizontal">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Chưa có tài khoản?  "
-                        android:textColor="#C0FFFFFF"
-                        android:textSize="14sp" />
+                        android:textColor="@color/ef_text_secondary"
+                        android:textSize="15sp" />
 
                     <TextView
                         android:id="@+id/btnGoToRegister"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Đăng ký"
-                        android:textColor="@color/white"
-                        android:textSize="14sp"
+                        android:text="Đăng ký ngay"
+                        android:textColor="@color/ef_primary"
+                        android:textSize="15sp"
                         android:textStyle="bold"
                         android:paddingVertical="4dp" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
-
 </FrameLayout>

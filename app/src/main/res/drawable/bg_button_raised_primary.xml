@@ -6,14 +6,14 @@
             <!-- Shadow Layer (darker bottom part) -->
             <item android:top="2dp">
                 <shape android:shape="rectangle">
-                    <corners android:radius="16dp" />
+                    <corners android:radius="28dp" />
                     <solid android:color="@color/ef_primary_dark" />
                 </shape>
             </item>
             <!-- Main Content Layer -->
             <item android:bottom="0dp" android:top="2dp">
                 <shape android:shape="rectangle">
-                    <corners android:radius="16dp" />
+                    <corners android:radius="28dp" />
                     <solid android:color="@color/ef_primary" />
                     <gradient
                         android:angle="270"
@@ -30,14 +30,14 @@
             <!-- Shadow Layer (darker bottom part) -->
             <item>
                 <shape android:shape="rectangle">
-                    <corners android:radius="16dp" />
+                    <corners android:radius="28dp" />
                     <solid android:color="@color/ef_primary_dark" />
                 </shape>
             </item>
             <!-- Main Content Layer -->
             <item android:bottom="4dp">
                 <shape android:shape="rectangle">
-                    <corners android:radius="16dp" />
+                    <corners android:radius="28dp" />
                     <solid android:color="@color/ef_primary" />
                     <gradient
                         android:angle="270"

@@ -13,12 +13,20 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
+
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
@@ -26,9 +34,11 @@ import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.LocalAuthStore;
 import com.example.englishflow.database.entity.LocalUserEntity;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import androidx.core.content.ContextCompat;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -105,7 +115,9 @@ public class SettingsActivity extends AppCompatActivity {
 
         selectedAvatarKey = settingsStore.getAvatarKey();
         if (avatarPreview != null) {
-            avatarPreview.setImageResource(AppSettingsStore.avatarResFromKey(selectedAvatarKey));
+            Glide.with(this)
+                 .load(AppSettingsStore.avatarResFromKey(selectedAvatarKey))
+                 .into(avatarPreview);
         }
 
         // Daily Goal
@@ -137,7 +149,14 @@ public class SettingsActivity extends AppCompatActivity {
         View saveProfileButton = findViewById(R.id.btnSaveProfile);
 
         if (backButton != null) backButton.setOnClickListener(v -> finish());
-        if (chooseAvatarButton != null) chooseAvatarButton.setOnClickListener(v -> showAvatarPicker());
+        if (chooseAvatarButton != null) {
+            chooseAvatarButton.setOnClickListener(v -> {
+                showAvatarPicker();
+            });
+        }
+        if (avatarPreview != null) {
+            avatarPreview.setOnClickListener(v -> showAvatarPicker());
+        }
         if (saveProfileButton != null) saveProfileButton.setOnClickListener(v -> saveProfileInfo());
 
         // Goal selection
@@ -195,10 +214,18 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void showAvatarPicker() {
-        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
         View v = getLayoutInflater().inflate(R.layout.dialog_avatar_picker, null);
-
         RecyclerView rv = v.findViewById(R.id.rvAvatarGrid);
+
+        if (rv == null) {
+            Toast.makeText(this, "Không thể mở danh sách ảnh đại diện", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Dùng 3 cột để ảnh hiển thị to rõ hơn
+        rv.setLayoutManager(new GridLayoutManager(this, 3));
+        rv.setHasFixedSize(true);
 
         String[] keys = new String[]{
                 AppSettingsStore.AVATAR_DEFAULT, AppSettingsStore.AVATAR_DOLPHIN, AppSettingsStore.AVATAR_GRADUATE,
@@ -221,9 +248,15 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onBindViewHolder(@NonNull AvatarViewHolder holder, int position) {
                 String key = keys[position];
-                holder.img.setImageResource(AppSettingsStore.avatarResFromKey(key));
+                
+                // Dùng Glide để load ảnh siêu nhỏ (Thumbnail) giúp máy ảo không bị treo
+                Glide.with(holder.itemView.getContext())
+                     .load(AppSettingsStore.avatarResFromKey(key))
+                     .override(150, 150) 
+                     .centerCrop()
+                     .diskCacheStrategy(DiskCacheStrategy.ALL)
+                     .into(holder.img);
 
-                // Highlight if selected
                 if (key.equals(selectedAvatarKey)) {
                     holder.img.setStrokeWidth(6f);
                     holder.img.setStrokeColor(ColorStateList.valueOf(getColor(R.color.ef_primary)));
@@ -234,8 +267,12 @@ public class SettingsActivity extends AppCompatActivity {
                 holder.itemView.setOnClickListener(view -> {
                     selectedAvatarKey = key;
                     settingsStore.setAvatarKey(key);
-                    avatarPreview.setImageResource(AppSettingsStore.avatarResFromKey(key));
-                    bottomSheetDialog.dismiss();
+                    if (avatarPreview != null) {
+                        Glide.with(SettingsActivity.this)
+                             .load(AppSettingsStore.avatarResFromKey(key))
+                             .into(avatarPreview);
+                    }
+                    dialog.dismiss();
                     Toast.makeText(SettingsActivity.this, "Đã đổi ảnh đại diện", Toast.LENGTH_SHORT).show();
                 });
             }
@@ -246,8 +283,8 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        bottomSheetDialog.setContentView(v);
-        bottomSheetDialog.show();
+        dialog.setContentView(v);
+        dialog.show();
     }
 
     static class AvatarViewHolder extends RecyclerView.ViewHolder {

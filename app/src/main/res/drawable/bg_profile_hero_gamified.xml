@@ -5,7 +5,6 @@
             <gradient
                 android:angle="320"
                 android:startColor="@color/ef_hero_grad_start"
-                android:centerColor="@color/ef_hero_grad_mid"
                 android:endColor="@color/ef_hero_grad_end"
                 android:type="linear" />
         </shape>

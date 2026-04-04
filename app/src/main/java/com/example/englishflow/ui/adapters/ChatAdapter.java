@@ -14,6 +14,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.ChatItem;
@@ -103,7 +105,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (settingsStore == null) {
                 settingsStore = new AppSettingsStore(holder.itemView.getContext());
             }
-            userHolder.avatar.setImageResource(settingsStore.getAvatarResId());
+            Glide.with(holder.itemView.getContext())
+                 .load(settingsStore.getAvatarResId())
+                 .into(userHolder.avatar);
 
         } else if (holder instanceof AiViewHolder) {
             AiViewHolder h = (AiViewHolder) holder;

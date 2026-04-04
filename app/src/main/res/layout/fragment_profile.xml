@@ -110,23 +110,31 @@
                             android:textSize="13sp" />
                     </LinearLayout>
 
-                    <!-- Settings Button (3D White) -->
-                    <com.google.android.material.button.MaterialButton
+                    <!-- Settings Button (Premium 3D Card) -->
+                    <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnOpenSettings"
                         android:layout_width="44dp"
                         android:layout_height="44dp"
-                        android:background="@drawable/bg_3d_badge_silver"
-                        app:backgroundTint="@null"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:insetLeft="0dp"
-                        android:insetRight="0dp"
-                        app:icon="@drawable/ic_settings"
-                        app:iconGravity="textStart"
-                        app:iconPadding="0dp"
-                        app:iconSize="20dp"
-                        app:iconTint="@color/ef_primary"
-                        android:elevation="4dp" />
+                        app:cardCornerRadius="22dp"
+                        app:cardElevation="6dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackgroundBorderless"
+                        app:cardBackgroundColor="@android:color/transparent">
+                        
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_3d_badge_silver"
+                            android:padding="10dp">
+                            
+                            <ImageView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:src="@drawable/ic_settings"
+                                app:tint="@color/ef_primary" />
+                        </FrameLayout>
+                    </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
             </LinearLayout>
 
@@ -283,7 +291,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Detailed Stats Section (3D Silver Card) -->
+            <!-- Detailed Stats Section (Premium 3D Card Content) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -291,23 +299,25 @@
                 android:background="@drawable/bg_stats_premium_card"
                 android:elevation="4dp"
                 android:orientation="vertical"
-                android:padding="18dp">
+                android:padding="24dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="THỐNG KÊ CHI TIẾT"
                     android:textColor="@color/ef_primary_dark"
-                    android:textSize="11sp"
+                    android:textSize="13sp"
                     android:textStyle="bold"
-                    android:letterSpacing="0.08"
-                    android:layout_marginBottom="18dp" />
+                    android:fontFamily="@font/nunito"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="24dp" />
 
                 <GridLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:columnCount="2"
-                    android:alignmentMode="alignMargins">
+                    android:rowCount="2"
+                    android:paddingHorizontal="4dp">
 
                     <!-- Learned -->
                     <LinearLayout
@@ -316,33 +326,40 @@
                         android:layout_columnWeight="1"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:layout_marginBottom="12dp">
+                        android:layout_marginBottom="24dp"
+                        android:paddingEnd="8dp">
+
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:src="@drawable/ic_nav_learn"
-                            android:padding="6dp"
-                            android:background="@drawable/bg_icon_circle_emerald"
-                            app:tint="@color/ef_stat_vocab" />
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:src="@drawable/book_new"
+                            android:scaleType="fitCenter" />
+
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
+                            android:layout_marginStart="16dp"
                             android:orientation="vertical">
+
                             <TextView
                                 android:id="@+id/tvDetailLearned"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="0"
                                 android:textColor="@color/ef_text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:fontFamily="@font/nunito" />
+
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Từ đã học"
                                 android:textColor="@color/ef_text_secondary"
-                                android:textSize="11sp" />
+                                android:textSize="12sp"
+                                android:fontFamily="@font/nunito"
+                                android:textStyle="bold"
+                                android:alpha="0.8" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -353,33 +370,40 @@
                         android:layout_columnWeight="1"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:layout_marginBottom="12dp">
+                        android:layout_marginBottom="24dp"
+                        android:paddingEnd="8dp">
+
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:src="@drawable/ic_search_premium"
-                            android:padding="6dp"
-                            android:background="@drawable/bg_icon_circle_blue"
-                            app:tint="@color/ef_stat_chat" />
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:src="@drawable/search"
+                            android:scaleType="fitCenter" />
+
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
+                            android:layout_marginStart="16dp"
                             android:orientation="vertical">
+
                             <TextView
                                 android:id="@+id/tvDetailScanned"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="0"
                                 android:textColor="@color/ef_text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:fontFamily="@font/nunito" />
+
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Ảnh đã quét"
                                 android:textColor="@color/ef_text_secondary"
-                                android:textSize="11sp" />
+                                android:textSize="12sp"
+                                android:fontFamily="@font/nunito"
+                                android:textStyle="bold"
+                                android:alpha="0.8" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -389,33 +413,40 @@
                         android:layout_height="wrap_content"
                         android:layout_columnWeight="1"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        android:paddingEnd="8dp">
+
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:src="@drawable/ic_nav_chat"
-                            android:padding="6dp"
-                            android:background="@drawable/bg_icon_circle_amber"
-                            app:tint="@color/ef_stat_streak" />
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:src="@drawable/chat"
+                            android:scaleType="fitCenter" />
+
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
+                            android:layout_marginStart="16dp"
                             android:orientation="vertical">
+
                             <TextView
                                 android:id="@+id/tvDetailChats"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="0"
                                 android:textColor="@color/ef_text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:fontFamily="@font/nunito" />
+
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Cuộc hội thoại"
                                 android:textColor="@color/ef_text_secondary"
-                                android:textSize="11sp" />
+                                android:textSize="12sp"
+                                android:fontFamily="@font/nunito"
+                                android:textStyle="bold"
+                                android:alpha="0.8" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -425,37 +456,45 @@
                         android:layout_height="wrap_content"
                         android:layout_columnWeight="1"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        android:paddingEnd="8dp">
+
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:src="@drawable/ic_history"
-                            android:padding="6dp"
-                            android:background="@drawable/bg_icon_circle_rose"
-                            app:tint="@color/ef_stat_best_streak" />
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:src="@drawable/history"
+                            android:scaleType="fitCenter" />
+
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
+                            android:layout_marginStart="16dp"
                             android:orientation="vertical">
+
                             <TextView
                                 android:id="@+id/tvDetailBestStreak"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="0"
                                 android:textColor="@color/ef_text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                android:fontFamily="@font/nunito" />
+
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Chuỗi cao nhất"
+                                android:text="Chuỗi tốt nhất"
                                 android:textColor="@color/ef_text_secondary"
-                                android:textSize="11sp" />
+                                android:textSize="12sp"
+                                android:fontFamily="@font/nunito"
+                                android:textStyle="bold"
+                                android:alpha="0.8" />
                         </LinearLayout>
                     </LinearLayout>
                 </GridLayout>
             </LinearLayout>
+
 
             <!-- Weekly Chart (Styled) -->
             <LinearLayout
@@ -481,7 +520,8 @@
                 <LinearLayout
                     android:id="@+id/chartContainer"
                     android:layout_width="match_parent"
-                    android:layout_height="140dp"
+                    android:layout_height="180dp"
+                    android:layout_marginTop="8dp"
                     android:gravity="bottom"
                     android:orientation="horizontal" />
 

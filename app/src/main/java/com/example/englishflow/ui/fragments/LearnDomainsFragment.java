@@ -101,7 +101,25 @@ public class LearnDomainsFragment extends Fragment {
         // Apply Insets for Status Bar
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
             androidx.core.graphics.Insets systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
+            
+            View btnBackInset = view.findViewById(R.id.btnBack);
+            View textContainerInset = view.findViewById(R.id.heroTextContainer);
+            
+            if (btnBackInset != null) {
+                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) btnBackInset.getLayoutParams();
+                lp.topMargin = systemBars.top + (int)(16 * getResources().getDisplayMetrics().density);
+                btnBackInset.setLayoutParams(lp);
+            }
+            
+            if (textContainerInset != null) {
+                textContainerInset.setPadding(
+                    textContainerInset.getPaddingLeft(),
+                    systemBars.top + (int)(64 * getResources().getDisplayMetrics().density),
+                    textContainerInset.getPaddingRight(),
+                    textContainerInset.getPaddingBottom()
+                );
+            }
+            
             return insets;
         });
     }

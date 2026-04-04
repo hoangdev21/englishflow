@@ -108,8 +108,11 @@ dependencies {
     // HTTP + JSON (for Gemini Vision API REST calls)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.airbnb.android:lottie:6.6.4")
+    implementation(libs.dotlottie.android)
+
     implementation("com.google.code.gson:gson:2.10.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 }
