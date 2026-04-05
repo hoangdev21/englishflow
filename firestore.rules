@@ -66,6 +66,11 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /map_lessons/{lessonId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
     match /access_logs/{logId} {
       allow create: if isSignedIn();
       allow get, list: if isAdmin();

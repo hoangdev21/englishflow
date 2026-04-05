@@ -75,6 +75,32 @@ Suggested schema:
 - domain: string
 - updatedAt: number (epoch millis)
 
+### map_lessons/{lessonId}
+Remote-driven Interactive Journey lessons (Học - Hành - Kiểm tra).
+
+Suggested schema:
+- lesson_id: string (e.g. "lesson_01")
+- order: number (display order in journey)
+- title: string
+- emoji: string
+- min_level: string (e.g. "A1")
+- prompt_key: string
+- role_description: string (scenario for roleplay)
+- min_exchanges: number
+- keywords: array<string>
+- status: string ("available" | "draft" | "archived")
+- flow_steps: array<object>
+  - type: string ("intro" | "vocabulary" | "situational_quiz")
+  - content: string (for intro)
+  - word: string (for vocabulary)
+  - ipa: string
+  - meaning: string
+  - instruction: string
+  - hint: string
+  - question: string (for quiz)
+  - expected_keyword: string
+  - accepted_answers: array<string>
+
 ### access_logs/{id}
 Track successful logins.
 
@@ -117,3 +143,22 @@ Suggested schema:
 - Room still acts as fallback if Firestore data has not loaded yet.
 - custom_vocabulary cloud collection is admin-write in rules; non-admin user-added local entries are kept via Room fallback merge.
 - For stricter privacy, you can split public leaderboard fields into a separate public collection later.
+
+## 7) map_lessons import automation (Firebase Admin + Node)
+- Tool path: `tools/firestore-import`
+- Install: `cd tools/firestore-import && npm install`
+- Dry run validation:
+  - `npm run import:map-lessons:dry`
+- Import/upsert to Firestore:
+  - `npm run import:map-lessons`
+- Import/upsert with explicit options (recommended when passing flags in PowerShell):
+  - `node import-map-lessons.js --seed ..\..\map_lessons_seed.json --service-account ..\..\secrets\service-account.json`
+- Import and remove documents not present in seed:
+  - `npm run import:map-lessons:delete-missing`
+- Import and remove documents not present in seed with explicit options:
+  - `node import-map-lessons.js --seed ..\..\map_lessons_seed.json --delete-missing`
+
+Credential options (pick one):
+- CLI flag: `--service-account <path_to_service_account_json>`
+- Env file path: `FIREBASE_SERVICE_ACCOUNT_PATH` or `GOOGLE_APPLICATION_CREDENTIALS`
+- Env raw JSON: `FIREBASE_SERVICE_ACCOUNT_JSON`

@@ -22,15 +22,15 @@ import androidx.fragment.app.Fragment;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
-import com.example.englishflow.data.LessonVocabulary;
+import com.example.englishflow.data.JourneyLessonRepository;
 import com.example.englishflow.data.MapNodeItem;
 import com.example.englishflow.ui.MapConversationActivity;
 import com.example.englishflow.ui.views.MapPathView;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 public class LearnMapFragment extends Fragment {
 
@@ -39,6 +39,7 @@ public class LearnMapFragment extends Fragment {
 
     private LinearLayout mapNodesContainer;
     private MapPathView mapPathView;
+    private JourneyLessonRepository journeyLessonRepository;
 
     @Nullable
     @Override
@@ -52,9 +53,9 @@ public class LearnMapFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         mapNodesContainer = view.findViewById(R.id.mapNodesContainer);
         mapPathView = view.findViewById(R.id.mapPathView);
+        journeyLessonRepository = new JourneyLessonRepository();
 
-        buildNodeRows(getMockJourney());
-        mapNodesContainer.post(this::drawPath);
+        loadJourneyNodes();
 
         // Back Button Logic
         View btnBack = view.findViewById(R.id.btnBack);
@@ -76,43 +77,42 @@ public class LearnMapFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if (mapNodesContainer != null) {
-            buildNodeRows(getMockJourney());
-            mapNodesContainer.post(this::drawPath);
+            loadJourneyNodes();
         }
     }
 
-    private List<MapNodeItem> getMockJourney() {
+    private void loadJourneyNodes() {
+        if (!isAdded()) {
+            return;
+        }
+
+        if (journeyLessonRepository == null) {
+            journeyLessonRepository = new JourneyLessonRepository();
+        }
+
+        journeyLessonRepository.fetchLessons(lessons -> {
+            if (!isAdded() || mapNodesContainer == null) {
+                return;
+            }
+
+            List<MapNodeItem> nodes = applyProgressStatuses(lessons);
+            AppRepository.getInstance(requireContext()).setTotalMapNodeCount(nodes.size());
+            buildNodeRows(nodes);
+            mapNodesContainer.post(this::drawPath);
+        });
+    }
+
+    private List<MapNodeItem> applyProgressStatuses(List<MapNodeItem> nodes) {
+        List<MapNodeItem> safeNodes = nodes == null ? new ArrayList<>() : new ArrayList<>(nodes);
+        if (safeNodes.isEmpty()) {
+            return safeNodes;
+        }
+
         AppRepository repo = AppRepository.getInstance(requireContext());
-        List<MapNodeItem> mockNodes = Arrays.asList(
-            new MapNodeItem("greetings_01", "Greetings", "Hi", "greetings_basic", 
-                    "You are a friendly neighbor meeting the user on a sidewalk. Start by saying Hi and ask for their name.", 3, 
-                    Arrays.asList(new com.example.englishflow.data.LessonVocabulary("Hello", "/həˈloʊ/", "Xin chào", "Hello, how are you?"), new com.example.englishflow.data.LessonVocabulary("Meet", "/miːt/", "Gặp gỡ", "Nice to meet you.")),
-                    MapNodeItem.Status.AVAILABLE),
-            new MapNodeItem("greetings_02", "Formal Hello", "GM", "greetings_formal", 
-                    "You are an interviewer at a big tech company. Start by greeting the user formally for their interview.", 4, 
-                     Arrays.asList(new com.example.englishflow.data.LessonVocabulary("Formal", "/ˈfɔːrml/", "Trang trọng", "This is a formal meeting."), new com.example.englishflow.data.LessonVocabulary("Appointment", "/əˈpɔɪntmənt/", "Cuộc hẹn", "I have an appointment.")),
-                    MapNodeItem.Status.LOCKED),
-            new MapNodeItem("greetings_03", "Time-based", "Time", "greetings_time", 
-                    "You are a barista early in the morning. Greet the user and ask what kind of coffee they'd like to start their day.", 4, 
-                    Arrays.asList(new com.example.englishflow.data.LessonVocabulary("Morning", "/ˈmɔːrnɪŋ/", "Buổi sáng", "Good morning!")),
-                    MapNodeItem.Status.LOCKED),
-            new MapNodeItem("greetings_04", "Phone Talk", "Call", "greetings_phone", 
-                    "You are a hotel receptionist answering a call. Greet the customer and offer your assistance.", 4, 
-                    Arrays.asList(new com.example.englishflow.data.LessonVocabulary("Reception", "/rɪˈsepʃn/", "Quầy lễ tân", "Go to the reception.")),
-                    MapNodeItem.Status.LOCKED),
-            new MapNodeItem("greetings_05", "Goodbye", "Bye", "greetings_goodbye", 
-                    "You are a teacher at the end of class. Say goodbye to the user and remind them about their homework.", 3, 
-                    Arrays.asList(new com.example.englishflow.data.LessonVocabulary("Class", "/klæs/", "Lớp học", "The class is over.")),
-                    MapNodeItem.Status.LOCKED),
-            new MapNodeItem("greetings_06", "How are you", "Mood", "greetings_howru", 
-                    "You are an old friend who hasn't seen the user for years. Greet them excitedly and ask how their life is going.", 5, 
-                    Arrays.asList(new com.example.englishflow.data.LessonVocabulary("Exciting", "/ɪkˈsaɪtɪŋ/", "Thú vị/Hứng thú", "This is exciting.")),
-                    MapNodeItem.Status.LOCKED)
-        );
 
         boolean prevCompleted = true; // First node is always available if previous is "completed"
-        for (int i = 0; i < mockNodes.size(); i++) {
-            MapNodeItem node = mockNodes.get(i);
+        for (int i = 0; i < safeNodes.size(); i++) {
+            MapNodeItem node = safeNodes.get(i);
             boolean isDone = repo.isMapNodeCompleted(node.getNodeId());
             
             if (isDone) {
@@ -125,7 +125,7 @@ public class LearnMapFragment extends Fragment {
                 node.setStatus(MapNodeItem.Status.LOCKED);
             }
         }
-        return mockNodes;
+        return safeNodes;
     }
 
     private void buildNodeRows(List<MapNodeItem> nodes) {
@@ -164,11 +164,12 @@ public class LearnMapFragment extends Fragment {
     private void bindNode(View nodeView, MapNodeItem node) {
         MaterialCardView circle = nodeView.findViewById(R.id.nodeCircle);
         View nodeContent = nodeView.findViewById(R.id.nodeContent);
-        TextView emoji = nodeView.findViewById(R.id.nodeEmoji);
+        ImageView nodeIcon = nodeView.findViewById(R.id.nodeIcon);
         TextView title = nodeView.findViewById(R.id.nodeTitle);
         ImageView stateIcon = nodeView.findViewById(R.id.nodeStateIcon);
 
-        emoji.setText(node.getEmoji());
+        nodeIcon.setImageResource(getLessonIconRes(node));
+        nodeIcon.setAlpha(1f);
         title.setText(node.getTitle());
 
         int strokeColor = ContextCompat.getColor(requireContext(), R.color.transparent);
@@ -179,11 +180,13 @@ public class LearnMapFragment extends Fragment {
                 stateIcon.setVisibility(View.VISIBLE);
                 stateIcon.setImageResource(android.R.drawable.checkbox_on_background);
                 title.setAlpha(1f);
+                nodeIcon.setAlpha(1f);
                 break;
             case AVAILABLE:
                 nodeContent.setBackgroundResource(R.drawable.bg_map_node_available);
                 stateIcon.setVisibility(View.GONE);
                 title.setAlpha(1f);
+                nodeIcon.setAlpha(1f);
                 startPulse(circle);
                 break;
             case IN_PROGRESS:
@@ -191,6 +194,7 @@ public class LearnMapFragment extends Fragment {
                 stateIcon.setVisibility(View.VISIBLE);
                 stateIcon.setImageResource(android.R.drawable.presence_away);
                 title.setAlpha(1f);
+                nodeIcon.setAlpha(1f);
                 break;
             case LOCKED:
             default:
@@ -198,7 +202,7 @@ public class LearnMapFragment extends Fragment {
                 stateIcon.setVisibility(View.VISIBLE);
                 stateIcon.setImageResource(R.drawable.ic_lock_closed);
                 title.setAlpha(0.7f);
-                emoji.setAlpha(0.75f);
+                nodeIcon.setAlpha(0.58f);
                 break;
         }
 
@@ -214,6 +218,107 @@ public class LearnMapFragment extends Fragment {
         nodeCircleViews.add(circle);
     }
 
+    private int getLessonIconRes(MapNodeItem node) {
+        if (node == null) {
+            return R.drawable.hello;
+        }
+
+        int byOrder = iconByOrder(extractOrder(node.getNodeId()));
+        if (byOrder != 0) {
+            return byOrder;
+        }
+
+        int byPrompt = iconByPrompt(node.getPromptKey());
+        if (byPrompt != 0) {
+            return byPrompt;
+        }
+
+        int byTitle = iconByTitle(node.getTitle());
+        if (byTitle != 0) {
+            return byTitle;
+        }
+
+        return R.drawable.hello;
+    }
+
+    private int extractOrder(String nodeId) {
+        if (nodeId == null || nodeId.trim().isEmpty()) {
+            return -1;
+        }
+        String digits = nodeId.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) {
+            return -1;
+        }
+        try {
+            return Integer.parseInt(digits);
+        } catch (Exception ignored) {
+            return -1;
+        }
+    }
+
+    private int iconByOrder(int order) {
+        switch (order) {
+            case 1:
+                return R.drawable.hello;
+            case 2:
+                return R.drawable.happy;
+            case 3:
+                return R.drawable.family;
+            case 4:
+                return R.drawable.coffee;
+            case 5:
+                return R.drawable.work;
+            case 6:
+                return R.drawable.fashion;
+            case 7:
+                return R.drawable.weather;
+            case 8:
+                return R.drawable.house;
+            case 9:
+                return R.drawable.hobby;
+            case 10:
+                return R.drawable.goodbye;
+            default:
+                return 0;
+        }
+    }
+
+    private int iconByPrompt(String promptKey) {
+        String key = promptKey == null ? "" : promptKey.trim().toLowerCase(Locale.US);
+        if (key.isEmpty()) {
+            return 0;
+        }
+        if (key.contains("greeting")) return R.drawable.hello;
+        if (key.contains("mood")) return R.drawable.happy;
+        if (key.contains("family")) return R.drawable.family;
+        if (key.contains("breakfast")) return R.drawable.coffee;
+        if (key.contains("job") || key.contains("dream") || key.contains("work")) return R.drawable.work;
+        if (key.contains("fashion")) return R.drawable.fashion;
+        if (key.contains("weather")) return R.drawable.weather;
+        if (key.contains("home") || key.contains("house")) return R.drawable.house;
+        if (key.contains("hobby") || key.contains("weekend")) return R.drawable.hobby;
+        if (key.contains("farewell") || key.contains("goodbye")) return R.drawable.goodbye;
+        return 0;
+    }
+
+    private int iconByTitle(String title) {
+        String text = title == null ? "" : title.trim().toLowerCase(Locale.US);
+        if (text.isEmpty()) {
+            return 0;
+        }
+        if (text.contains("chào")) return R.drawable.hello;
+        if (text.contains("cảm xúc")) return R.drawable.happy;
+        if (text.contains("gia đình")) return R.drawable.family;
+        if (text.contains("bữa sáng")) return R.drawable.coffee;
+        if (text.contains("công việc") || text.contains("ước mơ")) return R.drawable.work;
+        if (text.contains("thời trang") || text.contains("màu sắc")) return R.drawable.fashion;
+        if (text.contains("thời tiết")) return R.drawable.weather;
+        if (text.contains("ngôi nhà")) return R.drawable.house;
+        if (text.contains("sở thích")) return R.drawable.hobby;
+        if (text.contains("hẹn gặp lại")) return R.drawable.goodbye;
+        return 0;
+    }
+
     private void openConversation(MapNodeItem node) {
         Intent intent = new Intent(requireContext(), MapConversationActivity.class);
         intent.putExtra(MapConversationActivity.EXTRA_NODE_ID, node.getNodeId());
@@ -221,6 +326,9 @@ public class LearnMapFragment extends Fragment {
         intent.putExtra(MapConversationActivity.EXTRA_PROMPT_KEY, node.getPromptKey());
         intent.putExtra(MapConversationActivity.EXTRA_ROLE_CONTEXT, node.getRoleDescription());
         intent.putExtra(MapConversationActivity.EXTRA_VOCAB_LIST, new java.util.ArrayList<>(node.getVocabList()));
+        intent.putExtra(MapConversationActivity.EXTRA_FLOW_STEPS, new java.util.ArrayList<>(node.getFlowSteps()));
+        intent.putStringArrayListExtra(MapConversationActivity.EXTRA_LESSON_KEYWORDS, new java.util.ArrayList<>(node.getLessonKeywords()));
+        intent.putExtra(MapConversationActivity.EXTRA_MIN_LEVEL, node.getMinLevel());
         intent.putExtra(MapConversationActivity.EXTRA_MIN_EXCHANGES, node.getMinExchanges());
         startActivity(intent);
     }

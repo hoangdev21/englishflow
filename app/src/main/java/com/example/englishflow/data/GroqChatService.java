@@ -12,9 +12,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -61,19 +62,50 @@ public class GroqChatService {
         void onError(String error);
     }
 
+    public static class RagContext {
+        public String lessonId = "";
+        public String lessonTitle = "";
+        public String minLevel = "";
+        public String scenario = "";
+        public List<String> keywords = new ArrayList<>();
+        public List<String> expectedExpressions = new ArrayList<>();
+        public List<String> knowledgeChunks = new ArrayList<>();
+
+        public boolean hasAnyContext() {
+            return (lessonId != null && !lessonId.trim().isEmpty())
+                    || (lessonTitle != null && !lessonTitle.trim().isEmpty())
+                    || (minLevel != null && !minLevel.trim().isEmpty())
+                    || (scenario != null && !scenario.trim().isEmpty())
+                    || (keywords != null && !keywords.isEmpty())
+                    || (expectedExpressions != null && !expectedExpressions.isEmpty())
+                    || (knowledgeChunks != null && !knowledgeChunks.isEmpty());
+        }
+    }
+
     public void getChatResponse(String userMessage, String topic, ChatCallback callback) {
-        getChatResponse(userMessage, topic, null, null, callback);
+        getChatResponse(userMessage, topic, null, null, null, callback);
     }
 
     public void getChatResponse(String userMessage, String topic, String customSystemPrompt, List<com.example.englishflow.ui.MapConversationActivity.ChatMessage> history, ChatCallback callback) {
+        getChatResponse(userMessage, topic, customSystemPrompt, history, null, callback);
+    }
+
+    public void getChatResponse(String userMessage,
+                                String topic,
+                                String customSystemPrompt,
+                                List<com.example.englishflow.ui.MapConversationActivity.ChatMessage> history,
+                                RagContext ragContext,
+                                ChatCallback callback) {
         new Thread(() -> {
             try {
                 // 1. RAG: Search relevant vocabulary
-                List<CustomVocabularyEntity> contextVocab = searchRelevantVocab(userMessage);
+                List<CustomVocabularyEntity> contextVocab = searchRelevantVocab(userMessage, ragContext);
                 
                 // 2. Build Prompt
-                String systemPrompt = (customSystemPrompt != null && !customSystemPrompt.isEmpty()) 
-                        ? customSystemPrompt : buildSystemPrompt(topic, contextVocab);
+                String systemPrompt = buildSystemPrompt(topic, contextVocab, ragContext);
+                if (customSystemPrompt != null && !customSystemPrompt.trim().isEmpty()) {
+                    systemPrompt += "\n\nROLEPLAY ADD-ON:\n" + customSystemPrompt.trim();
+                }
                 
                 // 3. Call API
                 JsonObject requestBody = buildChatRequestWithHistory(systemPrompt, userMessage, history);
@@ -164,13 +196,61 @@ public class GroqChatService {
         return request;
     }
 
-    private List<CustomVocabularyEntity> searchRelevantVocab(String message) {
+    private List<CustomVocabularyEntity> searchRelevantVocab(String message, RagContext ragContext) {
         try {
-            String[] tokens = message.toLowerCase(Locale.US).split("\\s+");
-            List<String> listToken = Arrays.asList(tokens);
-            return database.customVocabularyDao().searchRelevant(listToken, message);
+            Set<String> tokenSet = new LinkedHashSet<>();
+            addTokens(tokenSet, message);
+
+            if (ragContext != null) {
+                if (ragContext.keywords != null) {
+                    for (String keyword : ragContext.keywords) {
+                        addTokens(tokenSet, keyword);
+                    }
+                }
+                if (ragContext.expectedExpressions != null) {
+                    for (String expression : ragContext.expectedExpressions) {
+                        addTokens(tokenSet, expression);
+                    }
+                }
+            }
+
+            if (tokenSet.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            List<String> listToken = new ArrayList<>(tokenSet);
+            if (listToken.size() > 20) {
+                listToken = listToken.subList(0, 20);
+            }
+
+            String query = message;
+            if (ragContext != null && ragContext.keywords != null && !ragContext.keywords.isEmpty()) {
+                query = message + " " + String.join(" ", ragContext.keywords);
+            }
+            return database.customVocabularyDao().searchRelevant(listToken, query);
         } catch (Exception e) {
             return new ArrayList<>();
+        }
+    }
+
+    private void addTokens(Set<String> tokens, String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return;
+        }
+
+        String cleaned = raw.toLowerCase(Locale.US)
+                .replaceAll("[^a-z0-9\\s]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+
+        if (cleaned.isEmpty()) {
+            return;
+        }
+
+        for (String token : cleaned.split(" ")) {
+            if (token.length() >= 2) {
+                tokens.add(token);
+            }
         }
     }
 
@@ -192,10 +272,41 @@ public class GroqChatService {
             "- Luôn sử dụng XUỐNG DÒNG KẾP giữa các đoạn.\n" +
             "- Trả về JSON với các trường: response, correction, explanation, vocab_word, vocab_ipa, vocab_meaning, vocab_example, vocab_example_vi.";
 
-    private String buildSystemPrompt(String topic, List<CustomVocabularyEntity> vocab) {
+    private String buildSystemPrompt(String topic, List<CustomVocabularyEntity> vocab, RagContext ragContext) {
         StringBuilder sb = new StringBuilder();
         sb.append(SYSTEM_PROMPT);
         sb.append("\n\nCHỦ ĐỀ: ").append(topic);
+
+        if (ragContext != null && ragContext.hasAnyContext()) {
+            sb.append("\n\nRAG LESSON CONTEXT:");
+            if (ragContext.lessonId != null && !ragContext.lessonId.trim().isEmpty()) {
+                sb.append("\n- lesson_id: ").append(ragContext.lessonId.trim());
+            }
+            if (ragContext.lessonTitle != null && !ragContext.lessonTitle.trim().isEmpty()) {
+                sb.append("\n- lesson_title: ").append(ragContext.lessonTitle.trim());
+            }
+            if (ragContext.minLevel != null && !ragContext.minLevel.trim().isEmpty()) {
+                sb.append("\n- learner_level: ").append(ragContext.minLevel.trim());
+            }
+            if (ragContext.scenario != null && !ragContext.scenario.trim().isEmpty()) {
+                sb.append("\n- scenario: ").append(ragContext.scenario.trim());
+            }
+
+            if (ragContext.keywords != null && !ragContext.keywords.isEmpty()) {
+                sb.append("\n- target_keywords: ").append(String.join(", ", trimList(ragContext.keywords, 12)));
+            }
+
+            if (ragContext.expectedExpressions != null && !ragContext.expectedExpressions.isEmpty()) {
+                sb.append("\n- expected_expressions: ").append(String.join(", ", trimList(ragContext.expectedExpressions, 12)));
+            }
+
+            if (ragContext.knowledgeChunks != null && !ragContext.knowledgeChunks.isEmpty()) {
+                sb.append("\n- knowledge_chunks:");
+                for (String chunk : trimList(ragContext.knowledgeChunks, 8)) {
+                    sb.append("\n  • ").append(chunk);
+                }
+            }
+        }
         
         if (vocab != null && !vocab.isEmpty()) {
             sb.append("\n\nDỮ LIỆU THAM KHẢO:\n");
@@ -203,7 +314,29 @@ public class GroqChatService {
                 sb.append("- ").append(v.word).append(": ").append(v.meaning).append("\n");
             }
         }
+
+        sb.append("\nRÀNG BUỘC THÊM:\n");
+        sb.append("- Trả lời ngắn gọn, tự nhiên, ưu tiên tính hội thoại.\n");
+        sb.append("- Nếu người học sai, sửa nhẹ nhàng và đưa 1 gợi ý cụ thể.\n");
+        sb.append("- Không bịa thêm kiến thức ngoài RAG context khi có sẵn dữ liệu.");
         return sb.toString();
+    }
+
+    private List<String> trimList(List<String> source, int max) {
+        List<String> result = new ArrayList<>();
+        if (source == null || source.isEmpty() || max <= 0) {
+            return result;
+        }
+        for (String item : source) {
+            if (item == null || item.trim().isEmpty()) {
+                continue;
+            }
+            result.add(item.trim());
+            if (result.size() >= max) {
+                break;
+            }
+        }
+        return result;
     }
 
     private JsonObject buildChatRequest(String systemPrompt, String userMessage) {

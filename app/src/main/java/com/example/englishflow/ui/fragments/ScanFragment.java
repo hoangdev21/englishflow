@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.speech.tts.TextToSpeech;
 import android.text.TextUtils;
 import android.text.InputType;
@@ -18,9 +19,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ScrollView;
 import android.view.ScaleGestureDetector;
 import android.view.MotionEvent;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import androidx.camera.core.Camera;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +32,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
@@ -47,37 +50,76 @@ import androidx.appcompat.app.AlertDialog;
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.AppSettingsStore;
+import com.example.englishflow.data.DictionaryResult;
+import com.example.englishflow.data.FreeDictionaryService;
 import com.example.englishflow.data.GeminiVisionService;
 import com.example.englishflow.data.ScanAnalyzer;
 import com.example.englishflow.data.ScanResult;
 import com.example.englishflow.data.WordEntry;
 import com.example.englishflow.database.entity.CustomVocabularyEntity;
+import com.example.englishflow.ui.views.MagicLensOverlayView;
 import com.example.englishflow.ui.viewmodel.ScanViewModel;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.TextRecognizer;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import okhttp3.OkHttpClient;
 
 public class ScanFragment extends Fragment {
     private static final int REQUEST_CAMERA_PERMISSION = 100;
     private static final float TTS_PITCH = 1.0f;
     private static final int MAX_GALLERY_IMAGE_DIMENSION = 1280;
     private static final long PREVIEW_HINT_INTERVAL_MS = 4500L;
+        private static final long MAGIC_LENS_ANALYSIS_INTERVAL_MS = 260L;
+        private static final int MAGIC_LENS_MAX_OVERLAYS = 18;
+
+        private static final Pattern MAGIC_LENS_WORD_PATTERN = Pattern.compile("[A-Za-z][A-Za-z'’-]{2,}");
+        private static final Set<String> MAGIC_LENS_COMMON_WORDS = new HashSet<>(Arrays.asList(
+            "the", "and", "for", "you", "that", "with", "this", "have", "from", "your",
+            "what", "when", "where", "which", "there", "their", "would", "could", "should",
+            "about", "after", "before", "because", "into", "than", "then", "them", "they",
+            "were", "been", "will", "shall", "while", "also", "just", "such", "some", "more",
+            "most", "many", "much", "very", "here", "over", "under", "between", "through",
+            "during", "until", "again", "once", "only", "every", "other", "each", "same", "both",
+            "book", "page", "line", "text", "read", "reading", "chapter", "story", "paper"
+        ));
 
     private AppRepository repository;
     private AppSettingsStore settingsStore;
     private GeminiVisionService geminiService;
+    private FreeDictionaryService freeDictionaryService;
+    private TextRecognizer magicLensTextRecognizer;
     private TextToSpeech textToSpeech;
     private ExecutorService imageExecutor;
     private ExecutorService cameraExecutor;
 
     private ImageCapture imageCapture;
+    private ImageAnalysis imageAnalysis;
     private ActivityResultLauncher<String> pickImageLauncher;
 
     private PreviewView cameraPreview;
@@ -94,18 +136,30 @@ public class ScanFragment extends Fragment {
     private TextView mappedWordText;
     private TextView confidenceText;
     private TextView previewHintText;
+    private View magicLensStatusDot;
     private LinearProgressIndicator scanLoading;
+    private MaterialButton magicLensToggleButton;
+    private MaterialButton magicLensModeButton;
+    private MagicLensOverlayView magicLensOverlay;
 
 
 
     private ScanViewModel scanViewModel;
     private boolean isProcessing = false;
     private boolean isPreviewAnalyzing = false;
+    private boolean isMagicLensEnabled = false;
     private int lensFacing = CameraSelector.LENS_FACING_BACK;
     private Handler previewHintHandler;
     private Runnable previewHintRunnable;
     private Camera camera;
     private ScaleGestureDetector scaleGestureDetector;
+
+    private MagicLensOverlayView.LabelMode magicLensLabelMode = MagicLensOverlayView.LabelMode.TRANSLATION;
+    private long lastMagicLensAnalysisAt = 0L;
+    private final AtomicBoolean magicLensAnalysisRunning = new AtomicBoolean(false);
+    private final Map<String, LensWordInfo> magicLensWordCache = new ConcurrentHashMap<>();
+    private final Set<String> pendingMagicLensLookups = Collections.synchronizedSet(new HashSet<>());
+    private final Set<String> learnedWordSet = Collections.synchronizedSet(new HashSet<>());
 
     @Nullable
     @Override
@@ -123,6 +177,8 @@ public class ScanFragment extends Fragment {
         imageExecutor = Executors.newSingleThreadExecutor();
         cameraExecutor = Executors.newSingleThreadExecutor();
         scanViewModel = new ViewModelProvider(this).get(ScanViewModel.class);
+        freeDictionaryService = new FreeDictionaryService(new OkHttpClient());
+        magicLensTextRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
 
         android.util.Log.d("ScanFragment", "Initializing Groq Vision service...");
         try {
@@ -148,6 +204,8 @@ public class ScanFragment extends Fragment {
         initTextToSpeech();
         setupButtons(view);
         setupZoomGesture();
+        warmMagicLensVocabularyCaches();
+        updateMagicLensUi();
         // startPreviewHintLoop(); // Removed to support user's wish for a cleaner preview without real-time overrides
 
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
@@ -189,7 +247,11 @@ public class ScanFragment extends Fragment {
         rawLabelText = view.findViewById(R.id.scanRawLabel);
         mappedWordText = view.findViewById(R.id.scanMappedWord);
         previewHintText = view.findViewById(R.id.scanPreviewHint);
+        magicLensStatusDot = view.findViewById(R.id.magicLensStatusDot);
         scanLoading = view.findViewById(R.id.scanLoading);
+        magicLensToggleButton = view.findViewById(R.id.btnMagicLensToggle);
+        magicLensModeButton = view.findViewById(R.id.btnMagicLensMode);
+        magicLensOverlay = view.findViewById(R.id.magicLensOverlayView);
 
     }
 
@@ -233,6 +295,16 @@ public class ScanFragment extends Fragment {
         analyzeButton.setOnClickListener(v -> toggleCamera());
         pronounceButton.setOnClickListener(v -> pronounceWord());
         saveButton.setOnClickListener(v -> saveCurrentWord());
+        if (magicLensToggleButton != null) {
+            magicLensToggleButton.setOnClickListener(v -> toggleMagicLens());
+        }
+        if (magicLensModeButton != null) {
+            magicLensModeButton.setOnClickListener(v -> cycleMagicLensMode());
+        }
+        if (magicLensOverlay != null) {
+            magicLensOverlay.setOnWordTapListener(this::onMagicLensWordTapped);
+            magicLensOverlay.setLensActive(false);
+        }
         manageCustomWordsButton.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), com.example.englishflow.ui.CustomVocabularyManagerActivity.class);
             startActivity(intent);
@@ -265,12 +337,17 @@ public class ScanFragment extends Fragment {
                         .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                         .build();
 
+                imageAnalysis = new ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build();
+                imageAnalysis.setAnalyzer(cameraExecutor, this::analyzeMagicLensFrame);
+
                 CameraSelector cameraSelector = new CameraSelector.Builder()
                         .requireLensFacing(lensFacing)
                         .build();
 
                 cameraProvider.unbindAll();
-                camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture);
+                camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalysis);
             } catch (Exception e) {
                 if (isAdded()) {
                     Toast.makeText(requireContext(), "Camera failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -302,6 +379,524 @@ public class ScanFragment extends Fragment {
             scaleGestureDetector.onTouchEvent(event);
             return true;
         });
+    }
+
+    private void toggleMagicLens() {
+        isMagicLensEnabled = !isMagicLensEnabled;
+        if (!isMagicLensEnabled) {
+            if (magicLensOverlay != null) {
+                magicLensOverlay.clearOverlays();
+            }
+            updateMagicLensStatus(false);
+        } else {
+            updateMagicLensStatus(true);
+        }
+        updateMagicLensUi();
+    }
+
+    private void cycleMagicLensMode() {
+        if (magicLensLabelMode == MagicLensOverlayView.LabelMode.TRANSLATION) {
+            magicLensLabelMode = MagicLensOverlayView.LabelMode.IPA;
+        } else if (magicLensLabelMode == MagicLensOverlayView.LabelMode.IPA) {
+            magicLensLabelMode = MagicLensOverlayView.LabelMode.TRANSLATION_IPA;
+        } else {
+            magicLensLabelMode = MagicLensOverlayView.LabelMode.TRANSLATION;
+        }
+
+        if (magicLensOverlay != null) {
+            magicLensOverlay.setLabelMode(magicLensLabelMode);
+        }
+        updateMagicLensUi();
+    }
+
+    private void updateMagicLensUi() {
+        if (magicLensToggleButton != null) {
+            magicLensToggleButton.setText(isMagicLensEnabled
+                    ? R.string.scan_magic_lens_toggle_off
+                    : R.string.scan_magic_lens_toggle_on);
+        }
+        if (magicLensModeButton != null) {
+            magicLensModeButton.setEnabled(isMagicLensEnabled);
+            magicLensModeButton.setAlpha(isMagicLensEnabled ? 1f : 0.58f);
+            if (magicLensLabelMode == MagicLensOverlayView.LabelMode.IPA) {
+                magicLensModeButton.setText(R.string.scan_magic_lens_mode_ipa);
+            } else if (magicLensLabelMode == MagicLensOverlayView.LabelMode.TRANSLATION_IPA) {
+                magicLensModeButton.setText(R.string.scan_magic_lens_mode_translation_ipa);
+            } else {
+                magicLensModeButton.setText(R.string.scan_magic_lens_mode_translation);
+            }
+        }
+        if (magicLensOverlay != null) {
+            magicLensOverlay.setLensActive(isMagicLensEnabled);
+            magicLensOverlay.setLabelMode(magicLensLabelMode);
+            if (!isMagicLensEnabled) {
+                magicLensOverlay.clearOverlays();
+            }
+        }
+        updateMagicLensStatus(isMagicLensEnabled);
+    }
+
+    private void analyzeMagicLensFrame(@NonNull ImageProxy imageProxy) {
+        if (!isMagicLensEnabled || magicLensTextRecognizer == null || !isAdded()) {
+            imageProxy.close();
+            return;
+        }
+
+        long now = SystemClock.elapsedRealtime();
+        if (now - lastMagicLensAnalysisAt < MAGIC_LENS_ANALYSIS_INTERVAL_MS) {
+            imageProxy.close();
+            return;
+        }
+        if (!magicLensAnalysisRunning.compareAndSet(false, true)) {
+            imageProxy.close();
+            return;
+        }
+
+        Image mediaImage = imageProxy.getImage();
+        if (mediaImage == null) {
+            magicLensAnalysisRunning.set(false);
+            imageProxy.close();
+            return;
+        }
+
+        int rotation = imageProxy.getImageInfo().getRotationDegrees();
+        final int sourceWidth = (rotation == 90 || rotation == 270) ? imageProxy.getHeight() : imageProxy.getWidth();
+        final int sourceHeight = (rotation == 90 || rotation == 270) ? imageProxy.getWidth() : imageProxy.getHeight();
+        InputImage inputImage = InputImage.fromMediaImage(mediaImage, rotation);
+
+        lastMagicLensAnalysisAt = now;
+        magicLensTextRecognizer.process(inputImage)
+                .addOnSuccessListener(visionText -> processMagicLensResult(visionText, sourceWidth, sourceHeight))
+                .addOnFailureListener(error -> {
+                        // magicLensStatusDot remains active state color
+                })
+                .addOnCompleteListener(task -> {
+                    magicLensAnalysisRunning.set(false);
+                    imageProxy.close();
+                });
+    }
+
+    private void processMagicLensResult(@NonNull Text visionText, int sourceWidth, int sourceHeight) {
+        if (!isAdded() || !isMagicLensEnabled) {
+            return;
+        }
+
+        List<MagicLensOverlayView.WordOverlay> overlays = buildMagicLensOverlays(visionText, sourceWidth, sourceHeight);
+        if (magicLensOverlay != null) {
+            magicLensOverlay.post(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                magicLensOverlay.setWordOverlays(overlays);
+            });
+        }
+
+        // Status is handled by toggle; no need for real-time text overrides to keep UI clean.
+    }
+
+    @NonNull
+    private List<MagicLensOverlayView.WordOverlay> buildMagicLensOverlays(@NonNull Text visionText,
+                                                                          int sourceWidth,
+                                                                          int sourceHeight) {
+        List<MagicLensOverlayView.WordOverlay> overlays = new java.util.ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+        outerLoop:
+        for (Text.TextBlock block : visionText.getTextBlocks()) {
+            if (block == null) {
+                continue;
+            }
+            for (Text.Line line : block.getLines()) {
+                if (line == null) {
+                    continue;
+                }
+
+                List<Text.Element> elements = line.getElements();
+                if (elements == null || elements.isEmpty()) {
+                    continue;
+                }
+
+                for (Text.Element element : elements) {
+                    if (element == null) {
+                        continue;
+                    }
+                    Rect rect = element.getBoundingBox();
+                    if (rect == null) {
+                        continue;
+                    }
+
+                    RectF mappedRect = mapBoundingBoxToPreview(rect, sourceWidth, sourceHeight);
+                    if (mappedRect == null) {
+                        continue;
+                    }
+
+                    Matcher matcher = MAGIC_LENS_WORD_PATTERN.matcher(nonNull(element.getText()));
+                    while (matcher.find()) {
+                        String normalized = normalizeWordForMagicLens(matcher.group());
+                        if (!shouldShowInMagicLens(normalized)) {
+                            continue;
+                        }
+
+                        String key = normalized
+                                + ":" + Math.round(mappedRect.left / 10f)
+                                + ":" + Math.round(mappedRect.top / 10f);
+                        if (!seen.add(key)) {
+                            continue;
+                        }
+
+                        LensWordInfo info = resolveMagicLensWordInfo(normalized);
+                        overlays.add(new MagicLensOverlayView.WordOverlay(
+                                normalized,
+                                mappedRect,
+                                info.ipa,
+                                info.meaning,
+                                info.confidence
+                        ));
+
+                        if (overlays.size() >= MAGIC_LENS_MAX_OVERLAYS) {
+                            break outerLoop;
+                        }
+                    }
+                }
+            }
+        }
+
+        overlays.sort((left, right) -> Integer.compare(
+                scoreMagicLensDifficulty(right.word),
+                scoreMagicLensDifficulty(left.word)
+        ));
+
+        if (overlays.size() > MAGIC_LENS_MAX_OVERLAYS) {
+            return new java.util.ArrayList<>(overlays.subList(0, MAGIC_LENS_MAX_OVERLAYS));
+        }
+        return overlays;
+    }
+
+    private int scoreMagicLensDifficulty(@NonNull String word) {
+        int score = Math.max(0, word.length());
+        if (!learnedWordSet.contains(word)) {
+            score += 4;
+        }
+        if (!MAGIC_LENS_COMMON_WORDS.contains(word)) {
+            score += 3;
+        }
+        if (word.length() >= 8) {
+            score += 2;
+        }
+        return score;
+    }
+
+    @Nullable
+    private RectF mapBoundingBoxToPreview(@NonNull Rect sourceRect, int sourceWidth, int sourceHeight) {
+        if (cameraPreview == null) {
+            return null;
+        }
+        int previewWidth = cameraPreview.getWidth();
+        int previewHeight = cameraPreview.getHeight();
+        if (previewWidth <= 0 || previewHeight <= 0 || sourceWidth <= 0 || sourceHeight <= 0) {
+            return null;
+        }
+
+        float scale = Math.max((float) previewWidth / sourceWidth, (float) previewHeight / sourceHeight);
+        float scaledWidth = sourceWidth * scale;
+        float scaledHeight = sourceHeight * scale;
+        float dx = (previewWidth - scaledWidth) / 2f;
+        float dy = (previewHeight - scaledHeight) / 2f;
+
+        RectF mapped = new RectF(
+                sourceRect.left * scale + dx,
+                sourceRect.top * scale + dy,
+                sourceRect.right * scale + dx,
+                sourceRect.bottom * scale + dy
+        );
+
+        mapped.left = Math.max(0f, mapped.left);
+        mapped.top = Math.max(0f, mapped.top);
+        mapped.right = Math.min(previewWidth, mapped.right);
+        mapped.bottom = Math.min(previewHeight, mapped.bottom);
+
+        if (mapped.width() < 18f || mapped.height() < 10f) {
+            return null;
+        }
+        return mapped;
+    }
+
+    @NonNull
+    private LensWordInfo resolveMagicLensWordInfo(@NonNull String word) {
+        LensWordInfo cached = magicLensWordCache.get(word);
+        if (cached != null) {
+            return cached;
+        }
+
+        LensWordInfo placeholder = new LensWordInfo(word, "", "", "", 0.32f);
+        magicLensWordCache.put(word, placeholder);
+        requestMagicLensWordEnrichment(word);
+        return placeholder;
+    }
+
+    private void requestMagicLensWordEnrichment(@NonNull String word) {
+        if (!pendingMagicLensLookups.add(word)) {
+            return;
+        }
+
+        imageExecutor.execute(() -> {
+            boolean dictionaryRequested = false;
+            try {
+                CustomVocabularyEntity custom = repository.findCustomVocabulary(word);
+                if (custom != null) {
+                    cacheMagicLensWordInfo(
+                            word,
+                            nonNull(custom.ipa),
+                            nonNull(custom.meaning),
+                            "custom",
+                            0.94f
+                    );
+                }
+
+                repository.fetchVietnameseSuggestion(word, suggestion -> {
+                    if (!TextUtils.isEmpty(suggestion)) {
+                        cacheMagicLensWordInfo(word, null, suggestion, "translate", 0.66f);
+                    }
+                });
+
+                LensWordInfo existing = magicLensWordCache.get(word);
+                boolean needIpa = existing == null || existing.ipa.isEmpty() || "-".equals(existing.ipa);
+                if (needIpa && freeDictionaryService != null) {
+                    dictionaryRequested = true;
+                    freeDictionaryService.lookupWord(word, new FreeDictionaryService.LookupCallback() {
+                        @Override
+                        public void onSuccess(DictionaryResult result) {
+                            String ipa = result != null ? nonNull(result.getIpa()) : "";
+                            cacheMagicLensWordInfo(word, ipa, null, "dictionary", 0.83f);
+                            pendingMagicLensLookups.remove(word);
+                        }
+
+                        @Override
+                        public void onNotFound() {
+                            pendingMagicLensLookups.remove(word);
+                        }
+
+                        @Override
+                        public void onError(Exception exception) {
+                            pendingMagicLensLookups.remove(word);
+                        }
+                    });
+                }
+            } catch (Exception ignored) {
+            } finally {
+                if (!dictionaryRequested) {
+                    pendingMagicLensLookups.remove(word);
+                }
+            }
+        });
+    }
+
+    private void cacheMagicLensWordInfo(@NonNull String word,
+                                        @Nullable String ipa,
+                                        @Nullable String meaning,
+                                        @Nullable String source,
+                                        float confidence) {
+        LensWordInfo current = magicLensWordCache.get(word);
+
+        String nextIpa = current != null ? current.ipa : "";
+        String nextMeaning = current != null ? current.meaning : "";
+        String nextSource = current != null ? current.source : "";
+        float nextConfidence = current != null ? current.confidence : 0.2f;
+
+        String cleanIpa = nonNull(ipa);
+        if (!cleanIpa.isEmpty() && !"-".equals(cleanIpa)) {
+            nextIpa = cleanIpa;
+        }
+
+        String cleanMeaning = nonNull(meaning);
+        if (!cleanMeaning.isEmpty()) {
+            nextMeaning = cleanMeaning;
+        }
+
+        String cleanSource = nonNull(source);
+        if (!cleanSource.isEmpty()) {
+            nextSource = cleanSource;
+        }
+
+        nextConfidence = Math.max(nextConfidence, confidence);
+
+        magicLensWordCache.put(word, new LensWordInfo(word, nextIpa, nextMeaning, nextSource, nextConfidence));
+    }
+
+    private void warmMagicLensVocabularyCaches() {
+        imageExecutor.execute(() -> {
+            try {
+                List<WordEntry> savedWords = repository.getSavedWords();
+                for (WordEntry wordEntry : savedWords) {
+                    String normalized = normalizeWordForMagicLens(wordEntry.getWord());
+                    if (normalized.isEmpty()) {
+                        continue;
+                    }
+                    learnedWordSet.add(normalized);
+                    cacheMagicLensWordInfo(
+                            normalized,
+                            nonNull(wordEntry.getIpa()),
+                            nonNull(wordEntry.getMeaning()),
+                            "saved",
+                            0.98f
+                    );
+                }
+
+                List<CustomVocabularyEntity> customVocabulary = repository.getAllCustomVocabulary();
+                for (CustomVocabularyEntity entity : customVocabulary) {
+                    String normalized = normalizeWordForMagicLens(entity.word);
+                    if (normalized.isEmpty()) {
+                        continue;
+                    }
+                    cacheMagicLensWordInfo(
+                            normalized,
+                            nonNull(entity.ipa),
+                            nonNull(entity.meaning),
+                            "custom",
+                            0.9f
+                    );
+                }
+            } catch (Exception ignored) {
+            }
+        });
+    }
+
+    @NonNull
+    private String normalizeWordForMagicLens(@Nullable String raw) {
+        String value = nonNull(raw)
+                .replace('’', '\'')
+                .trim()
+                .toLowerCase(Locale.US)
+                .replaceAll("^[^a-z']+|[^a-z']+$", "")
+                .replaceAll("\\s+", " ");
+
+        if (value.endsWith("'s") && value.length() > 3) {
+            value = value.substring(0, value.length() - 2);
+        }
+        return value;
+    }
+
+    private boolean shouldShowInMagicLens(@NonNull String word) {
+        if (word.isEmpty() || word.length() < 4) {
+            return false;
+        }
+        if (word.matches(".*\\d.*")) {
+            return false;
+        }
+        if (MAGIC_LENS_COMMON_WORDS.contains(word)) {
+            return false;
+        }
+        if (learnedWordSet.contains(word) && word.length() < 8) {
+            return false;
+        }
+        return true;
+    }
+
+    private void onMagicLensWordTapped(@NonNull MagicLensOverlayView.WordOverlay overlay) {
+        pronounceMagicLensWord(overlay.word);
+        showMagicLensWordSheet(overlay);
+    }
+
+    private void pronounceMagicLensWord(@NonNull String word) {
+        if (textToSpeech == null) {
+            return;
+        }
+        textToSpeech.speak(word, TextToSpeech.QUEUE_FLUSH, null, "magic-lens-word");
+    }
+
+    private void showMagicLensWordSheet(@NonNull MagicLensOverlayView.WordOverlay overlay) {
+        if (!isAdded()) {
+            return;
+        }
+
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
+        View sheetView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.bottom_sheet_magic_lens_word, null, false);
+
+        TextView wordView = sheetView.findViewById(R.id.tvMagicLensSheetWord);
+        TextView ipaView = sheetView.findViewById(R.id.tvMagicLensSheetIpa);
+        TextView meaningView = sheetView.findViewById(R.id.tvMagicLensSheetMeaning);
+        MaterialButton speakButton = sheetView.findViewById(R.id.btnMagicLensSheetSpeak);
+        MaterialButton saveButton = sheetView.findViewById(R.id.btnMagicLensSheetSave);
+
+        String normalized = normalizeWordForMagicLens(overlay.word);
+        LensWordInfo info = magicLensWordCache.get(normalized);
+        String finalWord = normalized.isEmpty() ? overlay.word : normalized;
+        String finalIpa = info != null && !TextUtils.isEmpty(info.ipa) ? info.ipa : overlay.ipa;
+        String finalMeaning = info != null && !TextUtils.isEmpty(info.meaning) ? info.meaning : overlay.meaning;
+
+        if (TextUtils.isEmpty(finalMeaning)) {
+            finalMeaning = getString(R.string.scan_magic_lens_fallback_meaning);
+        }
+        if (TextUtils.isEmpty(finalIpa)) {
+            finalIpa = "-";
+        }
+
+        wordView.setText(finalWord);
+        ipaView.setText(finalIpa);
+        meaningView.setText(finalMeaning);
+
+        String meaningToSave = finalMeaning;
+        String ipaToSave = finalIpa;
+
+        speakButton.setOnClickListener(v -> pronounceMagicLensWord(finalWord));
+        saveButton.setOnClickListener(v -> {
+            saveWordFromMagicLens(finalWord, ipaToSave, meaningToSave);
+            dialog.dismiss();
+        });
+
+        dialog.setContentView(sheetView);
+        dialog.show();
+    }
+
+    private void saveWordFromMagicLens(@NonNull String word,
+                                       @Nullable String ipa,
+                                       @Nullable String meaning) {
+        String safeWord = normalizeWordForMagicLens(word);
+        if (safeWord.isEmpty()) {
+            return;
+        }
+
+        String safeMeaning = nonNull(meaning);
+        if (safeMeaning.isEmpty()) {
+            safeMeaning = getString(R.string.scan_magic_lens_fallback_meaning);
+        }
+
+        String safeIpa = nonNull(ipa);
+        if (safeIpa.isEmpty()) {
+            safeIpa = "-";
+        }
+
+        repository.saveWord(new WordEntry(
+                safeWord,
+                safeIpa,
+                safeMeaning,
+                "noun",
+                "I found this word with Magic Lens.",
+                "Tôi gặp từ này khi dùng Magic Lens.",
+                "",
+                "Magic Lens",
+                "Saved from realtime overlay"
+        ));
+
+        learnedWordSet.add(safeWord);
+        cacheMagicLensWordInfo(safeWord, safeIpa, safeMeaning, "saved", 0.99f);
+        Toast.makeText(requireContext(), R.string.scan_magic_lens_save_success, Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateMagicLensStatus(boolean isActive) {
+        if (magicLensStatusDot != null) {
+            magicLensStatusDot.post(() -> {
+                magicLensStatusDot.setBackgroundResource(isActive
+                        ? R.drawable.bg_status_dot_on
+                        : R.drawable.bg_status_dot_off);
+            });
+        }
+    }
+
+    @NonNull
+    private String nonNull(@Nullable String value) {
+        return value == null ? "" : value.trim();
     }
 
     private void analyzeGalleryImage(@NonNull Uri imageUri) {
@@ -810,9 +1405,35 @@ public class ScanFragment extends Fragment {
         void onSave(String meaning);
     }
 
+    private static class LensWordInfo {
+        final String word;
+        final String ipa;
+        final String meaning;
+        final String source;
+        final float confidence;
+
+        LensWordInfo(String word, String ipa, String meaning, String source, float confidence) {
+            this.word = word == null ? "" : word;
+            this.ipa = ipa == null ? "" : ipa;
+            this.meaning = meaning == null ? "" : meaning;
+            this.source = source == null ? "" : source;
+            this.confidence = Math.max(0f, Math.min(1f, confidence));
+        }
+    }
+
     @Override
     public void onDestroyView() {
         stopPreviewHintLoop();
+        isMagicLensEnabled = false;
+        if (magicLensOverlay != null) {
+            magicLensOverlay.clearOverlays();
+        }
+        if (magicLensTextRecognizer != null) {
+            magicLensTextRecognizer.close();
+            magicLensTextRecognizer = null;
+        }
+        pendingMagicLensLookups.clear();
+        magicLensAnalysisRunning.set(false);
         if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();

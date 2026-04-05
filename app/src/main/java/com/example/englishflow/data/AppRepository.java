@@ -62,6 +62,7 @@ public class AppRepository {
     private static final String KEY_LAST_TOPIC_DOMAIN = "last_topic_domain";
     private static final String KEY_LAST_TOPIC_REMAINING_CARDS = "last_topic_remaining_cards";
     private static final String KEY_COMPLETED_MAP_NODES = "completed_map_nodes";
+    private static final String KEY_TOTAL_MAP_NODES = "total_map_nodes";
     private static final String KEY_FILL_BLANK_STATS_TOTAL_SESSIONS = "fill_blank_stats_total_sessions";
     private static final String KEY_FILL_BLANK_STATS_TOTAL_ATTEMPTS = "fill_blank_stats_total_attempts";
     private static final String KEY_FILL_BLANK_STATS_TOTAL_CORRECT = "fill_blank_stats_total_correct";
@@ -1270,7 +1271,14 @@ public class AppRepository {
     }
 
     public int getTotalMapNodeCount() {
-        return 6;
+        int saved = preferences.getInt(getPrefKey(KEY_TOTAL_MAP_NODES), JourneyLessonRepository.DEFAULT_JOURNEY_SIZE);
+        return Math.max(1, saved);
+    }
+
+    public void setTotalMapNodeCount(int count) {
+        int safeCount = Math.max(1, count);
+        preferences.edit().putInt(getPrefKey(KEY_TOTAL_MAP_NODES), safeCount).apply();
+        invalidateDashboardCache();
     }
 
     public int getXpToday() {
@@ -4018,9 +4026,13 @@ public class AppRepository {
     }
 
     public void saveMapNodeCompleted(String nodeId) {
+        if (nodeId == null || nodeId.trim().isEmpty()) {
+            return;
+        }
         Set<String> completed = new HashSet<>(preferences.getStringSet(getPrefKey(KEY_COMPLETED_MAP_NODES), new HashSet<>()));
         completed.add(nodeId);
         preferences.edit().putStringSet(getPrefKey(KEY_COMPLETED_MAP_NODES), completed).apply();
+        invalidateDashboardCache();
     }
 
     public boolean isMapNodeCompleted(String nodeId) {

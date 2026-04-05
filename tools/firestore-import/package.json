@@ -1,0 +1,14 @@
+{
+  "name": "englishflow-firestore-import",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Firestore Admin import tools for EnglishFlow",
+  "scripts": {
+    "import:map-lessons": "node import-map-lessons.js",
+    "import:map-lessons:dry": "node import-map-lessons.js --dry-run",
+    "import:map-lessons:delete-missing": "node import-map-lessons.js --delete-missing"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

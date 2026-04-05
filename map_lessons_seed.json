@@ -1,0 +1,332 @@
+[
+  {
+    "lesson_id": "lesson_01",
+    "order": 1,
+    "title": "Chào hỏi & Làm quen",
+    "emoji": "👋",
+    "min_level": "A1",
+    "prompt_key": "greetings_intro",
+    "role_description": "You are Flow, a friendly AI tutor meeting the learner for the first time.",
+    "min_exchanges": 4,
+    "keywords": ["Hello", "Good morning", "Name"],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Chào bạn! Mình là Flow. Hôm nay mình và bạn bắt đầu bài đầu tiên về chào hỏi nhé."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Good morning",
+        "ipa": "/gʊd ˈmɔːrnɪŋ/",
+        "meaning": "Chào buổi sáng",
+        "instruction": "Nhấn mic và đọc theo: Good morning.",
+        "hint": "Nhớ nhấn mạnh vào âm MOR."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi vừa ngủ dậy và gặp mẹ, bạn nên chào gì?",
+        "expected_keyword": "good morning",
+        "accepted_answers": ["good morning", "morning"],
+        "hint": "Từ khóa cần có: good morning"
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_02",
+    "order": 2,
+    "title": "Cảm xúc ngày mới",
+    "emoji": "😊",
+    "min_level": "A1",
+    "prompt_key": "morning_mood",
+    "role_description": "You are a caring friend asking about the learner's mood.",
+    "min_exchanges": 4,
+    "keywords": ["Happy", "Sad", "Tired", "Excited", "Hungry"],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Hôm nay bạn thấy thế nào? Mình sẽ giúp bạn diễn tả cảm xúc bằng tiếng Anh."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Happy",
+        "ipa": "/ˈhæpi/",
+        "meaning": "Vui",
+        "instruction": "Đọc theo: I feel happy.",
+        "hint": "Âm cuối là pi, phát âm ngắn gọn."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn rất vui hôm nay, bạn nói câu nào?",
+        "expected_keyword": "happy",
+        "accepted_answers": ["i feel happy", "happy"],
+        "hint": "Dùng từ happy trong câu."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_03",
+    "order": 3,
+    "title": "Gia đình yêu thương",
+    "emoji": "👨‍👩‍👧",
+    "min_level": "A1",
+    "prompt_key": "family_talk",
+    "role_description": "You ask the learner to describe family members and home routines.",
+    "min_exchanges": 4,
+    "keywords": ["Father", "Mother", "Sister", "Brother", "Cook"],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Hãy giới thiệu một thành viên trong gia đình của bạn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Cook",
+        "ipa": "/kʊk/",
+        "meaning": "Nấu ăn",
+        "instruction": "Đọc theo: My mother can cook.",
+        "hint": "Chú ý âm cuối /k/ ngắn."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Ai là người nấu ăn giỏi nhất trong nhà bạn?",
+        "expected_keyword": "cook",
+        "accepted_answers": ["cook", "my mother cooks", "my father cooks"],
+        "hint": "Trả lời cần có từ cook."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_04",
+    "order": 4,
+    "title": "Bữa sáng ngon miệng",
+    "emoji": "☕",
+    "min_level": "A1",
+    "prompt_key": "breakfast_order",
+    "role_description": "You are a waiter taking breakfast orders politely.",
+    "min_exchanges": 5,
+    "keywords": ["Coffee", "Tea", "Bread", "Breakfast", "Delicious"],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Mình đóng vai phục vụ. Bạn thử gọi món bằng tiếng Anh nhé."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Coffee",
+        "ipa": "/ˈkɔːfi/",
+        "meaning": "Cà phê",
+        "instruction": "Đọc theo: I would like coffee.",
+        "hint": "Phát âm rõ âm /kɔː/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn muốn gọi trà, bạn sẽ nói gì?",
+        "expected_keyword": "tea",
+        "accepted_answers": ["tea", "i would like tea"],
+        "hint": "Dùng từ tea trong câu."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_05",
+    "order": 5,
+    "title": "Công việc & Ước mơ",
+    "emoji": "💼",
+    "min_level": "A1",
+    "prompt_key": "job_and_dream",
+    "role_description": "You are a mentor asking about jobs and dreams.",
+    "min_exchanges": 5,
+    "keywords": ["Teacher", "Doctor", "Student", "Dream", "Work"],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bây giờ mình sẽ hỏi bạn về công việc và ước mơ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Dream",
+        "ipa": "/driːm/",
+        "meaning": "Ước mơ",
+        "instruction": "Đọc theo: My dream is to be a teacher.",
+        "hint": "Kéo dài âm /iː/ trong dream."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn ước mơ trở thành bác sĩ, bạn nói gì?",
+        "expected_keyword": "doctor",
+        "accepted_answers": ["doctor", "my dream is to be a doctor"],
+        "hint": "Cần có từ doctor."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_06",
+    "order": 6,
+    "title": "Thời trang & Màu sắc",
+    "emoji": "👕",
+    "min_level": "A1",
+    "prompt_key": "fashion_colors",
+    "role_description": "You are a stylist helping the learner describe outfits.",
+    "min_exchanges": 5,
+    "keywords": ["Blue", "Red", "Shirt", "Wear", "Favorite"],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Hãy mô tả trang phục hôm nay bằng tiếng Anh."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Shirt",
+        "ipa": "/ʃɜːrt/",
+        "meaning": "Áo sơ mi",
+        "instruction": "Đọc theo: I wear a blue shirt.",
+        "hint": "Nhớ âm /ʃ/ ở đầu từ."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu màu yêu thích của bạn là đỏ, bạn nói gì?",
+        "expected_keyword": "red",
+        "accepted_answers": ["red", "my favorite color is red"],
+        "hint": "Dùng từ red trong câu."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_07",
+    "order": 7,
+    "title": "Thời tiết hôm nay",
+    "emoji": "🌤️",
+    "min_level": "A1",
+    "prompt_key": "weather_today",
+    "role_description": "You are a weather reporter asking about outdoor conditions.",
+    "min_exchanges": 5,
+    "keywords": ["Sunny", "Rainy", "Cold", "Hot", "Weather"],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Mình sẽ đóng vai MC dự báo thời tiết."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Weather",
+        "ipa": "/ˈweðər/",
+        "meaning": "Thời tiết",
+        "instruction": "Đọc theo: The weather is sunny.",
+        "hint": "Âm /ð/ cần đặt lưỡi giữa răng."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu ngoài trời đang mưa, bạn nói gì?",
+        "expected_keyword": "rainy",
+        "accepted_answers": ["rainy", "it is rainy"],
+        "hint": "Trả lời cần có rainy."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_08",
+    "order": 8,
+    "title": "Ngôi nhà ấm cúng",
+    "emoji": "🏠",
+    "min_level": "A1",
+    "prompt_key": "home_space",
+    "role_description": "You ask the learner to describe objects in a room.",
+    "min_exchanges": 5,
+    "keywords": ["Bed", "Chair", "Table", "Room", "Home"],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Chúng ta sẽ mô tả đồ vật trong phòng của bạn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Bed",
+        "ipa": "/bed/",
+        "meaning": "Giường",
+        "instruction": "Đọc theo: I sleep on the bed.",
+        "hint": "Âm /e/ ngắn và rõ."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn đang ngồi trên ghế, bạn nói gì?",
+        "expected_keyword": "chair",
+        "accepted_answers": ["chair", "i sit on the chair"],
+        "hint": "Dùng từ chair."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_09",
+    "order": 9,
+    "title": "Sở thích cuối tuần",
+    "emoji": "🎬",
+    "min_level": "A1",
+    "prompt_key": "weekend_hobby",
+    "role_description": "You invite the learner to weekend activities.",
+    "min_exchanges": 5,
+    "keywords": ["Football", "Movie", "Music", "Free time", "Play"],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Cuối tuần rồi, mình rủ bạn đi chơi nhé."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Football",
+        "ipa": "/ˈfʊtbɔːl/",
+        "meaning": "Bóng đá",
+        "instruction": "Đọc theo: I play football on weekends.",
+        "hint": "Foot đọc ngắn gọn."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn thích xem phim lúc rảnh, bạn nói gì?",
+        "expected_keyword": "movie",
+        "accepted_answers": ["movie", "i like watching movies"],
+        "hint": "Cần có từ movie."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_10",
+    "order": 10,
+    "title": "Hẹn gặp lại",
+    "emoji": "👋",
+    "min_level": "A1",
+    "prompt_key": "farewell",
+    "role_description": "You summarize the first journey and say goodbye warmly.",
+    "min_exchanges": 4,
+    "keywords": ["Goodbye", "See you", "Awesome", "Journey"],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn đã hoàn thành hành trình đầu tiên. Mình rất tự hào về bạn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Goodbye",
+        "ipa": "/ˌɡʊdˈbaɪ/",
+        "meaning": "Tạm biệt",
+        "instruction": "Đọc theo: Goodbye and see you soon.",
+        "hint": "Nhấn âm vào /baɪ/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn muốn kết thúc buổi học lịch sự, bạn nói gì?",
+        "expected_keyword": "goodbye",
+        "accepted_answers": ["goodbye", "see you"],
+        "hint": "Sử dụng goodbye hoặc see you."
+      }
+    ]
+  }
+]

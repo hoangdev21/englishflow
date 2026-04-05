@@ -80,7 +80,6 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.common)
     implementation(libs.play.services.auth)
-    implementation("com.google.android.gms:play-services-location:21.3.0")
 
     implementation(libs.appcompat)
     implementation(libs.material)
@@ -110,6 +109,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-process:2.8.7")
     // HTTP + JSON (for Gemini Vision API REST calls)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("com.airbnb.android:lottie:6.6.4")
     implementation(libs.dotlottie.android)
 

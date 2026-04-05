@@ -17,22 +17,6 @@
     <string name="home_current_streak">Chuỗi hiện tại</string>
     <string name="home_scanned">Ảnh đã quét</string>
     <string name="home_xp_today">XP hôm nay</string>
-    <string name="home_context_title">Gợi ý học theo ngữ cảnh</string>
-    <string name="home_context_permission_required">Cần bật GPS để nhận gợi ý chính xác theo địa điểm.</string>
-    <string name="home_context_permission_reason">Cho phép vị trí để Flow đề xuất bài học phù hợp với nơi bạn đang ở.</string>
-    <string name="home_context_topic_placeholder">Chưa có gợi ý theo vị trí</string>
-    <string name="home_context_default_place">Vị trí hiện tại</string>
-    <string name="home_context_detected_place_format">Bối cảnh: %1$s</string>
-    <string name="home_context_topic_format">Gợi ý: %1$s</string>
-    <string name="home_context_scanning">Đang xác định vị trí...</string>
-    <string name="home_context_scanning_reason">Flow đang phân tích địa điểm để chọn bài học phù hợp nhất.</string>
-    <string name="home_context_reason_fallback">Tạm dùng đề xuất theo tiến độ học gần nhất do chưa lấy được GPS chính xác.</string>
-    <string name="home_context_error_reason">Tạm dùng đề xuất theo tiến độ học gần nhất do chưa lấy được GPS chính xác.</string>
-    <string name="home_context_enable_location_action">BẬT GPS</string>
-    <string name="home_context_refresh_action">LÀM MỚI GPS</string>
-    <string name="home_context_start_action">HỌC NGAY</string>
-    <string name="home_context_loading_action">ĐANG PHÂN TÍCH...</string>
-    <string name="home_context_permission_denied_toast">Bạn cần cấp quyền vị trí để dùng gợi ý học theo ngữ cảnh.</string>
 
     <string name="learn_fields">Lĩnh vực học từ vựng</string>
     <string name="learn_topics">Đề tài</string>
@@ -150,7 +134,7 @@
     <string name="learn_journey_subtitle">Luyện phản xạ giao tiếp với AI Flow</string>
     <string name="learn_journey_action">Tiếp tục học</string>
     <string name="learn_journey_progress_format">Bài học: %1$d/%2$d</string>
-    <string name="learn_journey_progress_placeholder">Bài học: 0/6</string>
+    <string name="learn_journey_progress_placeholder">Bài học: 0/10</string>
     <string name="learn_momentum_title">Nhịp học 7 ngày</string>
     <string name="learn_momentum_subtitle">Giữ nhịp đều để duy trì streak bền vững</string>
     <string name="learn_week_total_minutes_format">%1$d phút</string>
@@ -173,6 +157,18 @@
 
     <string name="scan_title">Scan vật thể bằng AI</string>
     <string name="scan_preview_desc">Hình ảnh xem trước để quét</string>
+    <string name="scan_magic_lens_toggle_on">Bật Magic Lens</string>
+    <string name="scan_magic_lens_toggle_off">Tắt Magic Lens</string>
+    <string name="scan_magic_lens_status_off">Magic Lens: OFF</string>
+    <string name="scan_magic_lens_status_searching">Magic Lens: Đang khóa trang...</string>
+    <string name="scan_magic_lens_status_tracking">Magic Lens: %1$d từ khó</string>
+    <string name="scan_magic_lens_status_no_words">Magic Lens: Không có từ khó</string>
+    <string name="scan_magic_lens_mode_translation">Dịch</string>
+    <string name="scan_magic_lens_mode_ipa">IPA</string>
+    <string name="scan_magic_lens_mode_translation_ipa">Dịch + IPA</string>
+    <string name="scan_magic_lens_fallback_meaning">Chưa có nghĩa. Nhấn Lưu để ôn từ này sau.</string>
+    <string name="scan_magic_lens_save_success">Đã lưu từ từ Magic Lens</string>
+    <string name="scan_magic_lens_pronounce_prefix">Phát âm: %1$s</string>
     <string name="chat_title">Chat luyện nói AI</string>
     <string name="profile_title">Hồ sơ học tập</string>
     <string name="profile_xp_current">XP hiện có</string>

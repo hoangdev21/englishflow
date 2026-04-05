@@ -13,3 +13,11 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Node import tool artifacts
+**/node_modules/
+
+# Firebase Admin service account keys
+*.service-account.json
+*service-account*.json
+tools/firestore-import/.env

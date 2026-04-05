@@ -1,13 +1,9 @@
 package com.example.englishflow.ui.fragments;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.TimePickerDialog;
 import android.content.pm.PackageManager;
 import android.content.Intent;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -61,16 +57,10 @@ import com.example.englishflow.ui.views.LightningProgressBar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.Priority;
-import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -84,12 +74,10 @@ public class HomeFragment extends Fragment {
 
     private static final OkHttpClient SHARED_HTTP_CLIENT = new OkHttpClient();
     private static final int REQUEST_NOTIFICATION_PERMISSION = 9001;
-    private static final int REQUEST_LOCATION_PERMISSION = 9002;
     private static final String DEFAULT_DICT_TITLE = "Mở tra từ điển";
     private static final String DEFAULT_DICT_HINT = "Nhập từ tiếng Anh hoặc tiếng Việt để tra IPA, nghĩa, ví dụ và từ đồng nghĩa.";
     private static final String DEFAULT_DICT_EXAMPLE = "Bạn có thể bấm vào từ đồng nghĩa trong kết quả để tra tiếp ngay lập tức.";
     private static final long UI_REFRESH_MIN_INTERVAL_MS = 1500L;
-    private static final long CONTEXT_REFRESH_MIN_INTERVAL_MS = 15000L;
         private static final int USER_NOTIFICATION_LIMIT = 60;
         private static final SimpleDateFormat NOTIFICATION_TIME_FORMAT =
             new SimpleDateFormat("dd/MM HH:mm", Locale.getDefault());
@@ -107,16 +95,6 @@ public class HomeFragment extends Fragment {
         private final List<FirebaseUserStore.AdminNotificationEntry> cachedUserNotifications = new ArrayList<>();
         private boolean notificationSnapshotInitialized = false;
     private long lastDashboardRenderAt = 0L;
-    private long lastContextSuggestionAt = 0L;
-    private int contextRequestVersion = 0;
-
-    private FusedLocationProviderClient fusedLocationClient;
-    private TextView contextPlaceText;
-    private TextView contextTopicText;
-    private TextView contextReasonText;
-    private MaterialButton contextRefreshButton;
-    private MaterialButton contextStartButton;
-    private ContextLearningSuggestion activeContextSuggestion;
 
     private TextToSpeech textToSpeech;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -150,7 +128,6 @@ public class HomeFragment extends Fragment {
 
         try {
             setupBasicViews(view);
-            setupContextAwareLearning(view);
             initTextToSpeech();
             observeUserStats();
             refreshData(true);
@@ -192,13 +169,6 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         stopUserNotificationObserver();
-        contextRequestVersion++;
-        activeContextSuggestion = null;
-        contextPlaceText = null;
-        contextTopicText = null;
-        contextReasonText = null;
-        contextRefreshButton = null;
-        contextStartButton = null;
         if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();
@@ -212,7 +182,6 @@ public class HomeFragment extends Fragment {
         super.onResume();
         if (getView() != null && repository != null) {
             refreshData(false);
-            refreshContextAwareSuggestion(false, false);
         }
         startUserNotificationObserver();
     }
@@ -243,549 +212,6 @@ public class HomeFragment extends Fragment {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private static final class LocationContextSignal {
-        final String placeLabel;
-        final String contextTag;
-
-        LocationContextSignal(String placeLabel, String contextTag) {
-            this.placeLabel = placeLabel;
-            this.contextTag = contextTag;
-        }
-    }
-
-    private static final class ContextLearningSuggestion {
-        final String placeLabel;
-        final String domain;
-        final String topic;
-        final String reason;
-
-        ContextLearningSuggestion(String placeLabel, String domain, String topic, String reason) {
-            this.placeLabel = placeLabel;
-            this.domain = domain;
-            this.topic = topic;
-            this.reason = reason;
-        }
-    }
-
-    private void setupContextAwareLearning(@NonNull View view) {
-        contextPlaceText = view.findViewById(R.id.txtContextAwarePlace);
-        contextTopicText = view.findViewById(R.id.txtContextAwareTopic);
-        contextReasonText = view.findViewById(R.id.txtContextAwareReason);
-        contextRefreshButton = view.findViewById(R.id.btnContextRefresh);
-        contextStartButton = view.findViewById(R.id.btnContextStart);
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-
-        if (contextRefreshButton != null) {
-            contextRefreshButton.setOnClickListener(v -> refreshContextAwareSuggestion(true, true));
-        }
-        if (contextStartButton != null) {
-            contextStartButton.setOnClickListener(v -> {
-                if (activeContextSuggestion != null) {
-                    repository.setPendingTopicRequest(activeContextSuggestion.domain, activeContextSuggestion.topic);
-                    navigateToTab(1);
-                    return;
-                }
-                refreshContextAwareSuggestion(true, true);
-            });
-        }
-
-        if (hasLocationPermission()) {
-            renderContextLoading();
-        } else {
-            renderContextPermissionNeeded();
-        }
-        refreshContextAwareSuggestion(false, false);
-    }
-
-    private void refreshContextAwareSuggestion(boolean userInitiated, boolean forceRefresh) {
-        if (!isAdded()) {
-            return;
-        }
-
-        if (!hasLocationPermission()) {
-            renderContextPermissionNeeded();
-            if (userInitiated) {
-                requestLocationPermissions();
-            }
-            return;
-        }
-
-        long now = SystemClock.elapsedRealtime();
-        if (!forceRefresh
-                && !userInitiated
-                && activeContextSuggestion != null
-                && now - lastContextSuggestionAt < CONTEXT_REFRESH_MIN_INTERVAL_MS) {
-            return;
-        }
-
-        renderContextLoading();
-        int requestVersion = ++contextRequestVersion;
-        requestLocationForContextSuggestion(requestVersion);
-    }
-
-    private boolean hasLocationPermission() {
-        if (!isAdded()) {
-            return false;
-        }
-        return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED
-                || ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void requestLocationPermissions() {
-        requestPermissions(
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                REQUEST_LOCATION_PERMISSION
-        );
-    }
-
-    @SuppressLint("MissingPermission")
-    private void requestLocationForContextSuggestion(int requestVersion) {
-        if (fusedLocationClient == null) {
-            renderContextError();
-            return;
-        }
-
-        CancellationTokenSource tokenSource = new CancellationTokenSource();
-        fusedLocationClient
-                .getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, tokenSource.getToken())
-                .addOnSuccessListener(location -> {
-                    if (requestVersion != contextRequestVersion || !isAdded()) {
-                        return;
-                    }
-                    if (location != null) {
-                        resolveContextSuggestion(location, requestVersion);
-                    } else {
-                        requestLastKnownLocationForContextSuggestion(requestVersion);
-                    }
-                })
-                .addOnFailureListener(error -> {
-                    if (requestVersion != contextRequestVersion || !isAdded()) {
-                        return;
-                    }
-                    requestLastKnownLocationForContextSuggestion(requestVersion);
-                });
-    }
-
-    @SuppressLint("MissingPermission")
-    private void requestLastKnownLocationForContextSuggestion(int requestVersion) {
-        if (fusedLocationClient == null) {
-            renderContextError();
-            return;
-        }
-
-        fusedLocationClient.getLastLocation()
-                .addOnSuccessListener(location -> {
-                    if (requestVersion != contextRequestVersion || !isAdded()) {
-                        return;
-                    }
-                    if (location == null) {
-                        renderContextError();
-                        return;
-                    }
-                    resolveContextSuggestion(location, requestVersion);
-                })
-                .addOnFailureListener(error -> {
-                    if (requestVersion == contextRequestVersion && isAdded()) {
-                        renderContextError();
-                    }
-                });
-    }
-
-    private void resolveContextSuggestion(@NonNull Location location, int requestVersion) {
-        new Thread(() -> {
-            List<DomainItem> domains = repository != null ? repository.getDomains() : Collections.emptyList();
-            LocationContextSignal contextSignal = inferLocationContext(location);
-            ContextLearningSuggestion suggestion = createContextLearningSuggestion(contextSignal, domains);
-
-            mainHandler.post(() -> {
-                if (!isAdded() || requestVersion != contextRequestVersion) {
-                    return;
-                }
-                lastContextSuggestionAt = SystemClock.elapsedRealtime();
-                activeContextSuggestion = suggestion;
-                renderContextSuggestion(suggestion);
-            });
-        }).start();
-    }
-
-    private LocationContextSignal inferLocationContext(@NonNull Location location) {
-        String placeLabel = getString(R.string.home_context_default_place);
-        StringBuilder contextTextBuilder = new StringBuilder();
-
-        if (isAdded() && Geocoder.isPresent()) {
-            try {
-                Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
-                List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-                if (addresses != null && !addresses.isEmpty()) {
-                    Address address = addresses.get(0);
-                    placeLabel = firstNonBlank(
-                            address.getFeatureName(),
-                            address.getSubLocality(),
-                            address.getLocality(),
-                            placeLabel
-                    );
-
-                    appendAddressPart(contextTextBuilder, address.getFeatureName());
-                    appendAddressPart(contextTextBuilder, address.getThoroughfare());
-                    appendAddressPart(contextTextBuilder, address.getSubLocality());
-                    appendAddressPart(contextTextBuilder, address.getLocality());
-                    appendAddressPart(contextTextBuilder, address.getSubAdminArea());
-                    appendAddressPart(contextTextBuilder, address.getAdminArea());
-                    appendAddressPart(contextTextBuilder, address.getCountryName());
-                }
-            } catch (IOException | IllegalArgumentException ignored) {
-            }
-        }
-
-        if (contextTextBuilder.length() == 0) {
-            contextTextBuilder.append(placeLabel);
-        }
-
-        String contextTag = classifyLocationContext(contextTextBuilder.toString());
-        return new LocationContextSignal(placeLabel, contextTag);
-    }
-
-    private ContextLearningSuggestion createContextLearningSuggestion(
-            @NonNull LocationContextSignal signal,
-            @NonNull List<DomainItem> domains
-    ) {
-        List<String> preferredDomainHints = new ArrayList<>();
-        switch (signal.contextTag) {
-            case "food":
-                preferredDomainHints.add("am thuc");
-                preferredDomainHints.add("an uong");
-                preferredDomainHints.add("kinh doanh");
-                break;
-            case "travel":
-                preferredDomainHints.add("du lich");
-                preferredDomainHints.add("am thuc");
-                break;
-            case "work":
-                preferredDomainHints.add("cong viec");
-                preferredDomainHints.add("kinh doanh");
-                preferredDomainHints.add("cong nghe");
-                break;
-            case "health":
-                preferredDomainHints.add("suc khoe");
-                preferredDomainHints.add("the thao");
-                break;
-            case "study":
-                preferredDomainHints.add("hoc tap");
-                preferredDomainHints.add("khoa hoc");
-                preferredDomainHints.add("cong nghe");
-                break;
-            case "shopping":
-                preferredDomainHints.add("kinh doanh");
-                preferredDomainHints.add("tai chinh");
-                preferredDomainHints.add("cong viec");
-                break;
-            case "sport":
-                preferredDomainHints.add("the thao");
-                preferredDomainHints.add("suc khoe");
-                break;
-            case "transit":
-                preferredDomainHints.add("du lich");
-                preferredDomainHints.add("cong viec");
-                break;
-            case "general":
-            default:
-                if (repository != null) {
-                    preferredDomainHints.add(normalizeText(repository.getLastTopicDomain()));
-                }
-                preferredDomainHints.add("du lich");
-                break;
-        }
-
-        DomainItem selectedDomain = pickBestDomain(domains, preferredDomainHints);
-
-        String domainName;
-        List<TopicItem> topics;
-        if (selectedDomain != null) {
-            domainName = selectedDomain.getName();
-            topics = selectedDomain.getTopics();
-        } else {
-            domainName = repository != null ? repository.getLastTopicDomain() : "Du lịch";
-            topics = Collections.emptyList();
-        }
-
-        String topicName = pickBestTopic(topics, domainName, signal.contextTag);
-        String reason = buildReasonForContext(signal.contextTag);
-
-        return new ContextLearningSuggestion(signal.placeLabel, domainName, topicName, reason);
-    }
-
-    @Nullable
-    private DomainItem pickBestDomain(@NonNull List<DomainItem> domains, @NonNull List<String> preferredHints) {
-        if (domains.isEmpty()) {
-            return null;
-        }
-
-        DomainItem bestDomain = domains.get(0);
-        int bestScore = Integer.MIN_VALUE;
-        for (DomainItem domainItem : domains) {
-            String normalizedDomain = normalizeText(domainItem.getName());
-            int score = 0;
-            for (String hint : preferredHints) {
-                if (hint == null || hint.trim().isEmpty()) {
-                    continue;
-                }
-                String normalizedHint = normalizeText(hint);
-                if (normalizedDomain.contains(normalizedHint)) {
-                    score += 10;
-                }
-                if (normalizedHint.contains(normalizedDomain) && !normalizedDomain.isEmpty()) {
-                    score += 6;
-                }
-            }
-            if (score > bestScore) {
-                bestScore = score;
-                bestDomain = domainItem;
-            }
-        }
-        return bestDomain;
-    }
-
-    @NonNull
-    private String pickBestTopic(@NonNull List<TopicItem> topics, @NonNull String domainName, @NonNull String contextTag) {
-        if (topics.isEmpty()) {
-            return domainName + " giao tiếp";
-        }
-
-        List<String> suffixPriority = new ArrayList<>();
-        switch (contextTag) {
-            case "study":
-                suffixPriority.add("học thuật");
-                suffixPriority.add("chuyên ngành");
-                suffixPriority.add("giao tiếp");
-                break;
-            case "work":
-            case "shopping":
-                suffixPriority.add("giao tiếp");
-                suffixPriority.add("thực chiến");
-                suffixPriority.add("chuyên ngành");
-                break;
-            case "travel":
-            case "food":
-            case "health":
-            case "sport":
-            case "transit":
-            case "general":
-            default:
-                suffixPriority.add("giao tiếp");
-                suffixPriority.add("tình huống");
-                suffixPriority.add("thực chiến");
-                break;
-        }
-        suffixPriority.add("cơ bản");
-
-        for (String suffix : suffixPriority) {
-            for (TopicItem topicItem : topics) {
-                String title = topicItem.getTitle();
-                if (title != null && normalizeText(title).endsWith(normalizeText(suffix))) {
-                    return title;
-                }
-            }
-        }
-
-        TopicItem firstTopic = topics.get(0);
-        if (firstTopic.getTitle() == null || firstTopic.getTitle().trim().isEmpty()) {
-            return domainName + " giao tiếp";
-        }
-        return firstTopic.getTitle();
-    }
-
-    @NonNull
-    private String classifyLocationContext(@NonNull String rawText) {
-        String normalized = normalizeText(rawText);
-
-        if (containsAny(normalized,
-                "cafe", "coffee", "tea", "tra sua", "restaurant", "quan an", "nha hang", "food", "bakery", "bistro")) {
-            return "food";
-        }
-        if (containsAny(normalized,
-                "airport", "san bay", "hotel", "hostel", "resort", "tour", "du lich", "travel")) {
-            return "travel";
-        }
-        if (containsAny(normalized,
-                "office", "company", "cong ty", "van phong", "coworking", "business")) {
-            return "work";
-        }
-        if (containsAny(normalized,
-                "hospital", "benh vien", "clinic", "phong kham", "pharmacy", "nha thuoc", "medical")) {
-            return "health";
-        }
-        if (containsAny(normalized,
-                "school", "truong", "university", "dai hoc", "college", "library", "thu vien", "campus")) {
-            return "study";
-        }
-        if (containsAny(normalized,
-                "mall", "shopping", "supermarket", "sieu thi", "market", "cho", "shop", "store", "atm", "bank")) {
-            return "shopping";
-        }
-        if (containsAny(normalized,
-                "gym", "fitness", "stadium", "sports", "the thao", "san bong", "pool")) {
-            return "sport";
-        }
-        if (containsAny(normalized,
-                "station", "ga", "metro", "bus", "ben xe", "terminal")) {
-            return "transit";
-        }
-        return "general";
-    }
-
-    @NonNull
-    private String buildReasonForContext(@NonNull String contextTag) {
-        switch (contextTag) {
-            case "food":
-                return "Bạn có vẻ đang ở khu ăn uống, nên luyện mẫu câu gọi món và hỏi dịch vụ sẽ áp dụng ngay.";
-            case "travel":
-                return "Bối cảnh di chuyển rất hợp để luyện hỏi đường, đặt chỗ và giao tiếp du lịch.";
-            case "work":
-                return "Không gian làm việc phù hợp để luyện hội thoại công việc và trao đổi chuyên môn.";
-            case "health":
-                return "Chủ đề sức khỏe giúp bạn sẵn sàng mô tả triệu chứng và trao đổi tại cơ sở y tế.";
-            case "study":
-                return "Môi trường học tập phù hợp để luyện từ vựng học thuật và giao tiếp lớp học.";
-            case "shopping":
-                return "Bạn đang ở khu mua sắm, nên luyện mẫu câu hỏi giá, thanh toán và tư vấn sản phẩm.";
-            case "sport":
-                return "Hoàn cảnh thể thao thích hợp để luyện hội thoại về luyện tập và sức khỏe.";
-            case "transit":
-                return "Ngữ cảnh di chuyển phù hợp để luyện hỏi tuyến, giờ và thủ tục đi lại.";
-            case "general":
-            default:
-                return "Gợi ý này được tối ưu theo vị trí hiện tại và tiến độ học gần nhất của bạn.";
-        }
-    }
-
-    private void renderContextPermissionNeeded() {
-        activeContextSuggestion = null;
-        if (contextPlaceText != null) {
-            contextPlaceText.setText(getString(R.string.home_context_permission_required));
-        }
-        if (contextTopicText != null) {
-            contextTopicText.setText(getString(R.string.home_context_topic_placeholder));
-        }
-        if (contextReasonText != null) {
-            contextReasonText.setText(getString(R.string.home_context_permission_reason));
-        }
-        if (contextRefreshButton != null) {
-            contextRefreshButton.setText(getString(R.string.home_context_enable_location_action));
-            contextRefreshButton.setEnabled(true);
-        }
-        if (contextStartButton != null) {
-            contextStartButton.setEnabled(false);
-            contextStartButton.setText(getString(R.string.home_context_start_action));
-        }
-    }
-
-    private void renderContextLoading() {
-        if (contextPlaceText != null) {
-            contextPlaceText.setText(getString(R.string.home_context_scanning));
-        }
-        if (contextTopicText != null) {
-            contextTopicText.setText(getString(R.string.home_context_topic_placeholder));
-        }
-        if (contextReasonText != null) {
-            contextReasonText.setText(getString(R.string.home_context_scanning_reason));
-        }
-        if (contextRefreshButton != null) {
-            contextRefreshButton.setText(getString(R.string.home_context_refresh_action));
-            contextRefreshButton.setEnabled(true);
-        }
-        if (contextStartButton != null) {
-            contextStartButton.setEnabled(false);
-            contextStartButton.setText(getString(R.string.home_context_loading_action));
-        }
-    }
-
-    private void renderContextSuggestion(@NonNull ContextLearningSuggestion suggestion) {
-        if (contextPlaceText != null) {
-            contextPlaceText.setText(getString(R.string.home_context_detected_place_format, suggestion.placeLabel));
-        }
-        if (contextTopicText != null) {
-            contextTopicText.setText(getString(R.string.home_context_topic_format, suggestion.topic));
-        }
-        if (contextReasonText != null) {
-            contextReasonText.setText(suggestion.reason);
-        }
-        if (contextRefreshButton != null) {
-            contextRefreshButton.setText(getString(R.string.home_context_refresh_action));
-            contextRefreshButton.setEnabled(true);
-        }
-        if (contextStartButton != null) {
-            contextStartButton.setEnabled(true);
-            contextStartButton.setText(getString(R.string.home_context_start_action));
-        }
-    }
-
-    private void renderContextError() {
-        activeContextSuggestion = buildFallbackSuggestion();
-        if (activeContextSuggestion != null) {
-            renderContextSuggestion(activeContextSuggestion);
-            if (contextReasonText != null) {
-                contextReasonText.setText(getString(R.string.home_context_error_reason));
-            }
-        }
-    }
-
-    @Nullable
-    private ContextLearningSuggestion buildFallbackSuggestion() {
-        if (repository == null) {
-            return null;
-        }
-        String domain = firstNonBlank(repository.getLastTopicDomain(), "Du lịch");
-        String topic = firstNonBlank(repository.getLastTopicTitle(), domain + " giao tiếp");
-        return new ContextLearningSuggestion(
-                getString(R.string.home_context_default_place),
-                domain,
-                topic,
-                getString(R.string.home_context_reason_fallback)
-        );
-    }
-
-    private void appendAddressPart(@NonNull StringBuilder builder, @Nullable String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return;
-        }
-        if (builder.length() > 0) {
-            builder.append(' ');
-        }
-        builder.append(value.trim());
-    }
-
-    private String firstNonBlank(String... candidates) {
-        for (String candidate : candidates) {
-            if (candidate != null && !candidate.trim().isEmpty()) {
-                return candidate.trim();
-            }
-        }
-        return "";
-    }
-
-    private boolean containsAny(@NonNull String source, String... candidates) {
-        for (String candidate : candidates) {
-            if (candidate == null || candidate.trim().isEmpty()) {
-                continue;
-            }
-            if (source.contains(normalizeText(candidate))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private String normalizeText(String raw) {
-        if (raw == null) {
-            return "";
-        }
-        String lowered = raw.trim().toLowerCase(Locale.US);
-        String normalized = Normalizer.normalize(lowered, Normalizer.Form.NFD);
-        return normalized.replaceAll("\\p{M}+", "");
     }
 
     private void setupQuickActionButtons(View view) {
@@ -1554,16 +980,6 @@ public class HomeFragment extends Fragment {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_LOCATION_PERMISSION && isAdded()) {
-            if (hasLocationPermission()) {
-                refreshContextAwareSuggestion(true, true);
-            } else {
-                renderContextPermissionNeeded();
-                Toast.makeText(requireContext(), getString(R.string.home_context_permission_denied_toast), Toast.LENGTH_LONG).show();
-            }
-            return;
-        }
-
         if (requestCode == REQUEST_NOTIFICATION_PERMISSION && isAdded()) {
             boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
             if (!granted) {

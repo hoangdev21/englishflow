@@ -30,6 +30,8 @@ public class VoiceFlowEngine {
 
     private static final String TAG = "VoiceFlowEngine";
     private static final String UTTERANCE_ID_SUFFIX = "_flowflow";
+    private static final int SPEAK_READY_RETRY_DELAY_MS = 180;
+    private static final int SPEAK_READY_RETRY_MAX = 12;
 
     public enum State { IDLE, LISTENING, PROCESSING, SPEAKING }
     private State currentState = State.IDLE;
@@ -37,6 +39,7 @@ public class VoiceFlowEngine {
     private TextToSpeech tts;
     private boolean ttsReady = false;
     private SpeechRecognizer speechRecognizer;
+    private boolean isShutdown = false;
     
     private final Context context;
     private final VoiceCallback callback;
@@ -70,6 +73,9 @@ public class VoiceFlowEngine {
 
     private void initTts() {
         tts = new TextToSpeech(context, status -> {
+            if (isShutdown) {
+                return;
+            }
             if (status == TextToSpeech.SUCCESS) {
                 ttsReady = true;
                 tts.setLanguage(localeEn);
@@ -96,7 +102,29 @@ public class VoiceFlowEngine {
     }
 
     public void speakResponse(String fullText) {
-        if (fullText == null || fullText.isEmpty() || !ttsReady) return;
+        speakResponse(fullText, 0);
+    }
+
+    private void speakResponse(String fullText, int retryCount) {
+        if (isShutdown) {
+            return;
+        }
+        if (fullText == null || fullText.trim().isEmpty()) {
+            return;
+        }
+
+        if (!ttsReady) {
+            if (retryCount >= SPEAK_READY_RETRY_MAX) {
+                Log.w(TAG, "TTS not ready after retries; skip utterance");
+                return;
+            }
+            final String pending = fullText;
+            mainHandler.postDelayed(
+                    () -> speakResponse(pending, retryCount + 1),
+                    SPEAK_READY_RETRY_DELAY_MS
+            );
+            return;
+        }
         
         tts.setSpeechRate(settingsStore.getVoiceSpeechRate());
         requestAudioFocus();
@@ -201,6 +229,9 @@ public class VoiceFlowEngine {
     }
 
     public void startListening(String lang) {
+        if (isShutdown || speechRecognizer == null) {
+            return;
+        }
         if (currentState == State.LISTENING) return;
         stopSpeaking();
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -214,6 +245,21 @@ public class VoiceFlowEngine {
     public void stopListening() { if (speechRecognizer != null) speechRecognizer.stopListening(); }
     public void setAutoRelisten(boolean enabled) { this.autoRelisten = enabled; }
     public State getState() { return currentState; }
-    public void shutdown() { stopListening(); stopSpeaking(); if (tts != null) tts.shutdown(); if (speechRecognizer != null) speechRecognizer.destroy(); }
+    public void shutdown() {
+        isShutdown = true;
+        autoRelisten = false;
+        stopListening();
+        stopSpeaking();
+        ttsReady = false;
+        if (tts != null) {
+            tts.shutdown();
+            tts = null;
+        }
+        if (speechRecognizer != null) {
+            speechRecognizer.destroy();
+            speechRecognizer = null;
+        }
+        setState(State.IDLE);
+    }
     private void setState(State s) { if (currentState != s) { currentState = s; callback.onStateChanged(s); } }
 }

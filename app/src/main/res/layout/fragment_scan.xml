@@ -74,7 +74,7 @@
             <!-- Camera Frame -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_height="320dp"
+                android:layout_height="400dp"
                 app:cardBackgroundColor="@color/black"
                 app:cardCornerRadius="36dp"
                 app:cardElevation="10dp"
@@ -91,6 +91,13 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent" />
 
+                    <com.example.englishflow.ui.views.MagicLensOverlayView
+                        android:id="@+id/magicLensOverlayView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clickable="true"
+                        android:focusable="false" />
+
                     <ImageView
                         android:id="@+id/scanPreview"
                         android:layout_width="match_parent"
@@ -104,6 +111,16 @@
                         android:layout_height="3dp"
                         android:background="@drawable/bg_scan_line"
                         android:visibility="gone" />
+
+                    <View
+                        android:id="@+id/magicLensStatusDot"
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_gravity="top|start"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/bg_status_dot_off"
+                        android:elevation="12dp" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -192,6 +209,42 @@
                         app:iconSize="28dp"
                         app:iconGravity="textStart" />
                 </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/magicLensControlRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMagicLensToggle"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_weight="1"
+                    android:text="Bật Magic Lens"
+                    app:icon="@drawable/ic_ai_stars"
+                    app:iconPadding="6dp"
+                    app:iconTint="@color/white"
+                    app:backgroundTint="@color/ef_primary"
+                    android:textColor="@color/white" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMagicLensMode"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="Dịch"
+                    app:icon="@drawable/ic_replace"
+                    app:iconPadding="6dp"
+                    app:iconTint="@color/ef_text_primary"
+                    app:backgroundTint="@color/ef_white_silver"
+                    android:textColor="@color/ef_text_primary" />
             </LinearLayout>
 
             <com.google.android.material.progressindicator.LinearProgressIndicator

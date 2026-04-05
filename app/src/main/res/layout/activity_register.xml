@@ -297,6 +297,17 @@
                         android:paddingVertical="4dp" />
                 </LinearLayout>
             </LinearLayout>
+
+            <!-- Bottom Hero Image -->
+            <ImageView
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="36dp"
+                android:layout_marginBottom="12dp"
+                android:adjustViewBounds="true"
+                android:src="@drawable/englist_hero_home"
+                android:alpha="0.95"
+                android:contentDescription="EnglishFlow Hero" />
         </LinearLayout>
     </ScrollView>
 </FrameLayout>

@@ -18,12 +18,13 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <TextView
-                android:id="@+id/nodeEmoji"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <ImageView
+                android:id="@+id/nodeIcon"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
                 android:layout_gravity="center"
-                android:textSize="28sp" />
+                android:contentDescription="Lesson icon"
+                android:scaleType="fitCenter" />
 
             <ImageView
                 android:id="@+id/nodeStateIcon"
