@@ -38,6 +38,7 @@ import com.example.englishflow.database.entity.ChatMessageEntity;
 import com.example.englishflow.database.entity.ChatSessionEntity;
 import com.example.englishflow.ui.adapters.ChatAdapter;
 import com.example.englishflow.ui.adapters.ChatHistoryAdapter;
+import com.example.englishflow.ui.views.VoiceWaveformView;
 import com.example.englishflow.util.VoiceFlowEngine;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
@@ -66,6 +67,7 @@ public class ChatFragment extends Fragment {
     private LinearLayout voiceStatusBar;
     private TextView tvVoiceStatus;
     private View voiceDot;
+    private VoiceWaveformView voiceWaveform;
 
     // ── Services ──────────────────────────────────────────────────────────────
     private AppRepository repository;
@@ -110,6 +112,7 @@ public class ChatFragment extends Fragment {
         voiceStatusBar = view.findViewById(R.id.voiceStatusBar);
         tvVoiceStatus  = view.findViewById(R.id.tvVoiceStatus);
         voiceDot       = view.findViewById(R.id.voiceDot);
+        voiceWaveform  = view.findViewById(R.id.voiceWaveform);
 
         View chatHeaderSection = view.findViewById(R.id.chatHeaderSection);
         if (chatHeaderSection != null) {
@@ -190,6 +193,9 @@ public class ChatFragment extends Fragment {
         }
         if (adapter != null) adapter.shutdownTts();
         if (voiceEngine != null) voiceEngine.shutdown();
+        if (voiceWaveform != null) {
+            voiceWaveform.setMode(VoiceWaveformView.Mode.IDLE);
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -219,6 +225,13 @@ public class ChatFragment extends Fragment {
             public void onPartialTranscript(String text) {
                 // Show live transcription in the status bar
                 tvVoiceStatus.setText(text);
+            }
+
+            @Override
+            public void onRmsChanged(float rmsDb) {
+                if (voiceWaveform != null) {
+                    voiceWaveform.setMicLevel(rmsDb);
+                }
             }
 
             @Override
@@ -320,6 +333,10 @@ public class ChatFragment extends Fragment {
                 tvVoiceStatus.setText("Đang lắng nghe...");
                 voiceDot.setBackgroundTintList(
                         android.content.res.ColorStateList.valueOf(0xFFEF4444));
+                if (voiceWaveform != null) {
+                    voiceWaveform.setVisibility(View.VISIBLE);
+                    voiceWaveform.setMode(VoiceWaveformView.Mode.LISTENING);
+                }
                 btnMic.setBackgroundResource(R.drawable.bg_mic_recording);
                 btnMic.setIconResource(R.drawable.ic_mic);
                 btnMic.setIconTintResource(android.R.color.holo_red_dark);
@@ -331,6 +348,10 @@ public class ChatFragment extends Fragment {
                 tvVoiceStatus.setText("Flow đang suy nghĩ...");
                 voiceDot.setBackgroundTintList(
                         android.content.res.ColorStateList.valueOf(0xFF3B82F6));
+                if (voiceWaveform != null) {
+                    voiceWaveform.setVisibility(View.VISIBLE);
+                    voiceWaveform.setMode(VoiceWaveformView.Mode.PROCESSING);
+                }
                 btnMic.clearAnimation();
                 btnMic.setBackgroundResource(R.drawable.bg_mic_idle);
                 btnMic.setIconResource(R.drawable.ic_mic);
@@ -342,6 +363,10 @@ public class ChatFragment extends Fragment {
                 tvVoiceStatus.setText("Flow đang trả lời...");
                 voiceDot.setBackgroundTintList(
                         android.content.res.ColorStateList.valueOf(0xFF10B981));
+                if (voiceWaveform != null) {
+                    voiceWaveform.setVisibility(View.VISIBLE);
+                    voiceWaveform.setMode(VoiceWaveformView.Mode.SPEAKING);
+                }
                 btnMic.clearAnimation();
                 btnMic.setBackgroundResource(R.drawable.bg_mic_speaking);
                 btnMic.setIconResource(R.drawable.ic_stop);
@@ -352,6 +377,10 @@ public class ChatFragment extends Fragment {
             default:
                 // Hide status bar when idle to free up screen space
                 voiceStatusBar.setVisibility(View.GONE);
+                if (voiceWaveform != null) {
+                    voiceWaveform.setMode(VoiceWaveformView.Mode.IDLE);
+                    voiceWaveform.setVisibility(View.GONE);
+                }
                 btnMic.clearAnimation();
                 btnMic.setBackgroundResource(R.drawable.bg_mic_idle);
                 btnMic.setIconResource(R.drawable.ic_mic);

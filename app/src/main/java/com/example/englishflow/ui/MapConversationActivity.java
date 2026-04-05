@@ -157,6 +157,11 @@ public class MapConversationActivity extends AppCompatActivity {
             }
 
             @Override
+            public void onRmsChanged(float rmsDb) {
+                // This screen currently only needs textual status updates.
+            }
+
+            @Override
             public void onSpeakingDone() {
                 runOnUiThread(() -> listeningStatus.setText(getString(R.string.map_conversation_hint)));
             }

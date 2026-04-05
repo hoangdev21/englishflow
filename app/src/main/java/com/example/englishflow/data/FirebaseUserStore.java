@@ -237,20 +237,36 @@ public class FirebaseUserStore {
             String serverDayKey = safeString(snapshot.get("xpTodayDayKey"));
             int serverXpToday = todayDayKey.equals(serverDayKey) ? safeInt(snapshot.get("xpToday")) : 0;
             long serverUpdatedAtMs = safeLong(snapshot.get("updatedAtMs"));
+            int serverCurrentStreak = safeInt(snapshot.get("currentStreak"));
+            int serverBestStreak = safeInt(snapshot.get("bestStreak"));
+            long serverLastStudyAtMs = safeLong(snapshot.get("lastStudyAt"));
 
-            boolean clientHasTodayActivity = !isDifferentDay(localLastStudyAtMs, now);
+            long normalizedLocalLastStudyAtMs = Math.max(0L, localLastStudyAtMs);
+
+            boolean clientHasTodayActivity = !isDifferentDay(normalizedLocalLastStudyAtMs, now);
             int clientXpToday = clientHasTodayActivity ? Math.max(0, xpToday) : 0;
             int mergedXpToday;
             if (!todayDayKey.equals(serverDayKey)) {
                 // Server day changed or not initialized yet: adopt today's local value.
                 mergedXpToday = clientXpToday;
-            } else if (clientHasTodayActivity && localLastStudyAtMs > serverUpdatedAtMs) {
+            } else if (clientHasTodayActivity && normalizedLocalLastStudyAtMs > serverUpdatedAtMs) {
                 // Local progress is newer than cloud snapshot, keep the higher value.
                 mergedXpToday = Math.max(serverXpToday, clientXpToday);
             } else {
                 // Cloud is newer or equal: avoid stale local overwrite.
                 mergedXpToday = serverXpToday;
             }
+
+            int mergedCurrentStreak;
+            if (normalizedLocalLastStudyAtMs > serverLastStudyAtMs) {
+                mergedCurrentStreak = Math.max(0, currentStreak);
+            } else if (serverLastStudyAtMs > normalizedLocalLastStudyAtMs) {
+                mergedCurrentStreak = Math.max(0, serverCurrentStreak);
+            } else {
+                mergedCurrentStreak = Math.max(Math.max(0, currentStreak), Math.max(0, serverCurrentStreak));
+            }
+
+            int mergedBestStreak = Math.max(Math.max(0, bestStreak), Math.max(0, serverBestStreak));
 
             Map<String, Object> updates = new HashMap<>();
             updates.put("displayName", displayName);
@@ -264,11 +280,13 @@ public class FirebaseUserStore {
             updates.put("xpTodayDayKey", todayDayKey);
             
             updates.put("learnedWords", Math.max(0, learnedWords));
-            updates.put("currentStreak", Math.max(0, currentStreak));
-            updates.put("bestStreak", Math.max(0, bestStreak));
+            updates.put("currentStreak", mergedCurrentStreak);
+            updates.put("bestStreak", mergedBestStreak);
             updates.put("totalWordsScanned", Math.max(0, totalWordsScanned));
             updates.put("totalStudyMinutes", Math.max(0, totalStudyMinutes));
-            updates.put("lastStudyAt", FieldValue.serverTimestamp());
+            if (normalizedLocalLastStudyAtMs > serverLastStudyAtMs && normalizedLocalLastStudyAtMs > 0L) {
+                updates.put("lastStudyAt", new Timestamp(new java.util.Date(normalizedLocalLastStudyAtMs)));
+            }
             updates.put("updatedAt", FieldValue.serverTimestamp());
             updates.put("updatedAtMs", now);
 

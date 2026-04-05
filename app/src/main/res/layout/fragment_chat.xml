@@ -179,6 +179,13 @@
                 android:background="@drawable/bg_pill_grey"
                 android:backgroundTint="@color/ef_primary" />
 
+            <com.example.englishflow.ui.views.VoiceWaveformView
+                android:id="@+id/voiceWaveform"
+                android:layout_width="34dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="8dp"
+                android:visibility="gone" />
+
             <!-- Live transcript / status text -->
             <TextView
                 android:id="@+id/tvVoiceStatus"

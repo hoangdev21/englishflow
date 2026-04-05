@@ -181,26 +181,28 @@
         <!-- 3D NEXT BUTTON -->
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="72dp">
             
             <View
                 android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:background="@drawable/bg_button_premium_primary" />
+                android:layout_height="72dp"
+                android:background="@drawable/bg_button_glossy_ocean_blue_3d" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCelebrationNext"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:text="Học tiếp bài mới"
-                android:textSize="18sp"
+                android:layout_height="72dp"
+                android:paddingBottom="8dp"
+                android:text="LUYỆN ĐIỀN TỪ"
                 android:textAllCaps="true"
-                android:letterSpacing="0.05"
-                android:paddingBottom="4dp"
-                app:cornerRadius="14dp"
-                android:backgroundTint="@android:color/transparent"
-                app:backgroundTint="@null" />
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/nunito"
+                android:background="@android:color/transparent"
+                app:backgroundTint="@android:color/transparent"
+                app:cornerRadius="16dp" />
         </FrameLayout>
 
         <LinearLayout

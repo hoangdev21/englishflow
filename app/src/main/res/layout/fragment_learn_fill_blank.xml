@@ -91,23 +91,10 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/fillBlankTopicTitle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:fontFamily="@font/nunito"
-                    android:maxLines="1"
-                    android:text="@string/fill_blank_topic_default"
-                    android:textColor="@color/ef_text_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
                 <FrameLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="122dp"
                     android:layout_height="36dp"
-                    android:layout_marginStart="10dp">
+                    android:layout_marginEnd="8dp">
 
                     <View
                         android:layout_width="match_parent"
@@ -117,7 +104,7 @@
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnChangeFillBlankTopic"
                         style="@style/Widget.Material3.Button"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="36dp"
                         android:paddingStart="12dp"
                         android:paddingTop="2dp"
@@ -135,6 +122,23 @@
 
 
                 </FrameLayout>
+
+                <TextView
+                    android:id="@+id/fillBlankTopicTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_fill_blank_topic_chip"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/nunito"
+                    android:gravity="start|center_vertical"
+                    android:maxLines="1"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:text="@string/fill_blank_topic_default"
+                    android:textColor="@color/ef_primary_dark"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <LinearLayout
@@ -336,21 +340,35 @@
                                 android:padding="12dp"
                                 android:visibility="gone">
 
-                                <TextView
-                                    android:id="@+id/fillBlankHintLabel"
-                                    android:layout_width="wrap_content"
+                                <LinearLayout
+                                    android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginBottom="2dp"
-                                    android:fontFamily="@font/nunito"
-                                    android:text="@string/fill_blank_hint_label"
-                                    android:textColor="@color/ef_hint_border"
-                                    android:textSize="11sp"
-                                    android:textStyle="bold" />
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal">
+
+                                    <ImageView
+                                        android:layout_width="16dp"
+                                        android:layout_height="16dp"
+                                        android:src="@drawable/ic_ai_stars"
+                                        android:tint="@color/ef_hint_border" />
+
+                                    <TextView
+                                        android:id="@+id/fillBlankHintLabel"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginStart="6dp"
+                                        android:fontFamily="@font/nunito"
+                                        android:text="GỢI Ý TỪ HỆ THỐNG"
+                                        android:textColor="@color/ef_hint_border"
+                                        android:textSize="11sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
 
                                 <TextView
                                     android:id="@+id/fillBlankHint"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
                                     android:fontFamily="@font/nunito"
                                     android:text="@string/fill_blank_hint_default"
                                     android:textColor="@color/ef_text_primary"
@@ -420,10 +438,41 @@
                                 </FrameLayout>
                             </LinearLayout>
 
+                            <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="38dp"
+                                android:layout_marginTop="8dp">
+
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="38dp"
+                                    android:background="@drawable/bg_fill_blank_button_gold_light" />
+
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btnSolveAnswer"
+                                    style="@style/Widget.Material3.Button"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="38dp"
+                                    android:paddingBottom="5dp"
+                                    android:text="Giải đáp giúp mình (50 XP)"
+                                    android:textAllCaps="false"
+                                    android:textColor="@color/ef_orange_primary"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold"
+                                    android:background="@android:color/transparent"
+                                    app:backgroundTint="@android:color/transparent"
+                                    app:cornerRadius="19dp"
+                                    app:icon="@drawable/ic_fire_streak"
+                                    app:iconSize="14dp"
+                                    app:iconTint="@color/ef_orange_primary"
+                                    app:iconGravity="textStart" />
+
+                            </FrameLayout>
+
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
+                                android:layout_marginTop="12dp"
                                 android:orientation="horizontal">
 
                                 <FrameLayout

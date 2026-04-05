@@ -14,11 +14,10 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.englishflow.R;
+import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.DomainItem;
-import com.example.englishflow.data.TopicItem;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import nl.dionsegijn.konfetti.core.Party;
@@ -122,21 +121,33 @@ public class LearnCelebrationFragment extends Fragment {
         });
 
         String restartDomain = safeDomain;
-        String restartTopic = safeTopic;
         actionFlashcard.setOnClickListener(v -> {
             Fragment parent = getParentFragment();
             if (parent instanceof LearnFlowNavigator) {
-                DomainItem domainItem = new DomainItem(
-                        "",
-                        restartDomain,
-                        0,
-                        "",
-                        "",
-                        0,
-                        Collections.emptyList()
-                );
-                TopicItem topicItem = new TopicItem(restartTopic, TopicItem.STATUS_LEARNING);
-                ((LearnFlowNavigator) parent).openFlashcards(domainItem, topicItem);
+                AppRepository repository = AppRepository.getInstance(requireContext());
+                DomainItem selectedDomain = null;
+                for (DomainItem domainItem : repository.getDomains()) {
+                    if (domainItem != null
+                            && domainItem.getName() != null
+                            && domainItem.getName().trim().equalsIgnoreCase(restartDomain)) {
+                        selectedDomain = domainItem;
+                        break;
+                    }
+                }
+
+                if (selectedDomain == null) {
+                    selectedDomain = new DomainItem(
+                            "📚",
+                            restartDomain,
+                            0,
+                            "#1A7A5E",
+                            "#2AAE84",
+                            0,
+                            repository.getTopicsForDomain(restartDomain)
+                    );
+                }
+
+                ((LearnFlowNavigator) parent).openTopics(selectedDomain);
                 return;
             }
             getParentFragmentManager().popBackStack();

@@ -83,6 +83,8 @@ public class AppRepository {
     private static final int FLASHCARD_BACKGROUND_ENRICH_LIMIT = 4;
     private static final int FLASHCARD_TRANSLATION_CONNECT_TIMEOUT_MS = 2500;
     private static final int FLASHCARD_TRANSLATION_READ_TIMEOUT_MS = 3000;
+    private static final int FILL_BLANK_BOOTSTRAP_MAX_RETRY = 6;
+    private static final long FILL_BLANK_BOOTSTRAP_RETRY_DELAY_MS = 180L;
     private static final long DASHBOARD_CACHE_TTL_MS = 5000L;
     private static final long DOMAINS_CACHE_TTL_MS = 30000L;
     private static final String COLLECTION_USERS = "users";
@@ -106,6 +108,12 @@ public class AppRepository {
     private final Object cacheLock = new Object();
     private final Object realtimeLock = new Object();
     private final Object dashboardRequestLock = new Object();
+
+    public void executeAsync(Runnable task) {
+        if (task != null) {
+            executorService.execute(task);
+        }
+    }
 
     private boolean dashboardRequestRunning = false;
     private final List<DataCallback<DashboardSnapshot>> pendingDashboardCallbacks = new ArrayList<>();
@@ -190,10 +198,16 @@ public class AppRepository {
     }
 
     public static class FillBlankTopicItem {
+        public static final int STATUS_NOT_STARTED = 0;
+        public static final int STATUS_IN_PROGRESS = 1;
+        public static final int STATUS_COMPLETED = 2;
+
         public final String domain;
         public final String topic;
         public final int learnedWords;
         public final int questionCount;
+        public int completedCount = 0;
+        public int status = STATUS_NOT_STARTED;
 
         public FillBlankTopicItem(String domain, String topic, int learnedWords, int questionCount) {
             this.domain = nonNullOrEmpty(domain, "");
@@ -529,6 +543,7 @@ public class AppRepository {
                         int normalizedCloudXpToday = cloudXpIsToday ? Math.max(0, cloudXpToday) : 0;
                         int cloudStreak = safeInt(snapshot.get("currentStreak"));
                         int cloudBestStreak = safeInt(snapshot.get("bestStreak"));
+                        long cloudLastStudyAtMs = safeLong(snapshot.get("lastStudyAt"));
                         int cloudLearnedWords = safeInt(snapshot.get("learnedWords"));
                         int cloudScannedWords = safeInt(snapshot.get("totalWordsScanned"));
                         int cloudStudyMinutes = safeInt(snapshot.get("totalStudyMinutes"));
@@ -546,10 +561,27 @@ public class AppRepository {
                                     stats.xpTodayEarned = normalizedCloudXpToday;
                                     changed = true;
                                 }
-                                if (cloudStreak > stats.currentStreak) {
+
+                                if (cloudLastStudyAtMs > 0L) {
+                                    if (cloudLastStudyAtMs > stats.lastStudyDate) {
+                                        stats.lastStudyDate = cloudLastStudyAtMs;
+                                        changed = true;
+
+                                        int normalizedCloudStreak = Math.max(0, cloudStreak);
+                                        if (stats.currentStreak != normalizedCloudStreak) {
+                                            stats.currentStreak = normalizedCloudStreak;
+                                            changed = true;
+                                        }
+                                    } else if (cloudLastStudyAtMs == stats.lastStudyDate
+                                            && cloudStreak > stats.currentStreak) {
+                                        stats.currentStreak = cloudStreak;
+                                        changed = true;
+                                    }
+                                } else if (cloudStreak > stats.currentStreak) {
                                     stats.currentStreak = cloudStreak;
                                     changed = true;
                                 }
+
                                 if (cloudBestStreak > stats.bestStreak) {
                                     stats.bestStreak = cloudBestStreak;
                                     changed = true;
@@ -566,8 +598,20 @@ public class AppRepository {
                                     stats.totalStudyMinutes = cloudStudyMinutes;
                                     changed = true;
                                 }
+
+                                int sessionDerivedStreak = computeRecentStreakFromStudySessions(getCurrentEmail());
+                                if (sessionDerivedStreak > stats.currentStreak) {
+                                    stats.currentStreak = sessionDerivedStreak;
+                                    changed = true;
+                                }
+
                                 if (!cloudCefr.isEmpty() && !cloudCefr.equals(stats.cefrLevel)) {
                                     stats.cefrLevel = cloudCefr;
+                                    changed = true;
+                                }
+
+                                if (stats.currentStreak > stats.bestStreak) {
+                                    stats.bestStreak = stats.currentStreak;
                                     changed = true;
                                 }
 
@@ -1139,6 +1183,14 @@ public class AppRepository {
         int totalXp = stats != null ? stats.totalXpEarned : 0;
         int totalStudyMinutes = stats != null ? stats.totalStudyMinutes : 0;
 
+        int sessionDerivedStreak = computeRecentStreakFromStudySessions(email);
+        if (sessionDerivedStreak > streak) {
+            streak = sessionDerivedStreak;
+        }
+        if (streak > bestStreak) {
+            bestStreak = streak;
+        }
+
         snapshot.userName = getUserName();
         snapshot.photoUrl = getPhotoUrl();
         snapshot.dailyWordGoal = getDailyWordGoal();
@@ -1451,7 +1503,9 @@ public class AppRepository {
             if (!cachedDomains.isEmpty()
                     && email.equals(cachedDomainsEmail)
                     && now - cachedDomainsAt <= DOMAINS_CACHE_TTL_MS) {
-                return new ArrayList<>(cachedDomains);
+                List<DomainItem> cachedCopy = new ArrayList<>(cachedDomains);
+                cachedCopy.removeIf(item -> item != null && shouldHideDomainCard(item.getName()));
+                return cachedCopy;
             }
         }
 
@@ -1468,7 +1522,9 @@ public class AppRepository {
 
             List<String> domains = new ArrayList<>(domainSet);
             for (String domain : domains) {
-                if (domain.equalsIgnoreCase("general") || domain.isEmpty()) continue;
+                if (domain.equalsIgnoreCase("general") || domain.isEmpty() || shouldHideDomainCard(domain)) {
+                    continue;
+                }
 
                 List<CustomVocabularyEntity> domainEntities = getEffectiveCustomVocabularyByDomain(domain);
                 
@@ -1498,12 +1554,26 @@ public class AppRepository {
             e.printStackTrace();
         }
 
+        list.removeIf(item -> item != null && shouldHideDomainCard(item.getName()));
+
         synchronized (cacheLock) {
             cachedDomains = new ArrayList<>(list);
             cachedDomainsEmail = email;
             cachedDomainsAt = now;
         }
         return list;
+    }
+
+    private boolean shouldHideDomainCard(String domain) {
+        if (domain == null) {
+            return false;
+        }
+        String normalized = domain.trim()
+                .toLowerCase(Locale.US)
+                .replaceAll("[^a-z0-9\\s]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+        return "everyday situational english".equals(normalized);
     }
 
     public void getDomainsAsync(DataCallback<List<DomainItem>> callback) {
@@ -2955,6 +3025,66 @@ public class AppRepository {
         return getStartOfDay(oldTime) != getStartOfDay(newTime);
     }
 
+    private int computeRecentStreakFromStudySessions(String email) {
+        try {
+            Set<Long> activeDays = new HashSet<>();
+
+            List<StudySession> cloudSessions = getRealtimeStudySessionsCopyIfReady();
+            if (cloudSessions != null) {
+                for (StudySession session : cloudSessions) {
+                    if (session == null) {
+                        continue;
+                    }
+                    long activityAt = session.getEndTime() > 0L ? session.getEndTime() : session.getStartTime();
+                    if (activityAt > 0L) {
+                        activeDays.add(getStartOfDay(activityAt));
+                    }
+                }
+            } else {
+                List<StudySessionEntity> localSessions = database.studySessionDao().getAllSessions(email);
+                if (localSessions != null) {
+                    for (StudySessionEntity session : localSessions) {
+                        if (session == null) {
+                            continue;
+                        }
+                        long activityAt = session.endTime > 0L ? session.endTime : session.startTime;
+                        if (activityAt > 0L) {
+                            activeDays.add(getStartOfDay(activityAt));
+                        }
+                    }
+                }
+            }
+
+            if (activeDays.isEmpty()) {
+                return 0;
+            }
+
+            long dayMs = 24L * 60L * 60L * 1000L;
+            long todayStart = getStartOfDay(System.currentTimeMillis());
+            long latestDay = 0L;
+            for (Long day : activeDays) {
+                if (day != null && day > latestDay) {
+                    latestDay = day;
+                }
+            }
+
+            if (latestDay < (todayStart - dayMs)) {
+                return 0;
+            }
+
+            int streak = 0;
+            long cursor = latestDay;
+            while (activeDays.contains(cursor)) {
+                streak++;
+                cursor -= dayMs;
+            }
+
+            return Math.max(0, streak);
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
     private UserStatsEntity getOrCreateUserStats() {
         String email = getCurrentEmail();
         UserStatsEntity stats = database.userStatsDao().getUserStats(email);
@@ -3172,10 +3302,26 @@ public class AppRepository {
                 return topicPool;
             }
 
-            int targetSize = Math.min(10, entities.size());
+            // Keep a deterministic ordering so topic progress does not "reset" after login
+            // when source switches between local fallback and realtime cloud snapshots.
+            List<CustomVocabularyEntity> stableEntities = new ArrayList<>(entities);
+            stableEntities.sort((left, right) -> {
+                String leftWord = normalizeWord(left != null ? left.word : "");
+                String rightWord = normalizeWord(right != null ? right.word : "");
+                int byWord = leftWord.compareToIgnoreCase(rightWord);
+                if (byWord != 0) {
+                    return byWord;
+                }
+
+                String leftMeaning = left != null && left.meaning != null ? left.meaning : "";
+                String rightMeaning = right != null && right.meaning != null ? right.meaning : "";
+                return leftMeaning.compareToIgnoreCase(rightMeaning);
+            });
+
+            int targetSize = Math.min(10, stableEntities.size());
             for (int i = 0; i < targetSize; i++) {
-                int index = (startIndex + i) % entities.size();
-                topicPool.add(entities.get(index));
+                int index = (startIndex + i) % stableEntities.size();
+                topicPool.add(stableEntities.get(index));
             }
         } catch (Exception ignored) {
         }
@@ -3309,21 +3455,79 @@ public class AppRepository {
     }
 
     public void getFillBlankTopicsAsync(DataCallback<List<FillBlankTopicItem>> callback) {
-        executorService.execute(() -> {
+        backgroundExecutor.execute(() -> {
             List<FillBlankTopicItem> topics = getFillBlankTopics();
-            mainHandler.post(() -> callback.onResult(topics));
+            int retries = 0;
+            while (topics.isEmpty()
+                    && retries < FILL_BLANK_BOOTSTRAP_MAX_RETRY
+                    && shouldRetryFillBlankBootstrap()) {
+                sleepForFillBlankBootstrap();
+                topics = getFillBlankTopics();
+                retries++;
+            }
+            List<FillBlankTopicItem> safeTopics = topics != null ? topics : new ArrayList<>();
+            mainHandler.post(() -> callback.onResult(safeTopics));
         });
     }
 
     public void getFillBlankQuestionsAsync(String topic, DataCallback<List<FillBlankQuestionItem>> callback) {
-        executorService.execute(() -> {
+        backgroundExecutor.execute(() -> {
             List<FillBlankQuestionItem> questions = getFillBlankQuestions(topic);
-            mainHandler.post(() -> callback.onResult(questions));
+            int retries = 0;
+            while (questions.isEmpty()
+                    && retries < FILL_BLANK_BOOTSTRAP_MAX_RETRY
+                    && shouldRetryFillBlankBootstrap()) {
+                sleepForFillBlankBootstrap();
+                questions = getFillBlankQuestions(topic);
+                retries++;
+            }
+            List<FillBlankQuestionItem> safeQuestions = questions != null ? questions : new ArrayList<>();
+            mainHandler.post(() -> callback.onResult(safeQuestions));
         });
     }
 
     public List<FillBlankQuestionItem> getFillBlankQuestions(String topic) {
-        return buildFillBlankQuestionsForTopic(topic, true, true);
+        // Keep first paint fast: avoid network translation work on the UI-critical path.
+        return buildFillBlankQuestionsForTopic(topic, true, false, false);
+    }
+
+    private boolean shouldRetryFillBlankBootstrap() {
+        String uid = getCurrentUid();
+        if (uid == null || uid.trim().isEmpty()) {
+            return false;
+        }
+
+        boolean learnedPending;
+        boolean customPending;
+        synchronized (realtimeLock) {
+            learnedPending = !realtimeLearnedReady;
+            customPending = !realtimeCustomReady;
+        }
+
+        if (!learnedPending && !customPending) {
+            return false;
+        }
+
+        try {
+            String email = getCurrentEmail();
+            int localLearnedCount = Math.max(0, database.learnedWordDao().getTotalWordsCount(email));
+            int localVocabularyCount = Math.max(0, database.customVocabularyDao().getCount());
+
+            if (learnedPending && localLearnedCount == 0) {
+                return true;
+            }
+            return customPending && localVocabularyCount == 0;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private void sleepForFillBlankBootstrap() {
+        try {
+            Thread.sleep(FILL_BLANK_BOOTSTRAP_RETRY_DELAY_MS);
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     public FillBlankStats getFillBlankStats() {
@@ -3460,18 +3664,38 @@ public class AppRepository {
                     continue;
                 }
 
-                List<FillBlankQuestionItem> questions = buildFillBlankQuestionsForTopic(topic, false, false);
-                if (questions.isEmpty()) {
-                    continue;
+                List<FillBlankQuestionItem> remainingQuestions = buildFillBlankQuestionsForTopic(topic, false, false, false);
+                if (remainingQuestions.isEmpty()) {
+                    // Check if it's because it's completed or truly empty pool
+                    List<FillBlankQuestionItem> allQuestions = buildFillBlankQuestionsForTopic(topic, false, false, true);
+                    if (allQuestions.isEmpty()) {
+                         continue;
+                    }
+                    FillBlankTopicItem item = new FillBlankTopicItem(
+                            nonEmpty(domain.getName(), getDomainFromTopic(topic)),
+                            topic,
+                            getLearnedWordCandidatesForTopic(topic, null, false).size(),
+                            allQuestions.size()
+                    );
+                    item.completedCount = allQuestions.size();
+                    item.status = FillBlankTopicItem.STATUS_COMPLETED;
+                    topicItems.add(item);
+                } else {
+                    List<FillBlankQuestionItem> allQuestions = buildFillBlankQuestionsForTopic(topic, false, false, true);
+                    FillBlankTopicItem item = new FillBlankTopicItem(
+                            nonEmpty(domain.getName(), getDomainFromTopic(topic)),
+                            topic,
+                            getLearnedWordCandidatesForTopic(topic, null, false).size(),
+                            allQuestions.size()
+                    );
+                    item.completedCount = allQuestions.size() - remainingQuestions.size();
+                    if (item.completedCount > 0) {
+                        item.status = FillBlankTopicItem.STATUS_IN_PROGRESS;
+                    } else {
+                        item.status = FillBlankTopicItem.STATUS_NOT_STARTED;
+                    }
+                    topicItems.add(item);
                 }
-
-                int learnedWords = getLearnedWordCandidatesForTopic(topic, null, false).size();
-                topicItems.add(new FillBlankTopicItem(
-                        nonEmpty(domain.getName(), getDomainFromTopic(topic)),
-                        topic,
-                        learnedWords,
-                        questions.size()
-                ));
             }
         }
 
@@ -3485,9 +3709,10 @@ public class AppRepository {
         return topicItems;
     }
 
-    private List<FillBlankQuestionItem> buildFillBlankQuestionsForTopic(String topic,
+    public List<FillBlankQuestionItem> buildFillBlankQuestionsForTopic(String topic,
                                                                         boolean allowFallback,
-                                                                        boolean useNetworkTranslation) {
+                                                                        boolean useNetworkTranslation,
+                                                                        boolean includeCompleted) {
         List<FillBlankQuestionItem> questions = new ArrayList<>();
         if (topic == null || topic.trim().isEmpty()) {
             return questions;
@@ -3516,14 +3741,14 @@ public class AppRepository {
 
             String sourceWord = sanitizeWordForFlashcard(entity.word);
             String normalizedWord = normalizeWord(sourceWord);
-            
+
             // Filter by learned candidates
             if (!learnedCandidates.contains(normalizedWord)) {
                 continue;
             }
 
-            // FILTER: Skip already completed questions in this topic
-            if (completedSet.contains(topicKeyPrefix + normalizedWord)) {
+            // FILTER: Skip already completed questions in this topic if NOT includeCompleted
+            if (!includeCompleted && completedSet.contains(topicKeyPrefix + normalizedWord)) {
                 continue;
             }
 
@@ -3538,7 +3763,9 @@ public class AppRepository {
             }
         }
 
-        Collections.shuffle(questions);
+        if (!includeCompleted) {
+            Collections.shuffle(questions);
+        }
         return questions;
     }
 

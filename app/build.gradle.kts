@@ -80,6 +80,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.common)
     implementation(libs.play.services.auth)
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 
     implementation(libs.appcompat)
     implementation(libs.material)

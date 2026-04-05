@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_bottom_sheet_premium"
@@ -42,6 +43,56 @@
             android:text="@string/fill_blank_topic_picker_subtitle"
             android:textColor="@color/ef_text_secondary"
             android:textSize="13sp" />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleFillBlankTabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:checkedButton="@+id/tabFillBlankNotStarted"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tabFillBlankNotStarted"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:fontFamily="@font/nunito"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="Chưa luyện"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tabFillBlankInProgress"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:fontFamily="@font/nunito"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="Đang luyện"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/tabFillBlankCompleted"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:fontFamily="@font/nunito"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="Hoàn thành"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+        </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <View
             android:layout_width="match_parent"

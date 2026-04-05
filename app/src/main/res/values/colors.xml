@@ -129,4 +129,7 @@
     <color name="ef_deep_sea_blue_light">#1E3A8A</color>
     <color name="ef_hint_border">#FF9800</color>
     <color name="ef_hint_bg">#FFF8ED</color>
+    <color name="ef_orange_primary">#FF9800</color>
+    <color name="ef_orange_dark">#E65100</color>
+    <color name="ef_orange_light">#FFF3E0</color>
 </resources>

@@ -7,8 +7,13 @@ import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
+import android.text.style.UnderlineSpan;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -55,6 +60,9 @@ public class LearnFillBlankFragment extends Fragment {
     private static final int XP_PER_CORRECT_ANSWER = 10;
     private static final int COMBO_STREAK_TARGET = 5;
     private static final int COMBO_BONUS_XP = 20;
+    private static final int TOPIC_BOOTSTRAP_MAX_RETRY = 3;
+    private static final int QUESTION_BOOTSTRAP_MAX_RETRY = 2;
+    private static final long BOOTSTRAP_RETRY_DELAY_MS = 280L;
 
     private AppRepository repository;
 
@@ -87,6 +95,7 @@ public class LearnFillBlankFragment extends Fragment {
     private MaterialButton checkButton;
     private MaterialButton nextButton;
     private MaterialButton goFlashcardButton;
+    private MaterialButton solveAnswerButton;
 
     private final List<AppRepository.FillBlankTopicItem> availableTopics = new ArrayList<>();
     private final List<AppRepository.FillBlankQuestionItem> questions = new ArrayList<>();
@@ -180,6 +189,7 @@ public class LearnFillBlankFragment extends Fragment {
         checkButton = view.findViewById(R.id.btnCheckFillBlank);
         nextButton = view.findViewById(R.id.btnNextFillBlank);
         goFlashcardButton = view.findViewById(R.id.btnFillBlankGoFlashcard);
+        solveAnswerButton = view.findViewById(R.id.btnSolveAnswer);
     }
 
     private void setupInteractions(@NonNull View view) {
@@ -261,16 +271,25 @@ public class LearnFillBlankFragment extends Fragment {
             goFlashcardButton.setOnClickListener(v -> openDomainsFlow());
         }
 
+        if (solveAnswerButton != null) {
+            solveAnswerButton.setOnClickListener(v -> showSolveConfirmationDialog());
+        }
+
         attachRaisedButtonMotion(changeTopicButton);
         attachRaisedButtonMotion(hintFirstButton);
         attachRaisedButtonMotion(hintLastButton);
         attachRaisedButtonMotion(checkButton);
         attachRaisedButtonMotion(nextButton);
         attachRaisedButtonMotion(goFlashcardButton);
+        attachRaisedButtonMotion(solveAnswerButton);
         attachRaisedButtonMotion(slotsInputCard);
     }
 
     private void loadTopics(@Nullable String preferredTopic) {
+        loadTopics(preferredTopic, 0);
+    }
+
+    private void loadTopics(@Nullable String preferredTopic, int attempt) {
         showLoading(true);
         repository.getFillBlankTopicsAsync(result -> {
             if (!isAdded()) {
@@ -283,6 +302,10 @@ public class LearnFillBlankFragment extends Fragment {
             }
 
             if (availableTopics.isEmpty()) {
+                if (attempt < TOPIC_BOOTSTRAP_MAX_RETRY) {
+                    postBootstrapRetry(() -> loadTopics(preferredTopic, attempt + 1));
+                    return;
+                }
                 showEmptyState(getString(R.string.fill_blank_empty_message));
                 return;
             }
@@ -291,7 +314,7 @@ public class LearnFillBlankFragment extends Fragment {
             if (selected == null) {
                 selected = availableTopics.get(0);
             }
-            loadQuestionsForTopic(selected.topic);
+            loadQuestionsForTopic(selected.topic, 0);
         });
     }
 
@@ -309,18 +332,35 @@ public class LearnFillBlankFragment extends Fragment {
     }
 
     private void loadQuestionsForTopic(@NonNull String topic) {
-        currentTopic = topic;
-        sessionXp = 0;
-        currentQuestionIndex = 0;
-        consecutiveCorrectStreak = 0;
-        sessionBestCombo = 0;
-        sessionCorrectCount = 0;
-        sessionWrongAttempts = 0;
-        hasRecordedSessionCompletion = false;
-        cancelAutoAdvance();
-        rewardedQuestions.clear();
-        refreshSessionXpText();
-        refreshComboIndicator();
+        loadQuestionsForTopic(topic, 0);
+    }
+
+    private void loadQuestionsForTopic(@NonNull String topic, int attempt) {
+        if (attempt == 0) {
+            currentTopic = topic;
+            sessionXp = 0;
+            currentQuestionIndex = 0;
+            consecutiveCorrectStreak = 0;
+            sessionBestCombo = 0;
+            sessionCorrectCount = 0;
+            sessionWrongAttempts = 0;
+            hasRecordedSessionCompletion = false;
+            cancelAutoAdvance();
+            rewardedQuestions.clear();
+            refreshSessionXpText();
+            refreshComboIndicator();
+        }
+
+        AppRepository.FillBlankTopicItem selectedTopicSnapshot = findTopicByName(topic);
+        setTopicBadgeText(topic);
+        if (topicMetaText != null && selectedTopicSnapshot != null) {
+            topicMetaText.setText(getString(
+                    R.string.fill_blank_topic_meta_format,
+                    selectedTopicSnapshot.domain,
+                    selectedTopicSnapshot.questionCount
+            ));
+        }
+
         showLoading(true);
 
         repository.getFillBlankQuestionsAsync(topic, result -> {
@@ -334,9 +374,6 @@ public class LearnFillBlankFragment extends Fragment {
             }
 
             AppRepository.FillBlankTopicItem selectedTopic = findTopicByName(topic);
-            if (topicTitleText != null) {
-                topicTitleText.setText(topic);
-            }
             if (topicMetaText != null && selectedTopic != null) {
                 topicMetaText.setText(getString(
                         R.string.fill_blank_topic_meta_format,
@@ -346,6 +383,13 @@ public class LearnFillBlankFragment extends Fragment {
             }
 
             if (questions.isEmpty()) {
+                boolean shouldRetry = attempt < QUESTION_BOOTSTRAP_MAX_RETRY
+                        && selectedTopicSnapshot != null
+                        && selectedTopicSnapshot.questionCount > 0;
+                if (shouldRetry) {
+                    postBootstrapRetry(() -> loadQuestionsForTopic(topic, attempt + 1));
+                    return;
+                }
                 showEmptyState(getString(R.string.fill_blank_no_questions));
                 return;
             }
@@ -353,6 +397,33 @@ public class LearnFillBlankFragment extends Fragment {
             showQuestionState();
             bindQuestion();
         });
+    }
+
+    private void postBootstrapRetry(@NonNull Runnable action) {
+        View anchor = rootContainer != null ? rootContainer : (loadingView != null ? loadingView : getView());
+        if (anchor == null) {
+            return;
+        }
+
+        anchor.postDelayed(() -> {
+            if (isAdded()) {
+                action.run();
+            }
+        }, BOOTSTRAP_RETRY_DELAY_MS);
+    }
+
+    private void setTopicBadgeText(@Nullable String topic) {
+        if (topicTitleText == null) {
+            return;
+        }
+
+        String safeTopic = topic == null ? "" : topic.trim();
+        if (safeTopic.isEmpty()) {
+            topicTitleText.setText(R.string.fill_blank_topic_default);
+            return;
+        }
+
+        topicTitleText.setText(getString(R.string.fill_blank_topic_inline_format, safeTopic));
     }
 
     private void bindQuestion() {
@@ -557,62 +628,269 @@ public class LearnFillBlankFragment extends Fragment {
             );
         }
 
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext(), R.style.ef_dialog_rounded)
+                .create();
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.fill_blank_done_title)
-                .setMessage(getString(
-                        R.string.fill_blank_done_message,
-                        questions.size(),
-                sessionXp,
-                sessionBestCombo
-                ))
-                .setPositiveButton(R.string.fill_blank_done_retry, (dialog, id) -> {
-                    repository.resetFillBlankProgressForTopic(currentTopic);
-                    loadQuestionsForTopic(currentTopic);
-                })
-                .setNegativeButton(R.string.fill_blank_done_change_topic, (dialog, id) -> showTopicPicker())
-                .show();
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_fill_blank_completion, null);
+        dialog.setView(dialogView);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.setCancelable(false);
 
+        TextView messageText = dialogView.findViewById(R.id.dialogDoneMessage);
+        TextView xpText = dialogView.findViewById(R.id.tvDoneXp);
+        TextView comboText = dialogView.findViewById(R.id.tvDoneCombo);
+        MaterialButton btnRetry = dialogView.findViewById(R.id.btnDoneRetry);
+        MaterialButton btnChangeTopic = dialogView.findViewById(R.id.btnDoneChangeTopic);
+
+        if (messageText != null) {
+            messageText.setText(getString(R.string.fill_blank_done_message, questions.size(), sessionXp, sessionBestCombo));
+        }
+        if (xpText != null) {
+            xpText.setText(String.valueOf(sessionXp));
+        }
+        if (comboText != null) {
+            comboText.setText(String.valueOf(sessionBestCombo));
+        }
+
+        btnRetry.setOnClickListener(v -> {
+            dialog.dismiss();
+            repository.resetFillBlankProgressForTopic(currentTopic);
+            loadQuestionsForTopic(currentTopic);
+        });
+
+        btnChangeTopic.setOnClickListener(v -> {
+            dialog.dismiss();
+            showTopicPicker();
+        });
+
+        dialog.show();
     }
 
     private void showTopicPicker() {
-        if (!isAdded() || availableTopics.isEmpty()) {
+        if (!isAdded()) {
             return;
         }
 
+        List<AppRepository.FillBlankTopicItem> cachedTopics = new ArrayList<>(availableTopics);
+        if (!cachedTopics.isEmpty()) {
+            showTopicPickerDialog(cachedTopics);
+
+            // Refresh in background so next open reflects latest status updates.
+            repository.getFillBlankTopicsAsync(result -> {
+                if (!isAdded()) {
+                    return;
+                }
+                availableTopics.clear();
+                if (result != null) {
+                    availableTopics.addAll(result);
+                }
+            });
+            return;
+        }
+
+        repository.getFillBlankTopicsAsync(result -> {
+            if (!isAdded()) {
+                return;
+            }
+
+            availableTopics.clear();
+            if (result != null) {
+                availableTopics.addAll(result);
+            }
+
+            if (availableTopics.isEmpty()) {
+                Toast.makeText(requireContext(), R.string.fill_blank_empty_message, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            showTopicPickerDialog(new ArrayList<>(availableTopics));
+        });
+    }
+
+    private void showTopicPickerDialog(@NonNull List<AppRepository.FillBlankTopicItem> sourceTopics) {
         BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
         View sheetView = LayoutInflater.from(requireContext())
                 .inflate(R.layout.dialog_fill_blank_topic_picker, null, false);
+
+        List<AppRepository.FillBlankTopicItem> latestTopics = new ArrayList<>(sourceTopics);
 
         TextView subtitle = sheetView.findViewById(R.id.tvFillBlankTopicSubtitle);
         if (subtitle != null) {
             subtitle.setText(getString(
                     R.string.fill_blank_topic_picker_subtitle_format,
-                    availableTopics.size()
+                    latestTopics.size()
             ));
         }
 
         RecyclerView recyclerView = sheetView.findViewById(R.id.rvFillBlankTopics);
         if (recyclerView != null) {
             recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-            recyclerView.setAdapter(new FillBlankTopicPickerAdapter(
-                    availableTopics,
+            List<AppRepository.FillBlankTopicItem> filtered = getFillBlankTopicsByStatus(
+                    latestTopics,
+                    AppRepository.FillBlankTopicItem.STATUS_NOT_STARTED
+            );
+
+            final FillBlankTopicPickerAdapter pickerAdapter = new FillBlankTopicPickerAdapter(
+                    filtered,
                     currentTopic,
                     selected -> {
                         dialog.dismiss();
-                        if (selected == null) {
-                            return;
+                        if (selected != null) {
+                            if (selected.status == AppRepository.FillBlankTopicItem.STATUS_COMPLETED) {
+                                  showTopicDetailReviewDialog(selected.topic);
+                            } else {
+                                  loadQuestionsForTopic(selected.topic);
+                            }
                         }
-                        if (selected.topic.equalsIgnoreCase(currentTopic)) {
-                            return;
-                        }
-                        loadQuestionsForTopic(selected.topic);
                     }
-            ));
+            );
+            recyclerView.setAdapter(pickerAdapter);
+
+            com.google.android.material.button.MaterialButtonToggleGroup toggle = sheetView.findViewById(R.id.toggleFillBlankTabs);
+            if (toggle != null) {
+                 toggle.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+                      if (!isChecked) return;
+                      int targetStatus = AppRepository.FillBlankTopicItem.STATUS_NOT_STARTED;
+                      if (checkedId == R.id.tabFillBlankInProgress) {
+                          targetStatus = AppRepository.FillBlankTopicItem.STATUS_IN_PROGRESS;
+                      } else if (checkedId == R.id.tabFillBlankCompleted) {
+                          targetStatus = AppRepository.FillBlankTopicItem.STATUS_COMPLETED;
+                      }
+
+                      pickerAdapter.submitItems(getFillBlankTopicsByStatus(latestTopics, targetStatus));
+                 });
+            }
         }
 
         dialog.setContentView(sheetView);
         dialog.show();
+    }
+
+    @NonNull
+    private List<AppRepository.FillBlankTopicItem> getFillBlankTopicsByStatus(
+            @NonNull List<AppRepository.FillBlankTopicItem> topics,
+            int status
+    ) {
+        List<AppRepository.FillBlankTopicItem> filtered = new ArrayList<>();
+        for (AppRepository.FillBlankTopicItem topic : topics) {
+            if (topic != null && topic.status == status) {
+                filtered.add(topic);
+            }
+        }
+        return filtered;
+    }
+
+    private void showTopicDetailReviewDialog(String topic) {
+        if (!isAdded()) return;
+
+        BottomSheetDialog reviewDialog = new BottomSheetDialog(requireContext());
+        View reviewView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_fill_blank_topic_review, null);
+
+        TextView title = reviewView.findViewById(R.id.tvReviewTitle);
+        title.setText("Ôn tập: " + topic);
+
+        RecyclerView rv = reviewView.findViewById(R.id.rvReviewQuestions);
+        rv.setLayoutManager(new LinearLayoutManager(requireContext()));
+
+        repository.executeAsync(() -> {
+            List<AppRepository.FillBlankQuestionItem> allQuestions = 
+                repository.buildFillBlankQuestionsForTopic(topic, false, true, true);
+            
+            if (isAdded()) {
+                 requireActivity().runOnUiThread(() -> {
+                      rv.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+                          @NonNull
+                          @Override
+                          public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                              View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_fill_blank_review_question, parent, false);
+                              return new RecyclerView.ViewHolder(v) {};
+                          }
+
+                          @Override
+                          public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+                              AppRepository.FillBlankQuestionItem q = allQuestions.get(position);
+                              TextView tvQ = holder.itemView.findViewById(R.id.tvReviewQuestion);
+                              TextView tvA = holder.itemView.findViewById(R.id.tvReviewAnswer);
+                              TextView tvVi = holder.itemView.findViewById(R.id.tvReviewVi);
+                              
+                              tvQ.setText(q.maskedSentence);
+                              tvA.setText(q.expectedAnswer);
+                              tvVi.setText(buildHighlightedVietnameseReview(
+                                      holder.itemView.getContext(),
+                                      q.sentenceVi,
+                                      q.meaningVi
+                              ));
+                          }
+
+                          @Override
+                          public int getItemCount() {
+                              return allQuestions.size();
+                          }
+                      });
+                 });
+            }
+        });
+
+        reviewDialog.setContentView(reviewView);
+        reviewDialog.show();
+    }
+
+    @NonNull
+    private CharSequence buildHighlightedVietnameseReview(@NonNull Context context,
+                                                          @Nullable String sentenceVi,
+                                                          @Nullable String meaningVi) {
+        String translation = sentenceVi == null ? "" : sentenceVi.trim();
+        if (translation.isEmpty()) {
+            translation = getString(R.string.fill_blank_review_translation_missing);
+        }
+
+        String translationLabel = getString(R.string.fill_blank_review_translation_label);
+        String translationPrefix = translationLabel.endsWith(" ") ? translationLabel : translationLabel + " ";
+
+        String answerVi = meaningVi == null ? "" : meaningVi.trim();
+        SpannableStringBuilder builder = new SpannableStringBuilder(translationPrefix).append(translation);
+
+        if (answerVi.isEmpty()) {
+            return builder;
+        }
+
+        int foundIndex = translation.toLowerCase(Locale.ROOT)
+                .indexOf(answerVi.toLowerCase(Locale.ROOT));
+
+        if (foundIndex >= 0) {
+            int start = translationPrefix.length() + foundIndex;
+            applyVietnameseAnswerSpan(context, builder, start, start + answerVi.length());
+            return builder;
+        }
+
+        String label = getString(R.string.fill_blank_review_vi_answer_label);
+        builder.append("  ").append(label).append(" ");
+        int start = builder.length();
+        builder.append(answerVi);
+        applyVietnameseAnswerSpan(context, builder, start, builder.length());
+        return builder;
+    }
+
+    private void applyVietnameseAnswerSpan(@NonNull Context context,
+                                           @NonNull SpannableStringBuilder text,
+                                           int start,
+                                           int end) {
+        if (start < 0 || end <= start || end > text.length()) {
+            return;
+        }
+
+        text.setSpan(new ForegroundColorSpan(ContextCompat.getColor(context, R.color.ef_orange_dark)),
+                start,
+                end,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new StyleSpan(Typeface.BOLD),
+                start,
+                end,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new UnderlineSpan(),
+                start,
+                end,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     private void updateHintText() {
@@ -647,7 +925,9 @@ public class LearnFillBlankFragment extends Fragment {
         }
         hintSegments.add(getString(R.string.fill_blank_hint_length_format, expected.length()));
 
-        hintText.setText(TextUtils.join(" • ", hintSegments));
+        // Changed separator to "-" as requested
+        hintText.setText(TextUtils.join(" - ", hintSegments));
+
         if (hintContainer != null && hintContainer.getVisibility() != View.VISIBLE) {
             hintContainer.setVisibility(View.VISIBLE);
             hintContainer.setAlpha(0f);
@@ -658,6 +938,64 @@ public class LearnFillBlankFragment extends Fragment {
                     .setDuration(300L)
                     .start();
         }
+    }
+
+    private void showSolveConfirmationDialog() {
+        if (!isAdded() || questions.isEmpty() || currentQuestionIndex >= questions.size()) {
+            return;
+        }
+
+        int solveCost = 50;
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext(), R.style.ef_dialog_rounded)
+                .create();
+
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_confirm_solve_hint, null);
+        dialog.setView(dialogView);
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btnCancelSolve);
+        MaterialButton btnConfirm = dialogView.findViewById(R.id.btnConfirmSolve);
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnConfirm.setOnClickListener(v -> {
+            dialog.dismiss();
+            processSolveAnswer(solveCost);
+        });
+
+        dialog.show();
+    }
+
+    private void processSolveAnswer(int cost) {
+        repository.spendXpAsync(cost, result -> {
+            if (!isAdded()) return;
+
+            if (result.success) {
+                revealAnswer();
+                Toast.makeText(requireContext(), "Đã dùng 50 XP để mở giải đáp!", Toast.LENGTH_SHORT).show();
+                refreshSessionXpAfterSpend(); // Optional: refresh UI if needed
+            } else {
+                Toast.makeText(requireContext(), result.message != null ? result.message : "Không đủ XP rùi!", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void revealAnswer() {
+        if (questions.isEmpty() || currentQuestionIndex >= questions.size()) return;
+        AppRepository.FillBlankQuestionItem question = questions.get(currentQuestionIndex);
+        
+        if (answerInput != null) {
+            answerInput.setText(question.expectedAnswer);
+            updateAnswerSlots(question.expectedAnswer);
+        }
+        
+        onCorrectAnswer(question);
+    }
+
+    private void refreshSessionXpAfterSpend() {
+        // Since we spent XP, we might want to update the local session display if it shows total XP
+        // But the session XP usually tracks earnings in this session.
+        // For clarity, we'll just keep it as is or update if it's total XP.
     }
 
 
@@ -1087,6 +1425,20 @@ public class LearnFillBlankFragment extends Fragment {
             ));
             holder.cardView.setStrokeWidth(dp(isCurrent ? 2 : 1));
 
+            if (item.status == AppRepository.FillBlankTopicItem.STATUS_IN_PROGRESS) {
+                holder.statusBadgeText.setVisibility(View.VISIBLE);
+                holder.statusBadgeText.setText("ĐANG HỌC");
+                holder.statusBadgeText.setBackgroundResource(R.drawable.bg_tag_amber);
+                holder.statusBadgeText.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.ef_orange_dark));
+            } else if (item.status == AppRepository.FillBlankTopicItem.STATUS_COMPLETED) {
+                holder.statusBadgeText.setVisibility(View.VISIBLE);
+                holder.statusBadgeText.setText("HOÀN THÀNH");
+                holder.statusBadgeText.setBackgroundResource(R.drawable.bg_tag_emerald);
+                holder.statusBadgeText.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.ef_primary_dark));
+            } else {
+                holder.statusBadgeText.setVisibility(View.GONE);
+            }
+
             holder.itemView.setOnClickListener(v -> {
                 v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
                 listener.onSelect(item);
@@ -1098,6 +1450,12 @@ public class LearnFillBlankFragment extends Fragment {
             return items.size();
         }
 
+        void submitItems(@NonNull List<AppRepository.FillBlankTopicItem> source) {
+            items.clear();
+            items.addAll(source);
+            notifyDataSetChanged();
+        }
+
         private class TopicOptionViewHolder extends RecyclerView.ViewHolder {
             final MaterialCardView cardView;
             final TextView emojiText;
@@ -1105,6 +1463,7 @@ public class LearnFillBlankFragment extends Fragment {
             final TextView topicDomainText;
             final TextView topicCountText;
             final TextView currentBadgeText;
+            final TextView statusBadgeText;
 
             TopicOptionViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -1114,6 +1473,7 @@ public class LearnFillBlankFragment extends Fragment {
                 topicDomainText = itemView.findViewById(R.id.fillBlankTopicDomain);
                 topicCountText = itemView.findViewById(R.id.fillBlankTopicCount);
                 currentBadgeText = itemView.findViewById(R.id.fillBlankTopicCurrentBadge);
+                statusBadgeText = itemView.findViewById(R.id.fillBlankTopicStatusBadge);
             }
         }
     }

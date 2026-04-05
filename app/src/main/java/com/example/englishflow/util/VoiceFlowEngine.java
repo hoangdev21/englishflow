@@ -55,6 +55,7 @@ public class VoiceFlowEngine {
         void onStateChanged(State state);
         void onTranscript(String text);
         void onPartialTranscript(String text);
+        void onRmsChanged(float rmsDb);
         void onSpeakingDone();
         void onError(String message);
     }
@@ -192,7 +193,7 @@ public class VoiceFlowEngine {
             }
             @Override public void onError(int error) { setState(State.IDLE); }
             @Override public void onBeginningOfSpeech() {}
-            @Override public void onRmsChanged(float rmsdB) {}
+            @Override public void onRmsChanged(float rmsdB) { callback.onRmsChanged(rmsdB); }
             @Override public void onBufferReceived(byte[] buffer) {}
             @Override public void onEndOfSpeech() {}
             @Override public void onEvent(int eventType, Bundle params) {}
