@@ -59,6 +59,12 @@
             android:label="Chi tiết người dùng"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".admin.AdminLessonDetailActivity"
+            android:exported="false"
+            android:label="@string/admin_lesson_detail_screen_title"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- Main Activity -->
         <activity
             android:name=".MainActivity"

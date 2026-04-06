@@ -91,9 +91,6 @@ public class LearnOverviewFragment extends Fragment {
     private TextView streakText;
     private TextView progressXpText;
     private TextView progressStateText;
-    private TextView heroGoalChipText;
-    private TextView heroModeChipText;
-    private TextView dailyGoalChipText;
     private TextView needToGoChipText;
     private TextView domainCountText;
     private LinearProgressIndicator journeyProgress;
@@ -137,9 +134,7 @@ public class LearnOverviewFragment extends Fragment {
         streakText = view.findViewById(R.id.learnProgressStreak);
         progressXpText = view.findViewById(R.id.learnProgressXp);
         progressStateText = view.findViewById(R.id.learnProgressState);
-        heroGoalChipText = view.findViewById(R.id.learnHeroChipGoal);
-        heroModeChipText = view.findViewById(R.id.learnHeroChipMode);
-        dailyGoalChipText = view.findViewById(R.id.learnChipDailyGoal);
+        progressStateText = view.findViewById(R.id.learnProgressState);
         needToGoChipText = view.findViewById(R.id.learnChipNeedToGo);
         domainCountText = view.findViewById(R.id.learnDomainsCount);
         journeyProgress = view.findViewById(R.id.learnJourneyProgress);
@@ -284,12 +279,6 @@ public class LearnOverviewFragment extends Fragment {
                 progressXpText.setText(getString(R.string.learn_progress_xp_format, xpToday));
             }
 
-            if (heroGoalChipText != null) {
-                heroGoalChipText.setText(getString(R.string.learn_progress_daily_goal_format, dailyGoal));
-            }
-            if (dailyGoalChipText != null) {
-                dailyGoalChipText.setText(getString(R.string.learn_progress_daily_goal_format, dailyGoal));
-            }
             if (needToGoChipText != null) {
                 if (remainingWords == 0) {
                     needToGoChipText.setText(R.string.learn_progress_need_to_go_done);
@@ -310,17 +299,7 @@ public class LearnOverviewFragment extends Fragment {
                 }
             }
 
-            if (heroModeChipText != null) {
-                if (percent >= 100) {
-                    heroModeChipText.setText(R.string.learn_hero_mode_done);
-                } else if (percent >= 70) {
-                    heroModeChipText.setText(R.string.learn_hero_mode_fire);
-                } else if (percent >= 30) {
-                    heroModeChipText.setText(R.string.learn_hero_mode_keep);
-                } else {
-                    heroModeChipText.setText(R.string.learn_hero_mode_chip);
-                }
-            }
+
 
             List<DomainItem> domains = snapshot.domains;
             updateDomainPreviews(domains);

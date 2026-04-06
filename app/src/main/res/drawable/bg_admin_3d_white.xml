@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Bottom Shadow Layer (Light Gray) -->
+    <item android:top="3dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#D0D6DC" />
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+    <!-- Main Button Body Layer (White with Outline) -->
+    <item android:bottom="3dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/white" />
+            <stroke android:color="@color/ef_outline" android:width="1dp" />
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+</layer-list>

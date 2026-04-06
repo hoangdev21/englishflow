@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:cardBackgroundColor="@color/ef_surface_variant"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/ef_outline_light"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/adminLessonDetailFlowIndex"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/ef_text_primary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAdminLessonDetailRemoveFlowStep"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minHeight="34dp"
+                android:minWidth="34dp"
+                app:backgroundTint="@color/ef_card_rose"
+                app:cornerRadius="10dp"
+                app:icon="@drawable/ic_delete"
+                app:iconGravity="textStart"
+                app:iconSize="14dp"
+                app:iconTint="@color/ef_card_rose_text" />
+        </LinearLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxBackgroundColor="@color/ef_surface"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/ef_outline"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputAdminLessonDetailFlowType"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/admin_lesson_detail_flow_type_hint"
+                android:inputType="text"
+                android:maxLines="1"
+                android:textColor="@color/ef_text_primary"
+                android:textColorHint="@color/ef_text_tertiary"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxBackgroundColor="@color/ef_surface"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/ef_outline"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputAdminLessonDetailFlowContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/admin_lesson_detail_flow_content_hint"
+                android:inputType="textCapSentences|textMultiLine"
+                android:minLines="2"
+                android:textColor="@color/ef_text_primary"
+                android:textColorHint="@color/ef_text_tertiary"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxBackgroundColor="@color/ef_surface"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/ef_outline"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputAdminLessonDetailFlowQuestion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/admin_lesson_detail_flow_question_hint"
+                android:inputType="textCapSentences|textMultiLine"
+                android:minLines="2"
+                android:textColor="@color/ef_text_primary"
+                android:textColorHint="@color/ef_text_tertiary"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxBackgroundColor="@color/ef_surface"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/ef_outline"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputAdminLessonDetailFlowInstruction"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/admin_lesson_detail_flow_instruction_hint"
+                android:inputType="textCapSentences|textMultiLine"
+                android:minLines="2"
+                android:textColor="@color/ef_text_primary"
+                android:textColorHint="@color/ef_text_tertiary"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:boxBackgroundColor="@color/ef_surface"
+                app:boxBackgroundMode="outline"
+                app:boxStrokeColor="@color/ef_outline"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputAdminLessonDetailFlowWord"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/admin_lesson_detail_flow_word_hint"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="@color/ef_text_primary"
+                    android:textColorHint="@color/ef_text_tertiary"
+                    android:textSize="13sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                app:boxBackgroundColor="@color/ef_surface"
+                app:boxBackgroundMode="outline"
+                app:boxStrokeColor="@color/ef_outline"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputAdminLessonDetailFlowIpa"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/admin_lesson_detail_flow_ipa_hint"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="@color/ef_text_primary"
+                    android:textColorHint="@color/ef_text_tertiary"
+                    android:textSize="13sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxBackgroundColor="@color/ef_surface"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/ef_outline"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputAdminLessonDetailFlowMeaning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/admin_lesson_detail_flow_meaning_hint"
+                android:inputType="textCapSentences"
+                android:maxLines="2"
+                android:textColor="@color/ef_text_primary"
+                android:textColorHint="@color/ef_text_tertiary"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxBackgroundColor="@color/ef_surface"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/ef_outline"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputAdminLessonDetailFlowExpectedKeyword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/admin_lesson_detail_flow_expected_keyword_hint"
+                android:inputType="text"
+                android:maxLines="1"
+                android:textColor="@color/ef_text_primary"
+                android:textColorHint="@color/ef_text_tertiary"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxBackgroundColor="@color/ef_surface"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/ef_outline"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputAdminLessonDetailFlowHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/admin_lesson_detail_flow_hint_hint"
+                android:inputType="textCapSentences|textMultiLine"
+                android:minLines="2"
+                android:textColor="@color/ef_text_primary"
+                android:textColorHint="@color/ef_text_tertiary"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxBackgroundColor="@color/ef_surface"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/ef_outline"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputAdminLessonDetailFlowRoleContext"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/admin_lesson_detail_flow_role_context_hint"
+                android:inputType="textCapSentences|textMultiLine"
+                android:minLines="2"
+                android:textColor="@color/ef_text_primary"
+                android:textColorHint="@color/ef_text_tertiary"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxBackgroundColor="@color/ef_surface"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/ef_outline"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/inputAdminLessonDetailFlowAcceptedAnswers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/admin_lesson_detail_flow_accepted_answers_hint"
+                android:inputType="textCapSentences|textMultiLine"
+                android:minLines="2"
+                android:textColor="@color/ef_text_primary"
+                android:textColorHint="@color/ef_text_tertiary"
+                android:textSize="13sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

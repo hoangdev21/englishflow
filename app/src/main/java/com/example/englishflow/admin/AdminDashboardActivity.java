@@ -119,6 +119,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         // Predictively check email first for immediate UI
         if (com.example.englishflow.data.FirebaseSeeder.isAdminEmail(email)) {
+            com.example.englishflow.data.FirebaseSeeder.seedAdminIfNeeded(uid, email);
             return; // Admin access granted by email
         }
 

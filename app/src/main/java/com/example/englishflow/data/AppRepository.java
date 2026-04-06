@@ -29,6 +29,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.net.HttpURLConnection;
@@ -147,6 +148,18 @@ public class AppRepository {
     private List<DomainItem> cachedDomains = new ArrayList<>();
     private String cachedDomainsEmail = "";
     private long cachedDomainsAt = 0L;
+    private final Object adminSeedCatalogLock = new Object();
+    private volatile AdminSeedCatalog cachedAdminSeedCatalog;
+
+    private static final class AdminSeedCatalog {
+        final List<CustomVocabularyEntity> entries;
+        final Set<String> seededWords;
+
+        AdminSeedCatalog(List<CustomVocabularyEntity> entries, Set<String> seededWords) {
+            this.entries = entries;
+            this.seededWords = seededWords;
+        }
+    }
 
     public static class DashboardSnapshot {
         public String userName = "Bạn";
@@ -2369,6 +2382,260 @@ public class AppRepository {
         return getEffectiveCustomVocabulary();
     }
 
+    public void getAdminVocabularyCatalogAsync(DataCallback<List<CustomVocabularyEntity>> callback) {
+        executorService.execute(() -> {
+            List<CustomVocabularyEntity> result = getAdminVocabularyCatalog();
+            if (callback != null) {
+                mainHandler.post(() -> callback.onResult(result));
+            }
+        });
+    }
+
+    public List<CustomVocabularyEntity> getAdminVocabularyCatalog() {
+        AdminSeedCatalog seedCatalog = getOrBuildAdminSeedCatalog();
+        Set<String> seededWords = new HashSet<>(seedCatalog.seededWords);
+        List<CustomVocabularyEntity> catalog = new ArrayList<>(seedCatalog.entries.size());
+        for (CustomVocabularyEntity seedEntry : seedCatalog.entries) {
+            catalog.add(cloneVocabularyEntity(seedEntry));
+        }
+
+        Map<String, CustomVocabularyEntity> customByWord = new LinkedHashMap<>();
+        try {
+            List<CustomVocabularyEntity> customEntries = getEffectiveCustomVocabulary();
+            for (CustomVocabularyEntity customEntry : customEntries) {
+                if (customEntry == null) {
+                    continue;
+                }
+
+                String normalizedWord = normalizeWord(customEntry.word);
+                if (normalizedWord.isEmpty()) {
+                    continue;
+                }
+                customByWord.put(normalizedWord, cloneVocabularyEntity(customEntry));
+            }
+        } catch (Exception ignored) {
+        }
+
+        if (!customByWord.isEmpty()) {
+            for (CustomVocabularyEntity entry : catalog) {
+                String normalizedWord = normalizeWord(entry.word);
+                if (normalizedWord.isEmpty()) {
+                    continue;
+                }
+
+                CustomVocabularyEntity customOverride = customByWord.get(normalizedWord);
+                if (customOverride != null) {
+                    mergeCustomIntoCatalogEntry(entry, customOverride);
+                }
+            }
+
+            for (Map.Entry<String, CustomVocabularyEntity> customEntry : customByWord.entrySet()) {
+                if (seededWords.contains(customEntry.getKey())) {
+                    continue;
+                }
+                catalog.add(cloneVocabularyEntity(customEntry.getValue()));
+            }
+        }
+
+        if (!catalog.isEmpty()) {
+            return catalog;
+        }
+
+        return new ArrayList<>(customByWord.values());
+    }
+
+    private AdminSeedCatalog getOrBuildAdminSeedCatalog() {
+        AdminSeedCatalog existing = cachedAdminSeedCatalog;
+        if (existing != null) {
+            return existing;
+        }
+
+        synchronized (adminSeedCatalogLock) {
+            if (cachedAdminSeedCatalog != null) {
+                return cachedAdminSeedCatalog;
+            }
+
+            Set<String> seededWords = new HashSet<>();
+            List<CustomVocabularyEntity> entries = buildAdminVocabularySeedEntries(seededWords);
+            cachedAdminSeedCatalog = new AdminSeedCatalog(entries, seededWords);
+            return cachedAdminSeedCatalog;
+        }
+    }
+
+    private List<CustomVocabularyEntity> buildAdminVocabularySeedEntries(Set<String> seededWords) {
+        List<CustomVocabularyEntity> entries = new ArrayList<>();
+
+        try {
+            appendSeedPackageEntries(readSeedJson(), entries, seededWords);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            appendLegacySeedEntries(readAssetJson(LEGACY_SEED_FILE_NAME), entries, seededWords);
+        } catch (Exception ignored) {
+        }
+
+        return entries;
+    }
+
+    private void appendSeedPackageEntries(String json,
+                                          List<CustomVocabularyEntity> target,
+                                          Set<String> seededWords) {
+        if (json == null || json.trim().isEmpty()) {
+            return;
+        }
+
+        try {
+            JSONObject root = new JSONObject(json);
+            JSONArray packages = root.optJSONArray("packages");
+            if (packages == null) {
+                return;
+            }
+
+            for (int i = 0; i < packages.length(); i++) {
+                JSONObject pkg = packages.optJSONObject(i);
+                if (pkg == null) {
+                    continue;
+                }
+
+                String packageDomain = nonEmpty(pkg.optString("domain", ""), "general");
+                JSONArray entries = pkg.optJSONArray("entries");
+                if (entries == null) {
+                    continue;
+                }
+
+                for (int j = 0; j < entries.length(); j++) {
+                    JSONObject entry = entries.optJSONObject(j);
+                    if (entry == null) {
+                        continue;
+                    }
+
+                    String normalizedWord = ScanAnalyzer.canonicalizeLabel(entry.optString("word", ""));
+                    if (normalizedWord.isEmpty()) {
+                        continue;
+                    }
+
+                    String meaning = nonEmpty(entry.optString("meaning", ""), "");
+                    String ipa = nonEmpty(entry.optString("ipa", ""), "-");
+                    String example = nonEmpty(entry.optString("example", ""), "");
+                    String source = nonEmpty(entry.optString("source", ""), "seed");
+                    String domain = nonEmpty(entry.optString("domain", ""), packageDomain, "general");
+                    boolean isLocked = entry.has("isLocked") ? entry.optBoolean("isLocked", true) : true;
+
+                    target.add(createCatalogEntry(
+                            normalizedWord,
+                            meaning,
+                            ipa,
+                            example,
+                            source,
+                            domain,
+                            isLocked
+                    ));
+
+                    if (seededWords != null) {
+                        seededWords.add(normalizeWord(normalizedWord));
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void appendLegacySeedEntries(String json,
+                                         List<CustomVocabularyEntity> target,
+                                         Set<String> seededWords) {
+        if (json == null || json.trim().isEmpty()) {
+            return;
+        }
+
+        try {
+            JSONObject root = new JSONObject(json);
+            Iterator<String> keys = root.keys();
+            while (keys.hasNext()) {
+                String rawWord = keys.next();
+                String normalizedWord = ScanAnalyzer.canonicalizeLabel(rawWord);
+                if (normalizedWord.isEmpty()) {
+                    continue;
+                }
+
+                String meaning = nonEmpty(root.optString(rawWord, ""), "");
+                target.add(createCatalogEntry(
+                        normalizedWord,
+                        meaning,
+                        "-",
+                        "",
+                        "seed",
+                        "general",
+                        true
+                ));
+
+                if (seededWords != null) {
+                    seededWords.add(normalizeWord(normalizedWord));
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private CustomVocabularyEntity createCatalogEntry(String word,
+                                                      String meaning,
+                                                      String ipa,
+                                                      String example,
+                                                      String source,
+                                                      String domain,
+                                                      boolean isLocked) {
+        CustomVocabularyEntity entity = new CustomVocabularyEntity(
+                nonEmpty(word, ""),
+                nonEmpty(meaning, ""),
+                nonEmpty(ipa, "-"),
+                nonEmpty(example, ""),
+                "",
+                ""
+        );
+        entity.source = nonEmpty(source, "seed");
+        entity.domain = nonEmpty(domain, "general");
+        entity.isLocked = isLocked;
+        entity.updatedAt = 0L;
+        return entity;
+    }
+
+    private CustomVocabularyEntity cloneVocabularyEntity(CustomVocabularyEntity source) {
+        CustomVocabularyEntity clone = createCatalogEntry(
+                nonEmpty(source == null ? "" : source.word, ""),
+                nonEmpty(source == null ? "" : source.meaning, ""),
+                nonEmpty(source == null ? "" : source.ipa, "-"),
+                nonEmpty(source == null ? "" : source.example, ""),
+                nonEmpty(source == null ? "" : source.source, "user"),
+                nonEmpty(source == null ? "" : source.domain, "general"),
+                source != null && source.isLocked
+        );
+        clone.exampleVi = source == null ? "" : nonEmpty(source.exampleVi, "");
+        clone.usage = source == null ? "" : nonEmpty(source.usage, "");
+        clone.updatedAt = source == null ? 0L : source.updatedAt;
+        return clone;
+    }
+
+    private void mergeCustomIntoCatalogEntry(CustomVocabularyEntity catalogEntry,
+                                             CustomVocabularyEntity customEntry) {
+        if (catalogEntry == null || customEntry == null) {
+            return;
+        }
+
+        catalogEntry.meaning = nonEmpty(customEntry.meaning, catalogEntry.meaning);
+        catalogEntry.ipa = nonEmpty(customEntry.ipa, catalogEntry.ipa, "-");
+        catalogEntry.example = nonEmpty(customEntry.example, catalogEntry.example);
+        catalogEntry.exampleVi = nonEmpty(customEntry.exampleVi, catalogEntry.exampleVi);
+        catalogEntry.usage = nonEmpty(customEntry.usage, catalogEntry.usage);
+        catalogEntry.source = nonEmpty(customEntry.source, catalogEntry.source, "seed");
+        catalogEntry.isLocked = customEntry.isLocked;
+        catalogEntry.updatedAt = customEntry.updatedAt;
+
+        String catalogDomain = safeString(catalogEntry.domain);
+        if (catalogDomain.isEmpty() || "general".equalsIgnoreCase(catalogDomain)) {
+            catalogEntry.domain = nonEmpty(customEntry.domain, catalogEntry.domain, "general");
+        }
+    }
+
     public void getSystemVocabularyCountAsync(DataCallback<Integer> callback) {
         executorService.execute(() -> {
             int count = getSystemVocabularyCount();
@@ -2483,6 +2750,109 @@ public class AppRepository {
         }
 
         return count;
+    }
+
+    public boolean upsertCustomVocabularyByAdmin(String word,
+                                                 String meaning,
+                                                 String domain,
+                                                 String source,
+                                                 boolean isLocked) {
+        if (word == null || word.trim().isEmpty() || meaning == null || meaning.trim().isEmpty()) {
+            return false;
+        }
+
+        String normalizedWord = ScanAnalyzer.canonicalizeLabel(word);
+        if (normalizedWord.isEmpty()) {
+            return false;
+        }
+
+        CustomVocabularyEntity existing = findCustomVocabulary(normalizedWord);
+        String safeMeaning = meaning.trim();
+        long now = System.currentTimeMillis();
+
+        CustomVocabularyEntity entity = existing != null
+                ? existing
+                : new CustomVocabularyEntity(
+                normalizedWord,
+                safeMeaning,
+                "-",
+                "",
+                "",
+                ""
+        );
+
+        entity.word = normalizedWord;
+        entity.meaning = safeMeaning;
+        entity.domain = normalizeAdminDomain(domain);
+        entity.source = normalizeAdminSource(source);
+        entity.isLocked = isLocked;
+        entity.ipa = nonEmpty(entity.ipa, "-");
+        entity.example = nonEmpty(entity.example, "");
+        entity.exampleVi = nonEmpty(entity.exampleVi, "");
+        entity.usage = nonEmpty(entity.usage, "");
+        entity.updatedAt = now;
+
+        database.customVocabularyDao().upsert(entity);
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("word", entity.word);
+        payload.put("meaning", entity.meaning);
+        payload.put("ipa", entity.ipa);
+        payload.put("example", entity.example);
+        payload.put("exampleVi", entity.exampleVi);
+        payload.put("usage", entity.usage);
+        payload.put("isLocked", entity.isLocked);
+        payload.put("source", entity.source);
+        payload.put("domain", entity.domain);
+        payload.put("updatedAt", now);
+        firestore.collection(COLLECTION_CUSTOM_VOCABULARY)
+                .document(normalizedWord)
+                .set(payload, com.google.firebase.firestore.SetOptions.merge());
+
+        invalidateDashboardCache();
+        return true;
+    }
+
+    public boolean updateCustomVocabularyByAdmin(String word,
+                                                 String meaning,
+                                                 String domain,
+                                                 String source,
+                                                 boolean isLocked) {
+        if (word == null || word.trim().isEmpty()) {
+            return false;
+        }
+
+        String normalizedWord = ScanAnalyzer.canonicalizeLabel(word);
+        if (normalizedWord.isEmpty()) {
+            return false;
+        }
+
+        CustomVocabularyEntity existing = findCustomVocabulary(normalizedWord);
+        String safeMeaning = nonEmpty(meaning, existing != null ? existing.meaning : "").trim();
+        if (safeMeaning.isEmpty()) {
+            return false;
+        }
+
+        String safeDomain = nonEmpty(domain, existing != null ? existing.domain : "general");
+        String safeSource = nonEmpty(source, existing != null ? existing.source : "admin");
+
+        return upsertCustomVocabularyByAdmin(
+                normalizedWord,
+                safeMeaning,
+                safeDomain,
+                safeSource,
+                isLocked
+        );
+    }
+
+    private String normalizeAdminDomain(String domain) {
+        String normalized = domain == null ? "" : domain.trim().toLowerCase(Locale.US);
+        return normalized.isEmpty() ? "general" : normalized;
+    }
+
+    private String normalizeAdminSource(String source) {
+        String normalized = source == null ? "" : source.trim().toLowerCase(Locale.US);
+        return normalized.isEmpty() ? "admin" : normalized;
     }
 
     public boolean updateCustomMeaning(String word, String meaning, boolean forceIfLocked) {
