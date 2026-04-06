@@ -16,6 +16,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -27,6 +29,7 @@ public class GroqChatService {
     private static final String TAG = "GroqChatService";
     private static final String API_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
     private static final String DEFAULT_MODEL = "llama-3.3-70b-versatile";
+    private static final ExecutorService CHAT_EXECUTOR = Executors.newFixedThreadPool(3);
     
     private final String apiKey;
     private final String modelName;
@@ -40,11 +43,7 @@ public class GroqChatService {
         this.modelName = (BuildConfig.GROQ_MODEL != null && !BuildConfig.GROQ_MODEL.isEmpty()) 
                 ? BuildConfig.GROQ_MODEL : "llama-3.1-70b-versatile"; 
         
-        this.httpClient = new OkHttpClient.Builder()
-                .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                .build();
+        this.httpClient = NetworkClientProvider.getAiClient();
                 
         this.gson = new Gson();
         this.database = EnglishFlowDatabase.getInstance(context);
@@ -96,7 +95,7 @@ public class GroqChatService {
                                 List<com.example.englishflow.ui.MapConversationActivity.ChatMessage> history,
                                 RagContext ragContext,
                                 ChatCallback callback) {
-        new Thread(() -> {
+        CHAT_EXECUTOR.execute(() -> {
             try {
                 // 1. RAG: Search relevant vocabulary
                 List<CustomVocabularyEntity> contextVocab = searchRelevantVocab(userMessage, ragContext);
@@ -118,11 +117,11 @@ public class GroqChatService {
                 Log.e(TAG, "Chat error", e);
                 callback.onError(e.getMessage());
             }
-        }).start();
+        });
     }
 
     public void getRawAiResponse(String prompt, RawCallback callback) {
-        new Thread(() -> {
+        CHAT_EXECUTOR.execute(() -> {
             try {
                 JsonObject requestBody = new JsonObject();
                 requestBody.addProperty("model", modelName);
@@ -147,7 +146,7 @@ public class GroqChatService {
             } catch (Exception e) {
                 callback.onError(e.getMessage());
             }
-        }).start();
+        });
     }
 
     private JsonObject buildChatRequestWithHistory(String systemPrompt, String userMessage, List<com.example.englishflow.ui.MapConversationActivity.ChatMessage> history) {

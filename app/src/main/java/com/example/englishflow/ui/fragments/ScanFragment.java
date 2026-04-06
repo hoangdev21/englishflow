@@ -53,6 +53,7 @@ import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.DictionaryResult;
 import com.example.englishflow.data.FreeDictionaryService;
 import com.example.englishflow.data.GeminiVisionService;
+import com.example.englishflow.data.NetworkClientProvider;
 import com.example.englishflow.data.ScanAnalyzer;
 import com.example.englishflow.data.ScanResult;
 import com.example.englishflow.data.WordEntry;
@@ -87,8 +88,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import okhttp3.OkHttpClient;
 
 public class ScanFragment extends Fragment {
     private static final int REQUEST_CAMERA_PERMISSION = 100;
@@ -177,7 +176,7 @@ public class ScanFragment extends Fragment {
         imageExecutor = Executors.newSingleThreadExecutor();
         cameraExecutor = Executors.newSingleThreadExecutor();
         scanViewModel = new ViewModelProvider(this).get(ScanViewModel.class);
-        freeDictionaryService = new FreeDictionaryService(new OkHttpClient());
+        freeDictionaryService = new FreeDictionaryService(NetworkClientProvider.getBaseClient());
         magicLensTextRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
 
         android.util.Log.d("ScanFragment", "Initializing Groq Vision service...");

@@ -24,6 +24,7 @@ import com.example.englishflow.data.DictionaryRepository;
 import com.example.englishflow.data.DictionaryResult;
 import com.example.englishflow.data.FreeDictionaryService;
 import com.example.englishflow.data.MyMemoryService;
+import com.example.englishflow.data.NetworkClientProvider;
 import com.example.englishflow.data.WordEntry;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.button.MaterialButton;
@@ -32,8 +33,6 @@ import com.google.android.material.chip.ChipGroup;
 
 import java.io.IOException;
 import java.util.List;
-
-import okhttp3.OkHttpClient;
 
 public class DictionaryBottomSheet extends BottomSheetDialogFragment {
     private static final String ARG_PREFILL = "prefill";
@@ -65,7 +64,7 @@ public class DictionaryBottomSheet extends BottomSheetDialogFragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_dictionary_bottom, container, false);
 
-        OkHttpClient okHttpClient = new OkHttpClient();
+        okhttp3.OkHttpClient okHttpClient = NetworkClientProvider.getBaseClient();
         dictionaryRepository = new DictionaryRepository(
                 new FreeDictionaryService(okHttpClient),
                 new MyMemoryService(okHttpClient)

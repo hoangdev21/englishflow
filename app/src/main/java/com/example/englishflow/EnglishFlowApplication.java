@@ -5,6 +5,8 @@ import android.util.Log;
 
 import com.example.englishflow.data.UserPresenceTracker;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreSettings;
 
 public class EnglishFlowApplication extends Application {
 
@@ -20,6 +22,16 @@ public class EnglishFlowApplication extends Application {
         if (firebaseApp == null) {
             Log.w(TAG, "FirebaseApp init returned null, skip presence tracker startup");
             return;
+        }
+
+        try {
+            FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
+                    .setPersistenceEnabled(true)
+                    .setCacheSizeBytes(FirebaseFirestoreSettings.CACHE_SIZE_UNLIMITED)
+                    .build();
+            FirebaseFirestore.getInstance().setFirestoreSettings(settings);
+        } catch (Exception e) {
+            Log.w(TAG, "Unable to apply Firestore cache settings", e);
         }
 
         presenceTracker = new UserPresenceTracker();

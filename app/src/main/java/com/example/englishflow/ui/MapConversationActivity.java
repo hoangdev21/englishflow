@@ -42,11 +42,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class MapConversationActivity extends AppCompatActivity {
 
     private static final double FREE_INPUT_VOCAB_MATCH_THRESHOLD = 0.88d;
     private static final float[] VOICE_SPEED_OPTIONS = new float[]{1.0f, 1.25f, 1.5f, 1.75f, 2.0f};
+    private static final AtomicLong MESSAGE_ID_GENERATOR = new AtomicLong(1L);
 
     private enum LessonStage {
         LECTURE,
@@ -113,6 +115,7 @@ public class MapConversationActivity extends AppCompatActivity {
     private boolean pendingPronunciationListen = false;
     private boolean isLessonClosed = false;
     private boolean vocabCompletionPromptShown = false;
+    private boolean mapNodeCompletionSaved = false;
     private int voiceSpeedIndex = 0;
     private LessonStage currentLessonStage = null;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
@@ -159,6 +162,8 @@ public class MapConversationActivity extends AppCompatActivity {
         chatMessages = new ArrayList<>();
         chatAdapter = new ChatAdapter(chatMessages);
         chatRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        chatRecyclerView.setItemAnimator(null);
+        chatRecyclerView.setItemViewCacheSize(20);
         chatRecyclerView.setAdapter(chatAdapter);
 
         String title = getIntent().getStringExtra(EXTRA_TITLE);
@@ -735,7 +740,7 @@ public class MapConversationActivity extends AppCompatActivity {
             safeSpeak("Tuyệt vời! Bạn phát âm đúng rồi.");
             currentPracticingWord.setPracticed(true);
             currentPracticingWord = null;
-            chatAdapter.notifyDataSetChanged();
+            notifyVocabularyHubChanged();
 
             if (areAllVocabularyPracticed()) {
                 onVocabularyCompleted();
@@ -869,7 +874,7 @@ public class MapConversationActivity extends AppCompatActivity {
         }
 
         bestMatch.setPracticed(true);
-        chatAdapter.notifyDataSetChanged();
+        notifyVocabularyHubChanged();
 
         String confirmLine = "Tốt lắm, bạn phát âm đúng từ " + bestMatch.getWord() + ".";
         typewriterMessage(confirmLine);
@@ -921,6 +926,7 @@ public class MapConversationActivity extends AppCompatActivity {
         }
 
         pendingQuizStep = quizSteps.get(quizStepIndex);
+        clearQuizCtaProcessingState();
         String question = nonEmpty(pendingQuizStep.getQuestion(), pendingQuizStep.getContent());
         if (question.isEmpty()) {
             question = "Hãy trả lời bằng từ khóa phù hợp với tình huống.";
@@ -928,7 +934,6 @@ public class MapConversationActivity extends AppCompatActivity {
 
         typewriterMessage(question);
         safeSpeak(question);
-        chatAdapter.notifyDataSetChanged();
     }
 
     private void evaluateQuizAnswer(String text) {
@@ -1069,7 +1074,7 @@ public class MapConversationActivity extends AppCompatActivity {
         isRoleplayActive = true;
         customPrompt = buildRoleplayPrompt();
         ragContext = buildRagContext();
-        chatAdapter.notifyDataSetChanged();
+        notifyVocabularyHubChanged();
 
         String openingPrompt = buildOpeningPrompt();
         groqChatService.getRawAiResponse(openingPrompt, new GroqChatService.RawCallback() {
@@ -1322,9 +1327,7 @@ public class MapConversationActivity extends AppCompatActivity {
 
             if (exchangeCount >= minExchanges) {
                 ivFinishFlag.setAlpha(1.0f);
-                if (nodeId != null) {
-                    AppRepository.getInstance(this).saveMapNodeCompleted(nodeId);
-                }
+                ensureNodeCompletionSaved();
                 if (isRoleplayActive && !isDoneShown) {
                     isDoneShown = true;
                     showCompletionDialog();
@@ -1348,9 +1351,7 @@ public class MapConversationActivity extends AppCompatActivity {
         );
 
         v.findViewById(R.id.btnFinishLesson).setOnClickListener(view -> {
-            if (nodeId != null) {
-                AppRepository.getInstance(this).saveMapNodeCompleted(nodeId);
-            }
+            ensureNodeCompletionSaved();
             dialog.dismiss();
             exitLesson();
         });
@@ -1388,7 +1389,7 @@ public class MapConversationActivity extends AppCompatActivity {
     private void addMessage(ChatMessage message) {
         chatMessages.add(message);
         chatAdapter.notifyItemInserted(chatMessages.size() - 1);
-        chatRecyclerView.smoothScrollToPosition(chatMessages.size() - 1);
+        scrollChatToLatest(true);
     }
 
     private void typewriterMessage(String fullText) {
@@ -1420,12 +1421,17 @@ public class MapConversationActivity extends AppCompatActivity {
         message.vocabExampleVi = vocabExampleVi;
         message.hintEligible = enableHintCoach && isHintEligibleText(safeText);
         message.hintReady = false;
+        message.text = "";
+        message.fullText = safeText;
 
         chatMessages.add(message);
         int position = chatMessages.size() - 1;
         chatAdapter.notifyItemInserted(position);
-        chatRecyclerView.smoothScrollToPosition(position);
+        scrollChatToLatest(true);
 
+        final int textLength = safeText.length();
+        final int charStep = textLength > 240 ? 4 : (textLength > 120 ? 3 : (textLength > 60 ? 2 : 1));
+        final long frameDelayMs = textLength > 240 ? 12L : (textLength > 120 ? 16L : 24L);
         final int[] index = {0};
         uiHandler.post(new Runnable() {
             @Override
@@ -1433,18 +1439,18 @@ public class MapConversationActivity extends AppCompatActivity {
                 if (isLessonClosed || isFinishing()) {
                     return;
                 }
-                if (index[0] <= safeText.length()) {
+                if (index[0] < textLength) {
+                    index[0] = Math.min(textLength, index[0] + charStep);
                     message.text = safeText.substring(0, index[0]);
-                    chatAdapter.notifyItemChanged(position);
-                    index[0]++;
-                    uiHandler.postDelayed(this, 25);
+                    chatAdapter.notifyItemChanged(position, ChatAdapter.PAYLOAD_TEXT_ONLY);
+                    uiHandler.postDelayed(this, frameDelayMs);
                     return;
                 }
 
                 if (message.hintEligible && !message.hintReady) {
                     message.hintReady = true;
                     chatAdapter.notifyItemChanged(position);
-                    chatRecyclerView.smoothScrollToPosition(position);
+                    scrollChatToLatest(false);
                 }
             }
         });
@@ -1592,12 +1598,90 @@ public class MapConversationActivity extends AppCompatActivity {
         int position = chatMessages.indexOf(message);
         if (position >= 0) {
             chatAdapter.notifyItemChanged(position);
-            chatRecyclerView.smoothScrollToPosition(position);
+            scrollChatToLatest(false);
         } else {
-            chatAdapter.notifyDataSetChanged();
+            int lastIndex = chatMessages.size() - 1;
+            if (lastIndex >= 0) {
+                chatAdapter.notifyItemChanged(lastIndex);
+            }
         }
 
         speakHintCoach(message);
+    }
+
+    private void ensureNodeCompletionSaved() {
+        if (mapNodeCompletionSaved) {
+            return;
+        }
+        if (nodeId == null || nodeId.trim().isEmpty()) {
+            return;
+        }
+        AppRepository.getInstance(this).saveMapNodeCompleted(nodeId);
+        mapNodeCompletionSaved = true;
+    }
+
+    private void notifyVocabularyHubChanged() {
+        int position = findLatestMessagePosition(true, false);
+        if (position >= 0) {
+            chatAdapter.notifyItemChanged(position);
+        }
+    }
+
+    private void notifyQuizCtaChanged() {
+        int position = findLatestMessagePosition(false, true);
+        if (position >= 0) {
+            chatAdapter.notifyItemChanged(position);
+        }
+    }
+
+    private void clearQuizCtaProcessingState() {
+        boolean changed = false;
+        for (ChatMessage message : chatMessages) {
+            if (message != null && message.isQuizCta && message.quizCtaProcessing) {
+                message.quizCtaProcessing = false;
+                changed = true;
+            }
+        }
+        if (changed) {
+            notifyQuizCtaChanged();
+        }
+    }
+
+    private int findLatestMessagePosition(boolean vocabHub, boolean quizCta) {
+        for (int i = chatMessages.size() - 1; i >= 0; i--) {
+            ChatMessage message = chatMessages.get(i);
+            if (message == null) {
+                continue;
+            }
+            if (vocabHub && message.isVocabHub) {
+                return i;
+            }
+            if (quizCta && message.isQuizCta) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void scrollChatToLatest(boolean smooth) {
+        if (chatRecyclerView == null || chatMessages.isEmpty()) {
+            return;
+        }
+
+        int target = chatMessages.size() - 1;
+        RecyclerView.LayoutManager layoutManager = chatRecyclerView.getLayoutManager();
+        if (layoutManager instanceof LinearLayoutManager) {
+            int lastVisible = ((LinearLayoutManager) layoutManager).findLastVisibleItemPosition();
+            boolean nearBottom = lastVisible >= target - 2;
+            if (smooth && nearBottom) {
+                chatRecyclerView.smoothScrollToPosition(target);
+            } else {
+                chatRecyclerView.scrollToPosition(target);
+            }
+            return;
+        }
+
+        chatRecyclerView.scrollToPosition(target);
     }
 
     private void speakHintCoach(ChatMessage message) {
@@ -1715,6 +1799,7 @@ public class MapConversationActivity extends AppCompatActivity {
     }
 
     public static class ChatMessage {
+        public final long id;
         public String text;
         public String fullText;
         public boolean isAi;
@@ -1739,6 +1824,7 @@ public class MapConversationActivity extends AppCompatActivity {
         public String hintCoachVi;
 
         public ChatMessage(String text, boolean isAi) {
+            this.id = MESSAGE_ID_GENERATOR.getAndIncrement();
             this.text = text;
             this.fullText = text;
             this.isAi = isAi;
@@ -1750,11 +1836,18 @@ public class MapConversationActivity extends AppCompatActivity {
         private static final int TYPE_USER = 1;
         private static final int TYPE_VOCAB_HUB = 2;
         private static final int TYPE_QUIZ_CTA = 3;
+        private static final String PAYLOAD_TEXT_ONLY = "payload_text_only";
 
         private final List<ChatMessage> messages;
 
         ChatAdapter(List<ChatMessage> messages) {
             this.messages = messages;
+            setHasStableIds(true);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return messages.get(position).id;
         }
 
         @Override
@@ -1783,6 +1876,25 @@ public class MapConversationActivity extends AppCompatActivity {
             int layout = (viewType == TYPE_AI) ? R.layout.item_chat_ai : R.layout.item_chat_user;
             View v = LayoutInflater.from(parent.getContext()).inflate(layout, parent, false);
             return (viewType == TYPE_AI) ? new AiViewHolder(v) : new UserViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder,
+                                     int position,
+                                     @NonNull List<Object> payloads) {
+            if (!payloads.isEmpty() && payloads.contains(PAYLOAD_TEXT_ONLY)) {
+                ChatMessage msg = messages.get(position);
+                if (holder instanceof AiViewHolder) {
+                    ((AiViewHolder) holder).messageText.setText(msg.text);
+                    return;
+                }
+                if (holder instanceof UserViewHolder) {
+                    ((UserViewHolder) holder).messageText.setText(msg.text);
+                    return;
+                }
+            }
+
+            super.onBindViewHolder(holder, position, payloads);
         }
 
         @Override

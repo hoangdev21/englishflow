@@ -6,6 +6,7 @@ import android.animation.PropertyValuesHolder;
 import android.content.Intent;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,8 +34,11 @@ import com.google.android.material.card.MaterialCardView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class LearnMapFragment extends Fragment {
+
+    private static final long JOURNEY_REFRESH_INTERVAL_MS = 30_000L;
 
     private final List<Animator> runningAnimators = new ArrayList<>();
     private final List<Animator> runningHeroAnimators = new ArrayList<>();
@@ -51,6 +55,7 @@ public class LearnMapFragment extends Fragment {
     private View mapHeroPulseRingOuter;
     private View mapHeroPulseRingInner;
     private MapNodeItem heroSpeakTarget;
+    private long lastJourneyLoadedAt = 0L;
 
     @Nullable
     @Override
@@ -101,9 +106,17 @@ public class LearnMapFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if (mapNodesContainer != null) {
-            loadJourneyNodes();
+            if (currentJourneyNodes.isEmpty() || shouldReloadJourney()) {
+                loadJourneyNodes();
+            } else {
+                refreshCurrentJourneyStatuses();
+            }
         }
         refreshHeroSummary();
+    }
+
+    private boolean shouldReloadJourney() {
+        return SystemClock.elapsedRealtime() - lastJourneyLoadedAt >= JOURNEY_REFRESH_INTERVAL_MS;
     }
 
     private void loadJourneyNodes() {
@@ -123,11 +136,25 @@ public class LearnMapFragment extends Fragment {
             List<MapNodeItem> nodes = applyProgressStatuses(lessons);
             currentJourneyNodes.clear();
             currentJourneyNodes.addAll(nodes);
+            lastJourneyLoadedAt = SystemClock.elapsedRealtime();
             AppRepository.getInstance(requireContext()).setTotalMapNodeCount(nodes.size());
             buildNodeRows(nodes);
             mapNodesContainer.post(this::drawPath);
             configureSpeakQuickButton();
         });
+    }
+
+    private void refreshCurrentJourneyStatuses() {
+        if (!isAdded() || mapNodesContainer == null || currentJourneyNodes.isEmpty()) {
+            return;
+        }
+
+        List<MapNodeItem> refreshed = applyProgressStatuses(currentJourneyNodes);
+        currentJourneyNodes.clear();
+        currentJourneyNodes.addAll(refreshed);
+        buildNodeRows(refreshed);
+        mapNodesContainer.post(this::drawPath);
+        configureSpeakQuickButton();
     }
 
     private void refreshHeroSummary() {
@@ -284,11 +311,12 @@ public class LearnMapFragment extends Fragment {
         }
 
         AppRepository repo = AppRepository.getInstance(requireContext());
+        Set<String> completedNodeIds = repo.getCompletedMapNodeIds();
 
         boolean prevCompleted = true; // First node is always available if previous is "completed"
         for (int i = 0; i < safeNodes.size(); i++) {
             MapNodeItem node = safeNodes.get(i);
-            boolean isDone = repo.isMapNodeCompleted(node.getNodeId());
+            boolean isDone = completedNodeIds.contains(node.getNodeId());
             
             if (isDone) {
                 node.setStatus(MapNodeItem.Status.COMPLETED);
@@ -556,6 +584,7 @@ public class LearnMapFragment extends Fragment {
         nodeCircleViews.clear();
         currentJourneyNodes.clear();
         heroSpeakTarget = null;
+        lastJourneyLoadedAt = 0L;
 
         mapNodesContainer = null;
         mapPathView = null;

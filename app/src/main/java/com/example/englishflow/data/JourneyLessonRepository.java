@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Source;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,9 +22,15 @@ public class JourneyLessonRepository {
 
     public static final int DEFAULT_JOURNEY_SIZE = 10;
     private static final String COLLECTION_MAP_LESSONS = "map_lessons";
+    private static final long LESSON_CACHE_TTL_MS = 3L * 60L * 1000L;
+    private static final ExecutorService PARSE_EXECUTOR = Executors.newSingleThreadExecutor();
+    private static final Object LESSON_CACHE_LOCK = new Object();
+    private static List<MapNodeItem> cachedLessons;
+    private static long cachedLessonsAtMs;
+    private static boolean refreshInFlight;
+    private static final List<LessonCallback> pendingCallbacks = new ArrayList<>();
 
     private final FirebaseFirestore firestore;
-    private final ExecutorService executor;
     private final Handler mainHandler;
 
     public interface LessonCallback {
@@ -32,7 +39,6 @@ public class JourneyLessonRepository {
 
     public JourneyLessonRepository() {
         this.firestore = FirebaseFirestore.getInstance();
-        this.executor = Executors.newSingleThreadExecutor();
         this.mainHandler = new Handler(Looper.getMainLooper());
     }
 
@@ -41,22 +47,168 @@ public class JourneyLessonRepository {
             return;
         }
 
-        firestore.collection(COLLECTION_MAP_LESSONS)
-                .get()
-                .addOnSuccessListener(snapshot -> executor.execute(() -> {
-                    List<MapNodeItem> parsed = parseSnapshot(snapshot != null
-                            ? snapshot.getDocuments()
-                            : Collections.emptyList());
-                    if (parsed.isEmpty()) {
-                        parsed = buildFallbackJourney();
-                    }
-                    deliver(callback, parsed);
-                }))
-                .addOnFailureListener(error -> executor.execute(() -> deliver(callback, buildFallbackJourney())));
+        long now = System.currentTimeMillis();
+        List<MapNodeItem> hotCache = getCachedLessonsSnapshot();
+        boolean cacheFresh = hotCache != null && !hotCache.isEmpty() && (now - getCachedAtMs()) <= LESSON_CACHE_TTL_MS;
+
+        if (hotCache != null && !hotCache.isEmpty()) {
+            deliver(callback, hotCache);
+            if (cacheFresh) {
+                return;
+            }
+        }
+
+        boolean queueCallback = hotCache == null || hotCache.isEmpty();
+        synchronized (LESSON_CACHE_LOCK) {
+            if (queueCallback) {
+                pendingCallbacks.add(callback);
+            }
+            if (refreshInFlight) {
+                return;
+            }
+            refreshInFlight = true;
+        }
+
+        if (queueCallback) {
+            fetchFromFirestoreCacheThenServer();
+        } else {
+            fetchFromFirestoreServer();
+        }
     }
 
     private void deliver(LessonCallback callback, List<MapNodeItem> lessons) {
-        mainHandler.post(() -> callback.onResult(lessons));
+        List<MapNodeItem> safeLessons = copyLessons(lessons);
+        mainHandler.post(() -> callback.onResult(safeLessons));
+    }
+
+    private void fetchFromFirestoreCacheThenServer() {
+        firestore.collection(COLLECTION_MAP_LESSONS)
+                .get(Source.CACHE)
+                .addOnSuccessListener(snapshot -> PARSE_EXECUTOR.execute(() -> {
+                    List<MapNodeItem> parsed = parseSnapshot(snapshot != null
+                            ? snapshot.getDocuments()
+                            : Collections.emptyList());
+                    if (!parsed.isEmpty()) {
+                        setCachedLessons(parsed);
+                        finishRefresh(parsed);
+                        return;
+                    }
+                    fetchFromFirestoreServer();
+                }))
+                .addOnFailureListener(error -> fetchFromFirestoreServer());
+    }
+
+    private void fetchFromFirestoreServer() {
+        firestore.collection(COLLECTION_MAP_LESSONS)
+                .get(Source.SERVER)
+                .addOnSuccessListener(snapshot -> PARSE_EXECUTOR.execute(() -> {
+                    List<MapNodeItem> parsed = parseSnapshot(snapshot != null
+                            ? snapshot.getDocuments()
+                            : Collections.emptyList());
+
+                    if (parsed.isEmpty()) {
+                        parsed = resolveFallbackLessons();
+                    }
+
+                    setCachedLessons(parsed);
+                    finishRefresh(parsed);
+                }))
+                .addOnFailureListener(error -> PARSE_EXECUTOR.execute(() -> {
+                    List<MapNodeItem> fallback = resolveFallbackLessons();
+                    setCachedLessons(fallback);
+                    finishRefresh(fallback);
+                }));
+    }
+
+    private List<MapNodeItem> resolveFallbackLessons() {
+        List<MapNodeItem> cache = getCachedLessonsSnapshot();
+        if (cache != null && !cache.isEmpty()) {
+            return cache;
+        }
+        return buildFallbackJourney();
+    }
+
+    private void finishRefresh(List<MapNodeItem> lessons) {
+        List<LessonCallback> callbacks;
+        synchronized (LESSON_CACHE_LOCK) {
+            refreshInFlight = false;
+            callbacks = new ArrayList<>(pendingCallbacks);
+            pendingCallbacks.clear();
+        }
+
+        if (callbacks.isEmpty()) {
+            return;
+        }
+
+        for (LessonCallback callback : callbacks) {
+            deliver(callback, lessons);
+        }
+    }
+
+    private List<MapNodeItem> getCachedLessonsSnapshot() {
+        synchronized (LESSON_CACHE_LOCK) {
+            if (cachedLessons == null || cachedLessons.isEmpty()) {
+                return null;
+            }
+            return copyLessons(cachedLessons);
+        }
+    }
+
+    private long getCachedAtMs() {
+        synchronized (LESSON_CACHE_LOCK) {
+            return cachedLessonsAtMs;
+        }
+    }
+
+    private void setCachedLessons(List<MapNodeItem> lessons) {
+        synchronized (LESSON_CACHE_LOCK) {
+            cachedLessons = copyLessons(lessons);
+            cachedLessonsAtMs = System.currentTimeMillis();
+        }
+    }
+
+    private List<MapNodeItem> copyLessons(List<MapNodeItem> lessons) {
+        if (lessons == null || lessons.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<MapNodeItem> copies = new ArrayList<>(lessons.size());
+        for (MapNodeItem item : lessons) {
+            if (item == null) {
+                continue;
+            }
+
+            List<LessonVocabulary> copiedVocab = new ArrayList<>();
+            for (LessonVocabulary vocab : item.getVocabList()) {
+                if (vocab == null) {
+                    continue;
+                }
+                LessonVocabulary copy = new LessonVocabulary(
+                        vocab.getWord(),
+                        vocab.getIpa(),
+                        vocab.getMeaning(),
+                        vocab.getExample()
+                );
+                copy.setPracticed(vocab.isPracticed());
+                copiedVocab.add(copy);
+            }
+
+            copies.add(new MapNodeItem(
+                    item.getNodeId(),
+                    item.getTitle(),
+                    item.getEmoji(),
+                    item.getPromptKey(),
+                    item.getRoleDescription(),
+                    item.getMinExchanges(),
+                    copiedVocab,
+                    item.getStatus(),
+                    item.getMinLevel(),
+                    new ArrayList<>(item.getFlowSteps()),
+                    new ArrayList<>(item.getLessonKeywords())
+            ));
+        }
+
+        return copies;
     }
 
     private List<MapNodeItem> parseSnapshot(List<com.google.firebase.firestore.DocumentSnapshot> docs) {

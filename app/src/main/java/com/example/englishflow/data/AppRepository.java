@@ -88,6 +88,7 @@ public class AppRepository {
     private static final long FILL_BLANK_BOOTSTRAP_RETRY_DELAY_MS = 180L;
     private static final long DASHBOARD_CACHE_TTL_MS = 5000L;
     private static final long DOMAINS_CACHE_TTL_MS = 30000L;
+    private static final long CLOUD_SYNC_MIN_INTERVAL_MS = 15000L;
     private static final String COLLECTION_USERS = "users";
     private static final String COLLECTION_LEARNED_WORDS = "learned_words";
     private static final String COLLECTION_STUDY_SESSIONS = "study_sessions";
@@ -109,6 +110,7 @@ public class AppRepository {
     private final Object cacheLock = new Object();
     private final Object realtimeLock = new Object();
     private final Object dashboardRequestLock = new Object();
+    private final Object cloudSyncLock = new Object();
 
     public void executeAsync(Runnable task) {
         if (task != null) {
@@ -139,6 +141,8 @@ public class AppRepository {
     private DashboardSnapshot cachedDashboardSnapshot;
     private String cachedDashboardEmail = "";
     private long cachedDashboardAt = 0L;
+    private boolean cloudSyncRunning = false;
+    private long lastCloudSyncAt = 0L;
 
     private List<DomainItem> cachedDomains = new ArrayList<>();
     private String cachedDomainsEmail = "";
@@ -1263,10 +1267,21 @@ public class AppRepository {
 
     public int getCompletedMapNodeCount() {
         try {
-            Set<String> completed = preferences.getStringSet(getPrefKey(KEY_COMPLETED_MAP_NODES), new HashSet<>());
-            return completed != null ? completed.size() : 0;
+            return getCompletedMapNodeIds().size();
         } catch (Exception e) {
             return 0;
+        }
+    }
+
+    public Set<String> getCompletedMapNodeIds() {
+        try {
+            Set<String> completed = preferences.getStringSet(getPrefKey(KEY_COMPLETED_MAP_NODES), new HashSet<>());
+            if (completed == null || completed.isEmpty()) {
+                return new HashSet<>();
+            }
+            return new HashSet<>(completed);
+        } catch (Exception ignored) {
+            return new HashSet<>();
         }
     }
 
@@ -3131,51 +3146,69 @@ public class AppRepository {
             return;
         }
 
-        try {
-            String email = getCurrentEmail();
-            UserStatsEntity stats = database.userStatsDao().getUserStats(email);
-
-            List<WordEntry> cloudWords = getRealtimeLearnedWordsCopyIfReady();
-            List<StudySession> cloudSessions = getRealtimeStudySessionsCopyIfReady();
-
-            Integer learnedWords = cloudWords != null
-                    ? cloudWords.size()
-                    : database.learnedWordDao().getTotalWordsCount(email);
-
-            int totalXp = stats != null ? stats.totalXpEarned : 0;
-            int xpToday = stats != null ? stats.xpTodayEarned : 0;
-            int currentStreak = stats != null ? stats.currentStreak : 0;
-            int bestStreak = stats != null ? stats.bestStreak : 0;
-            int totalWordsScanned = stats != null ? stats.totalWordsScanned : 0;
-            int totalStudyMinutes = stats != null ? stats.totalStudyMinutes : 0;
-            long localLastStudyAtMs = stats != null ? stats.lastStudyDate : 0L;
-            if (cloudSessions != null) {
-                long totalMs = 0L;
-                for (StudySession session : cloudSessions) {
-                    long start = session.getStartTime();
-                    long end = session.getEndTime();
-                    if (end <= 0L) {
-                        end = start;
-                    }
-                    totalMs += Math.max(0L, end - start);
-                }
-                totalStudyMinutes = (int) (totalMs / 60000L);
+        synchronized (cloudSyncLock) {
+            long now = System.currentTimeMillis();
+            if (cloudSyncRunning) {
+                return;
             }
-
-            firebaseUserStore.syncUserProgress(
-                    uid,
-                    getUserName(),
-                    totalXp,
-                    xpToday,
-                    learnedWords != null ? learnedWords : 0,
-                    currentStreak,
-                    bestStreak,
-                    totalWordsScanned,
-                    totalStudyMinutes,
-                    localLastStudyAtMs
-            );
-        } catch (Exception ignored) {
+            if (now - lastCloudSyncAt < CLOUD_SYNC_MIN_INTERVAL_MS) {
+                return;
+            }
+            cloudSyncRunning = true;
+            lastCloudSyncAt = now;
         }
+
+        executorService.execute(() -> {
+            try {
+                String email = getCurrentEmail();
+                UserStatsEntity stats = database.userStatsDao().getUserStats(email);
+
+                List<WordEntry> cloudWords = getRealtimeLearnedWordsCopyIfReady();
+                List<StudySession> cloudSessions = getRealtimeStudySessionsCopyIfReady();
+
+                Integer learnedWords = cloudWords != null
+                        ? cloudWords.size()
+                        : database.learnedWordDao().getTotalWordsCount(email);
+
+                int totalXp = stats != null ? stats.totalXpEarned : 0;
+                int xpToday = stats != null ? stats.xpTodayEarned : 0;
+                int currentStreak = stats != null ? stats.currentStreak : 0;
+                int bestStreak = stats != null ? stats.bestStreak : 0;
+                int totalWordsScanned = stats != null ? stats.totalWordsScanned : 0;
+                int totalStudyMinutes = stats != null ? stats.totalStudyMinutes : 0;
+                long localLastStudyAtMs = stats != null ? stats.lastStudyDate : 0L;
+                if (cloudSessions != null) {
+                    long totalMs = 0L;
+                    for (StudySession session : cloudSessions) {
+                        long start = session.getStartTime();
+                        long end = session.getEndTime();
+                        if (end <= 0L) {
+                            end = start;
+                        }
+                        totalMs += Math.max(0L, end - start);
+                    }
+                    totalStudyMinutes = (int) (totalMs / 60000L);
+                }
+
+                firebaseUserStore.syncUserProgress(
+                        uid,
+                        getUserName(),
+                        totalXp,
+                        xpToday,
+                        learnedWords != null ? learnedWords : 0,
+                        currentStreak,
+                        bestStreak,
+                        totalWordsScanned,
+                        totalStudyMinutes,
+                        localLastStudyAtMs
+                );
+            } catch (Exception ignored) {
+            } finally {
+                synchronized (cloudSyncLock) {
+                    cloudSyncRunning = false;
+                }
+            }
+        });
     }
 
     private void updateStreakForNewActivity(String email, UserStatsEntity stats, long now) {
@@ -4029,14 +4062,16 @@ public class AppRepository {
         if (nodeId == null || nodeId.trim().isEmpty()) {
             return;
         }
-        Set<String> completed = new HashSet<>(preferences.getStringSet(getPrefKey(KEY_COMPLETED_MAP_NODES), new HashSet<>()));
+        Set<String> completed = getCompletedMapNodeIds();
         completed.add(nodeId);
         preferences.edit().putStringSet(getPrefKey(KEY_COMPLETED_MAP_NODES), completed).apply();
         invalidateDashboardCache();
     }
 
     public boolean isMapNodeCompleted(String nodeId) {
-        Set<String> completed = preferences.getStringSet(getPrefKey(KEY_COMPLETED_MAP_NODES), new HashSet<>());
-        return completed.contains(nodeId);
+        if (nodeId == null || nodeId.trim().isEmpty()) {
+            return false;
+        }
+        return getCompletedMapNodeIds().contains(nodeId);
     }
 }

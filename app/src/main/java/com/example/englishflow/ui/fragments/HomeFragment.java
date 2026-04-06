@@ -44,6 +44,7 @@ import com.example.englishflow.data.DomainItem;
 import com.example.englishflow.data.FirebaseUserStore;
 import com.example.englishflow.data.FreeDictionaryService;
 import com.example.englishflow.data.MyMemoryService;
+import com.example.englishflow.data.NetworkClientProvider;
 import com.example.englishflow.data.TopicItem;
 import com.example.englishflow.data.WordEntry;
 import com.example.englishflow.reminder.AdminNotificationCenter;
@@ -68,11 +69,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Date;
 
-import okhttp3.OkHttpClient;
-
 public class HomeFragment extends Fragment {
 
-    private static final OkHttpClient SHARED_HTTP_CLIENT = new OkHttpClient();
+    private static final okhttp3.OkHttpClient SHARED_HTTP_CLIENT = NetworkClientProvider.getBaseClient();
     private static final int REQUEST_NOTIFICATION_PERMISSION = 9001;
     private static final String DEFAULT_DICT_TITLE = "Mở tra từ điển";
     private static final String DEFAULT_DICT_HINT = "Nhập từ tiếng Anh hoặc tiếng Việt để tra IPA, nghĩa, ví dụ và từ đồng nghĩa.";

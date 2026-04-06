@@ -30,7 +30,7 @@ public class GeminiVisionService {
     private static final Pattern ENGLISH_WORD_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z\\-]{1,}");
     private static final int MAX_CACHE_SIZE = 128;
     private static final long CACHE_TTL_MS = 15L * 60L * 1000L;
-    private static final OkHttpClient httpClient = new OkHttpClient();
+    private static final OkHttpClient httpClient = NetworkClientProvider.getAiClient();
     private static final Gson gson = new Gson();
     private static final Map<String, CachedVisionResult> RESPONSE_CACHE = java.util.Collections.synchronizedMap(
             new LinkedHashMap<String, CachedVisionResult>(MAX_CACHE_SIZE, 0.75f, true) {
