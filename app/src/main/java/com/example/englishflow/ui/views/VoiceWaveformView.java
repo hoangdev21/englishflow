@@ -36,6 +36,7 @@ public class VoiceWaveformView extends View {
     private float micLevel = 0f;
     private float smoothedMicLevel = 0f;
     private Mode mode = Mode.IDLE;
+    private long lastFrameNanos = 0L;
 
     public VoiceWaveformView(Context context) {
         super(context);
@@ -63,6 +64,8 @@ public class VoiceWaveformView extends View {
 
     public void setMode(@NonNull Mode nextMode) {
         if (mode == nextMode) {
+            // Keep subtle ambient motion alive even when remaining in IDLE.
+            startAnimationIfNeeded();
             return;
         }
 
@@ -71,10 +74,8 @@ public class VoiceWaveformView extends View {
 
         if (mode == Mode.IDLE) {
             resetMicLevel();
-            stopAnimation();
-        } else {
-            startAnimationIfNeeded();
         }
+        startAnimationIfNeeded();
         invalidate();
     }
 
@@ -98,7 +99,28 @@ public class VoiceWaveformView extends View {
         animator.setInterpolator(new LinearInterpolator());
         animator.setRepeatCount(ValueAnimator.INFINITE);
         animator.addUpdateListener(animation -> {
-            animationPhase += 0.32f;
+            long nowNanos = System.nanoTime();
+            if (lastFrameNanos <= 0L) {
+                lastFrameNanos = nowNanos;
+            }
+            float deltaSeconds = (nowNanos - lastFrameNanos) / 1_000_000_000f;
+            lastFrameNanos = nowNanos;
+
+            float speedCyclesPerSecond;
+            switch (mode) {
+                case IDLE:
+                    speedCyclesPerSecond = 0.45f;
+                    break;
+                case PROCESSING:
+                    speedCyclesPerSecond = 0.85f;
+                    break;
+                case LISTENING:
+                case SPEAKING:
+                default:
+                    speedCyclesPerSecond = 1.15f;
+                    break;
+            }
+            animationPhase += deltaSeconds * speedCyclesPerSecond * (float) (Math.PI * 2f);
             invalidate();
         });
         animator.start();
@@ -109,6 +131,7 @@ public class VoiceWaveformView extends View {
             animator.cancel();
             animator = null;
         }
+        lastFrameNanos = 0L;
     }
 
     private void updateColorForMode() {
@@ -124,7 +147,7 @@ public class VoiceWaveformView extends View {
                 break;
             case IDLE:
             default:
-                barPaint.setColor(Color.parseColor("#9CA3AF"));
+                barPaint.setColor(Color.parseColor("#80D7E9FF"));
                 break;
         }
     }
@@ -132,10 +155,6 @@ public class VoiceWaveformView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
-        if (mode == Mode.IDLE) {
-            return;
-        }
 
         float width = getWidth();
         float height = getHeight();
@@ -153,16 +172,23 @@ public class VoiceWaveformView extends View {
 
         float minHalfHeight = Math.max(2f, height * 0.10f);
         float maxHalfHeight = height * 0.46f;
+        boolean silentListening = mode == Mode.LISTENING && smoothedMicLevel < 0.06f;
 
         for (int i = 0; i < BAR_COUNT; i++) {
             float localPhase = animationPhase + phaseOffsets[i];
             float wave = 0.5f + 0.5f * (float) Math.sin(localPhase);
             float pulse = 0.5f + 0.5f * (float) Math.sin((localPhase * 0.65f) + (i * 0.45f));
+            float ambient = 0.5f + 0.5f * (float) Math.sin((localPhase * 0.42f) + (i * 0.20f));
 
             float intensity;
             switch (mode) {
                 case LISTENING:
-                    intensity = 0.15f + (0.50f * ((0.35f * wave) + (0.65f * smoothedMicLevel)));
+                    if (silentListening) {
+                        // Silence scanning effect while still in listening mode.
+                        intensity = 0.10f + (0.20f * ambient);
+                    } else {
+                        intensity = 0.15f + (0.50f * ((0.35f * wave) + (0.65f * smoothedMicLevel)));
+                    }
                     break;
                 case PROCESSING:
                     intensity = 0.18f + (0.18f * pulse);
@@ -172,7 +198,8 @@ public class VoiceWaveformView extends View {
                     break;
                 case IDLE:
                 default:
-                    intensity = 0.08f;
+                    // Ambient breathing bars when everyone is silent.
+                    intensity = 0.08f + (0.16f * ambient);
                     break;
             }
 
@@ -207,7 +234,7 @@ public class VoiceWaveformView extends View {
         super.onWindowVisibilityChanged(visibility);
         if (visibility != VISIBLE) {
             stopAnimation();
-        } else if (mode != Mode.IDLE) {
+        } else {
             startAnimationIfNeeded();
         }
     }

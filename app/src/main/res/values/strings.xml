@@ -26,7 +26,18 @@
     <string name="learn_map_title">Mới bắt đầu</string>
     <string name="learn_map_subtitle">Tap vào node để bắt đầu luyện nói cùng AI Flow</string>
     <string name="learn_map_speak">Nói</string>
+    <string name="learn_map_streak_chip_format">🔥 %1$d</string>
+    <string name="learn_map_speak_unavailable">Chưa có bài học khả dụng để bắt đầu nói ngay.</string>
     <string name="map_conversation_hint">Nhấn để nói</string>
+    <string name="map_conversation_hint_coach_cd">Mở gợi ý cho câu này</string>
+    <string name="map_conversation_hint_translation_label">Dịch nhanh</string>
+    <string name="map_conversation_hint_coach_label">Flow gợi ý trả lời</string>
+    <string name="map_conversation_hint_loading">Flow đang tạo gợi ý cho bạn...</string>
+    <string name="map_conversation_hint_translation_fallback">Mình chưa lấy được bản dịch lúc này, thử nhấn lại sau ít giây nhé.</string>
+    <string name="map_conversation_hint_coach_fallback">Bạn có thể trả lời ngắn với cấu trúc hiện tại và thay chủ ngữ theo ngữ cảnh.</string>
+    <string name="map_conversation_speed_toast_format">Tốc độ giọng Flow: %1$s</string>
+    <string name="map_conversation_quiz_cta_label">Kiểm tra ngay</string>
+    <string name="map_conversation_quiz_cta_processing">Đang mở phần kiểm tra...</string>
 
     <string name="learn_overview_title">Khu vực học tập</string>
     <string name="learn_progress_title">Tiến độ học tập hôm nay</string>

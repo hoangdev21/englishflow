@@ -2,6 +2,7 @@ package com.example.englishflow.ui;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -29,9 +30,11 @@ import com.example.englishflow.data.GroqChatService;
 import com.example.englishflow.data.LessonVocabulary;
 import com.example.englishflow.data.MapLessonFlowStep;
 import com.example.englishflow.util.VoiceFlowEngine;
+import com.example.englishflow.ui.views.VoiceWaveformView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -41,6 +44,14 @@ import java.util.Map;
 import java.util.Set;
 
 public class MapConversationActivity extends AppCompatActivity {
+
+    private static final double FREE_INPUT_VOCAB_MATCH_THRESHOLD = 0.88d;
+    private static final float[] VOICE_SPEED_OPTIONS = new float[]{1.0f, 1.25f, 1.5f, 1.75f, 2.0f};
+
+    private enum LessonStage {
+        LECTURE,
+        PRACTICE
+    }
 
     public static final String EXTRA_NODE_ID = "extra_node_id";
     public static final String EXTRA_TITLE = "extra_title";
@@ -60,9 +71,18 @@ public class MapConversationActivity extends AppCompatActivity {
     private View ivFinishFlag;
     private TextView listeningStatus;
     private TextView timerText;
+    private TextView speedPanel;
     private ImageButton micButton;
     private View btnType;
     private View btnInspiration;
+    private View stageLectureDot;
+    private View stagePracticeDot;
+    private View stageConnector;
+    private View stageLectureRow;
+    private View stagePracticeRow;
+    private TextView stageLectureText;
+    private TextView stagePracticeText;
+    private VoiceWaveformView heroWaveform;
 
     private RecyclerView chatRecyclerView;
     private ChatAdapter chatAdapter;
@@ -92,6 +112,9 @@ public class MapConversationActivity extends AppCompatActivity {
     private boolean isDoneShown = false;
     private boolean pendingPronunciationListen = false;
     private boolean isLessonClosed = false;
+    private boolean vocabCompletionPromptShown = false;
+    private int voiceSpeedIndex = 0;
+    private LessonStage currentLessonStage = null;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
     private final List<String> guidedIntroMessages = new ArrayList<>();
@@ -120,8 +143,17 @@ public class MapConversationActivity extends AppCompatActivity {
         listeningStatus = findViewById(R.id.mapListeningStatus);
         micButton = findViewById(R.id.mapMicButton);
         timerText = findViewById(R.id.mapTimerText);
+        speedPanel = findViewById(R.id.speedPanel);
         btnType = findViewById(R.id.btnType);
         btnInspiration = findViewById(R.id.btnInspiration);
+        stageLectureDot = findViewById(R.id.stageLectureDot);
+        stagePracticeDot = findViewById(R.id.stagePracticeDot);
+        stageConnector = findViewById(R.id.stageConnector);
+        stageLectureRow = findViewById(R.id.stageLectureRow);
+        stagePracticeRow = findViewById(R.id.stagePracticeRow);
+        stageLectureText = findViewById(R.id.stageLectureText);
+        stagePracticeText = findViewById(R.id.stagePracticeText);
+        heroWaveform = findViewById(R.id.heroWaveform);
         chatRecyclerView = findViewById(R.id.mapChatHistory);
 
         chatMessages = new ArrayList<>();
@@ -170,7 +202,11 @@ public class MapConversationActivity extends AppCompatActivity {
 
             @Override
             public void onRmsChanged(float rmsDb) {
-                // This screen currently only needs textual status updates.
+                runOnUiThread(() -> {
+                    if (heroWaveform != null) {
+                        heroWaveform.setMicLevel(rmsDb);
+                    }
+                });
             }
 
             @Override
@@ -207,6 +243,8 @@ public class MapConversationActivity extends AppCompatActivity {
                 });
             }
         });
+
+        initializeHeroControls();
 
         findViewById(R.id.mapConversationBack).setOnClickListener(v -> exitLesson());
 
@@ -276,6 +314,10 @@ public class MapConversationActivity extends AppCompatActivity {
             voiceFlowEngine.stopListening();
             voiceFlowEngine.stopSpeaking();
         }
+        if (heroWaveform != null) {
+            heroWaveform.resetMicLevel();
+            heroWaveform.setMode(VoiceWaveformView.Mode.IDLE);
+        }
     }
 
     private boolean canUseVoice() {
@@ -287,6 +329,130 @@ public class MapConversationActivity extends AppCompatActivity {
             return;
         }
         voiceFlowEngine.speakResponse(text);
+    }
+
+    private void initializeHeroControls() {
+        if (heroWaveform != null) {
+            heroWaveform.resetMicLevel();
+            heroWaveform.setMode(VoiceWaveformView.Mode.IDLE);
+        }
+
+        if (speedPanel != null) {
+            speedPanel.setOnClickListener(v -> cycleVoiceSpeed());
+        }
+
+        voiceSpeedIndex = 0;
+        applySelectedVoiceSpeed(false);
+        setLessonStage(LessonStage.LECTURE);
+    }
+
+    private void cycleVoiceSpeed() {
+        voiceSpeedIndex = (voiceSpeedIndex + 1) % VOICE_SPEED_OPTIONS.length;
+        applySelectedVoiceSpeed(true);
+    }
+
+    private void applySelectedVoiceSpeed(boolean showToast) {
+        float speed = VOICE_SPEED_OPTIONS[voiceSpeedIndex];
+
+        if (voiceFlowEngine != null) {
+            voiceFlowEngine.setSpeechRateOverride(speed);
+        }
+
+        String speedLabel = formatSpeedLabel(speed);
+        if (speedPanel != null) {
+            speedPanel.setText(speedLabel);
+        }
+
+        if (showToast) {
+            Toast.makeText(this, getString(R.string.map_conversation_speed_toast_format, speedLabel), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private String formatSpeedLabel(float speed) {
+        if (Math.abs(speed - Math.round(speed)) < 0.001f) {
+            return String.format(Locale.US, "%dx", (int) Math.round(speed));
+        }
+        if (Math.abs(speed * 2f - Math.round(speed * 2f)) < 0.001f) {
+            return String.format(Locale.US, "%.1fx", speed);
+        }
+        return String.format(Locale.US, "%.2fx", speed);
+    }
+
+    private void setLessonStage(@NonNull LessonStage stage) {
+        if (currentLessonStage == stage) {
+            return;
+        }
+        currentLessonStage = stage;
+        applyStageUi();
+    }
+
+    private void pushPracticeStage() {
+        setLessonStage(LessonStage.PRACTICE);
+    }
+
+    private void applyStageUi() {
+        if (stageLectureDot == null
+                || stagePracticeDot == null
+                || stageLectureText == null
+                || stagePracticeText == null
+                || stageLectureRow == null
+                || stagePracticeRow == null) {
+            return;
+        }
+
+        if (currentLessonStage == LessonStage.LECTURE) {
+            stageLectureDot.setBackgroundResource(R.drawable.bg_step_active);
+            stagePracticeDot.setBackgroundResource(R.drawable.bg_step_inactive);
+
+            stageLectureRow.setAlpha(1f);
+            stagePracticeRow.setAlpha(0.55f);
+            if (stageConnector != null) {
+                stageConnector.setAlpha(0.35f);
+            }
+
+            stageLectureText.setTypeface(Typeface.DEFAULT_BOLD);
+            stagePracticeText.setTypeface(Typeface.DEFAULT);
+            stageLectureText.setTextColor(ContextCompat.getColor(this, R.color.white));
+            stagePracticeText.setTextColor(ContextCompat.getColor(this, R.color.white));
+            return;
+        }
+
+        stageLectureDot.setBackgroundResource(R.drawable.bg_step_active);
+        stagePracticeDot.setBackgroundResource(R.drawable.bg_step_active);
+
+        stageLectureRow.setAlpha(0.78f);
+        stagePracticeRow.setAlpha(1f);
+        if (stageConnector != null) {
+            stageConnector.setAlpha(0.72f);
+        }
+
+        stageLectureText.setTypeface(Typeface.DEFAULT);
+        stagePracticeText.setTypeface(Typeface.DEFAULT_BOLD);
+        stageLectureText.setTextColor(ContextCompat.getColor(this, R.color.white));
+        stagePracticeText.setTextColor(ContextCompat.getColor(this, R.color.white));
+    }
+
+    private void updateWaveformForState(@NonNull VoiceFlowEngine.State state) {
+        if (heroWaveform == null) {
+            return;
+        }
+
+        switch (state) {
+            case LISTENING:
+                heroWaveform.setMode(VoiceWaveformView.Mode.LISTENING);
+                break;
+            case PROCESSING:
+                heroWaveform.setMode(VoiceWaveformView.Mode.PROCESSING);
+                break;
+            case SPEAKING:
+                heroWaveform.setMode(VoiceWaveformView.Mode.SPEAKING);
+                break;
+            case IDLE:
+            default:
+                heroWaveform.resetMicLevel();
+                heroWaveform.setMode(VoiceWaveformView.Mode.IDLE);
+                break;
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -301,6 +467,8 @@ public class MapConversationActivity extends AppCompatActivity {
     }
 
     private void startLesson() {
+        setLessonStage(LessonStage.LECTURE);
+
         if (lessonVocab == null) {
             lessonVocab = new ArrayList<>();
         }
@@ -570,10 +738,7 @@ public class MapConversationActivity extends AppCompatActivity {
             chatAdapter.notifyDataSetChanged();
 
             if (areAllVocabularyPracticed()) {
-                String nextMessage = hasPendingQuiz()
-                        ? "Bạn đã hoàn thành phần từ vựng. Nhấn nút bên dưới để vào phần kiểm tra."
-                        : "Bạn đã hoàn thành phần từ vựng. Nhấn nút bên dưới để vào hội thoại nhập vai.";
-                addMessage(new ChatMessage(nextMessage, true));
+                onVocabularyCompleted();
             }
             return;
         }
@@ -604,6 +769,118 @@ public class MapConversationActivity extends AppCompatActivity {
         return true;
     }
 
+    private void onVocabularyCompleted() {
+        if (vocabCompletionPromptShown) {
+            return;
+        }
+
+        vocabCompletionPromptShown = true;
+        pendingPronunciationListen = false;
+
+        String doneLine = "Bạn đã hoàn thành học từ vựng, bắt đầu phần kiểm tra nhé.";
+        typewriterMessage(doneLine);
+        safeSpeak(doneLine);
+
+        if (hasPendingQuiz()) {
+            showQuizCtaMessage();
+        }
+    }
+
+    private void showQuizCtaMessage() {
+        for (ChatMessage message : chatMessages) {
+            if (message != null && message.isQuizCta) {
+                return;
+            }
+        }
+
+        ChatMessage cta = new ChatMessage("", true);
+        cta.isQuizCta = true;
+        addMessage(cta);
+    }
+
+    private void handleQuizCtaClick(ChatMessage ctaMessage) {
+        if (ctaMessage == null || ctaMessage.quizCtaProcessing) {
+            return;
+        }
+
+        ctaMessage.quizCtaProcessing = true;
+        int position = chatMessages.indexOf(ctaMessage);
+        if (position >= 0) {
+            chatAdapter.notifyItemChanged(position);
+        }
+
+        if (!areAllVocabularyPracticed()) {
+            ctaMessage.quizCtaProcessing = false;
+            if (position >= 0) {
+                chatAdapter.notifyItemChanged(position);
+            }
+            addMessage(new ChatMessage("Bạn cần luyện xong tất cả từ vựng trước khi vào kiểm tra.", true));
+            return;
+        }
+
+        if (!hasPendingQuiz()) {
+            ctaMessage.quizCtaProcessing = false;
+            if (position >= 0) {
+                chatAdapter.notifyItemChanged(position);
+            }
+            startProactiveChat();
+            return;
+        }
+
+        pushPracticeStage();
+        playGuidedIntroSequence(
+                Collections.singletonList("Mình mở phần kiểm tra ngay cho bạn."),
+                0,
+                () -> {
+                    if (pendingQuizStep == null) {
+                        promptNextQuizStep();
+                    }
+                }
+        );
+    }
+
+    private boolean tryCaptureVocabularyFromFreeInput(String text) {
+        if (lessonVocab == null || lessonVocab.isEmpty()) {
+            return false;
+        }
+
+        LessonVocabulary bestMatch = null;
+        double bestScore = 0d;
+
+        for (LessonVocabulary vocab : lessonVocab) {
+            if (vocab == null || vocab.isPracticed()) {
+                continue;
+            }
+
+            String target = nonEmpty(vocab.getWord());
+            if (target.isEmpty()) {
+                continue;
+            }
+
+            double score = computePronunciationScore(text, target);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMatch = vocab;
+            }
+        }
+
+        if (bestMatch == null || bestScore < FREE_INPUT_VOCAB_MATCH_THRESHOLD) {
+            return false;
+        }
+
+        bestMatch.setPracticed(true);
+        chatAdapter.notifyDataSetChanged();
+
+        String confirmLine = "Tốt lắm, bạn phát âm đúng từ " + bestMatch.getWord() + ".";
+        typewriterMessage(confirmLine);
+        safeSpeak(confirmLine);
+
+        if (areAllVocabularyPracticed()) {
+            onVocabularyCompleted();
+        }
+        return true;
+    }
+
     private boolean hasPendingQuiz() {
         return pendingQuizStep != null || quizStepIndex < quizSteps.size();
     }
@@ -615,6 +892,7 @@ public class MapConversationActivity extends AppCompatActivity {
         }
 
         if (hasPendingQuiz()) {
+            pushPracticeStage();
             playGuidedIntroSequence(
                     Collections.singletonList("Mình chuyển sang phần kiểm tra nhé."),
                     0,
@@ -631,6 +909,8 @@ public class MapConversationActivity extends AppCompatActivity {
     }
 
     private void promptNextQuizStep() {
+        pushPracticeStage();
+
         if (pendingQuizStep != null) {
             return;
         }
@@ -671,16 +951,15 @@ public class MapConversationActivity extends AppCompatActivity {
         }
 
         if (isCorrect) {
-            addMessage(new ChatMessage("Chính xác! Bạn đã vượt qua phần kiểm tra.", true));
-            safeSpeak("Excellent! Let's continue.");
+            final String successLine = "Chính xác! Bạn đã vượt qua phần kiểm tra.";
+            final String transitionLine = "Tuyệt! Giờ mình bước vào phần hội thoại thực chiến.";
             pendingQuizStep = null;
             quizStepIndex++;
 
             if (hasPendingQuiz()) {
-                promptNextQuizStep();
+                playGuidedIntroSequence(Collections.singletonList(successLine), 0, this::promptNextQuizStep);
             } else {
-                addMessage(new ChatMessage("Tuyệt! Giờ mình bước vào phần hội thoại thực chiến.", true));
-                startProactiveChat();
+                playGuidedIntroSequence(Arrays.asList(successLine, transitionLine), 0, this::startProactiveChat);
             }
             return;
         }
@@ -740,6 +1019,9 @@ public class MapConversationActivity extends AppCompatActivity {
         }
 
         if (!isRoleplayActive) {
+            if (tryCaptureVocabularyFromFreeInput(text)) {
+                return;
+            }
             addMessage(new ChatMessage("Hãy hoàn thành phần học từ vựng và kiểm tra trước khi hội thoại nhập vai.", true));
             return;
         }
@@ -765,7 +1047,7 @@ public class MapConversationActivity extends AppCompatActivity {
                     if (isLessonClosed || isFinishing()) {
                         return;
                     }
-                    typewriterMessage(response, correction, explanation, vocabWord, vocabIpa, vocabMeaning, vocabExample, vocabExampleVi);
+                    typewriterMessage(response, correction, explanation, vocabWord, vocabIpa, vocabMeaning, vocabExample, vocabExampleVi, true);
                     safeSpeak(response);
                 });
             }
@@ -778,6 +1060,8 @@ public class MapConversationActivity extends AppCompatActivity {
     }
 
     private void startProactiveChat() {
+        pushPracticeStage();
+
         if (isRoleplayActive) {
             return;
         }
@@ -795,7 +1079,7 @@ public class MapConversationActivity extends AppCompatActivity {
                     if (isLessonClosed || isFinishing()) {
                         return;
                     }
-                    typewriterMessage(rawResponse);
+                    typewriterMessage(rawResponse, true);
                     safeSpeak(rawResponse);
                 });
             }
@@ -807,7 +1091,7 @@ public class MapConversationActivity extends AppCompatActivity {
                         return;
                     }
                     String fallback = "Hello! I'm ready to practice " + currentTopic + " with you.";
-                    typewriterMessage(fallback);
+                    typewriterMessage(fallback, true);
                     safeSpeak(fallback);
                 });
             }
@@ -1076,6 +1360,8 @@ public class MapConversationActivity extends AppCompatActivity {
     }
 
     private void renderState(@NonNull VoiceFlowEngine.State state) {
+        updateWaveformForState(state);
+
         switch (state) {
             case LISTENING:
                 micButton.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start();
@@ -1106,7 +1392,11 @@ public class MapConversationActivity extends AppCompatActivity {
     }
 
     private void typewriterMessage(String fullText) {
-        typewriterMessage(fullText, null, null, null, null, null, null, null);
+        typewriterMessage(fullText, false);
+    }
+
+    private void typewriterMessage(String fullText, boolean enableHintCoach) {
+        typewriterMessage(fullText, null, null, null, null, null, null, null, enableHintCoach);
     }
 
     private void typewriterMessage(String fullText,
@@ -1116,7 +1406,8 @@ public class MapConversationActivity extends AppCompatActivity {
                                    String vocabIpa,
                                    String vocabMeaning,
                                    String vocabExample,
-                                   String vocabExampleVi) {
+                                   String vocabExampleVi,
+                                   boolean enableHintCoach) {
         String safeText = fullText == null ? "" : fullText;
 
         ChatMessage message = new ChatMessage(safeText, true);
@@ -1127,6 +1418,8 @@ public class MapConversationActivity extends AppCompatActivity {
         message.vocabMeaning = vocabMeaning;
         message.vocabExample = vocabExample;
         message.vocabExampleVi = vocabExampleVi;
+        message.hintEligible = enableHintCoach && isHintEligibleText(safeText);
+        message.hintReady = false;
 
         chatMessages.add(message);
         int position = chatMessages.size() - 1;
@@ -1145,9 +1438,176 @@ public class MapConversationActivity extends AppCompatActivity {
                     chatAdapter.notifyItemChanged(position);
                     index[0]++;
                     uiHandler.postDelayed(this, 25);
+                    return;
+                }
+
+                if (message.hintEligible && !message.hintReady) {
+                    message.hintReady = true;
+                    chatAdapter.notifyItemChanged(position);
+                    chatRecyclerView.smoothScrollToPosition(position);
                 }
             }
         });
+    }
+
+    private boolean isHintEligibleText(String text) {
+        String value = nonEmpty(text);
+        if (value.isEmpty()) {
+            return false;
+        }
+
+        int englishWordCount = 0;
+        int totalWordCount = 0;
+        String lower = value.toLowerCase(Locale.US);
+        String[] tokens = lower.split("\\s+");
+        for (String token : tokens) {
+            String cleaned = token.replaceAll("[^a-zàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]", "");
+            if (cleaned.isEmpty()) {
+                continue;
+            }
+            totalWordCount++;
+            if (cleaned.matches("[a-z']+")) {
+                englishWordCount++;
+            }
+        }
+
+        if (totalWordCount == 0) {
+            return false;
+        }
+
+        double ratio = (double) englishWordCount / (double) totalWordCount;
+        return ratio >= 0.70d;
+    }
+
+    private void onHintCoachClicked(ChatMessage message) {
+        if (message == null || !message.hintEligible || !message.hintReady) {
+            return;
+        }
+
+        int position = chatMessages.indexOf(message);
+        if (position < 0) {
+            return;
+        }
+
+        if (message.hintExpanded && !message.hintLoading) {
+            message.hintExpanded = false;
+            chatAdapter.notifyItemChanged(position);
+            return;
+        }
+
+        if (message.hintTranslationVi != null && !message.hintTranslationVi.isEmpty() && !message.hintLoading) {
+            message.hintExpanded = true;
+            chatAdapter.notifyItemChanged(position);
+            speakHintCoach(message);
+            return;
+        }
+
+        if (message.hintLoading) {
+            return;
+        }
+
+        message.hintLoading = true;
+        message.hintExpanded = true;
+        chatAdapter.notifyItemChanged(position);
+
+        String sourceText = nonEmpty(message.fullText, message.text).replace("\"", "\\\\\"");
+
+        String prompt = "Bạn là trợ giảng tiếng Anh. Hãy phân tích câu sau cho người mới học: \""
+            + sourceText
+                + "\"\\n"
+                + "Trả đúng 2 dòng, không đánh số:\\n"
+                + "VI: <bản dịch tiếng Việt tự nhiên, ngắn gọn>\\n"
+                + "COACH: <hướng dẫn bằng tiếng Việt để người học trả lời tiếp + 1 câu mẫu tiếng Anh ngắn>.";
+
+        groqChatService.getRawAiResponse(prompt, new GroqChatService.RawCallback() {
+            @Override
+            public void onSuccess(String rawResponse) {
+                runOnUiThread(() -> {
+                    if (isLessonClosed || isFinishing()) {
+                        return;
+                    }
+                    applyHintCoachResponse(message, rawResponse, true);
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    if (isLessonClosed || isFinishing()) {
+                        return;
+                    }
+                    applyHintCoachResponse(message, null, false);
+                });
+            }
+        });
+    }
+
+    private void applyHintCoachResponse(ChatMessage message, String rawResponse, boolean fromAi) {
+        if (message == null) {
+            return;
+        }
+
+        String translation = null;
+        String coach = null;
+
+        if (fromAi && rawResponse != null) {
+            String[] lines = rawResponse.split("\\r?\\n");
+            List<String> plainLines = new ArrayList<>();
+            for (String line : lines) {
+                String cleaned = nonEmpty(line);
+                if (cleaned.isEmpty()) {
+                    continue;
+                }
+
+                plainLines.add(cleaned.replaceFirst("^[\\-•*]+\\s*", ""));
+
+                String lower = cleaned.toLowerCase(Locale.US);
+                if (lower.startsWith("vi:")) {
+                    translation = nonEmpty(cleaned.substring(3));
+                } else if (lower.startsWith("coach:")) {
+                    coach = nonEmpty(cleaned.substring(6));
+                }
+            }
+
+            if ((translation == null || translation.isEmpty()) && !plainLines.isEmpty()) {
+                translation = plainLines.get(0).replaceFirst("(?i)^vi\\s*:\\s*", "").trim();
+            }
+            if ((coach == null || coach.isEmpty()) && plainLines.size() >= 2) {
+                coach = plainLines.get(1).replaceFirst("(?i)^coach\\s*:\\s*", "").trim();
+            }
+        }
+
+        if (translation == null || translation.isEmpty()) {
+            translation = getString(R.string.map_conversation_hint_translation_fallback);
+        }
+        if (coach == null || coach.isEmpty()) {
+            coach = getString(R.string.map_conversation_hint_coach_fallback);
+        }
+
+        message.hintLoading = false;
+        message.hintExpanded = true;
+        message.hintTranslationVi = translation;
+        message.hintCoachVi = coach;
+
+        int position = chatMessages.indexOf(message);
+        if (position >= 0) {
+            chatAdapter.notifyItemChanged(position);
+            chatRecyclerView.smoothScrollToPosition(position);
+        } else {
+            chatAdapter.notifyDataSetChanged();
+        }
+
+        speakHintCoach(message);
+    }
+
+    private void speakHintCoach(ChatMessage message) {
+        if (message == null) {
+            return;
+        }
+        String translation = nonEmpty(message.hintTranslationVi);
+        String coach = nonEmpty(message.hintCoachVi);
+        String voice = "Bản dịch: " + translation + ". Gợi ý phản hồi: " + coach;
+        safeSpeak(voice);
     }
 
     private void showTypeDialog() {
@@ -1256,6 +1716,7 @@ public class MapConversationActivity extends AppCompatActivity {
 
     public static class ChatMessage {
         public String text;
+        public String fullText;
         public boolean isAi;
         public String correction;
         public String explanation;
@@ -1267,9 +1728,19 @@ public class MapConversationActivity extends AppCompatActivity {
 
         public boolean isVocabHub = false;
         public List<LessonVocabulary> nodeVocabEntries;
+        public boolean isQuizCta = false;
+        public boolean quizCtaProcessing = false;
+
+        public boolean hintEligible;
+        public boolean hintReady;
+        public boolean hintExpanded;
+        public boolean hintLoading;
+        public String hintTranslationVi;
+        public String hintCoachVi;
 
         public ChatMessage(String text, boolean isAi) {
             this.text = text;
+            this.fullText = text;
             this.isAi = isAi;
         }
     }
@@ -1278,6 +1749,7 @@ public class MapConversationActivity extends AppCompatActivity {
         private static final int TYPE_AI = 0;
         private static final int TYPE_USER = 1;
         private static final int TYPE_VOCAB_HUB = 2;
+        private static final int TYPE_QUIZ_CTA = 3;
 
         private final List<ChatMessage> messages;
 
@@ -1291,6 +1763,9 @@ public class MapConversationActivity extends AppCompatActivity {
             if (msg.isVocabHub) {
                 return TYPE_VOCAB_HUB;
             }
+            if (msg.isQuizCta) {
+                return TYPE_QUIZ_CTA;
+            }
             return msg.isAi ? TYPE_AI : TYPE_USER;
         }
 
@@ -1300,6 +1775,10 @@ public class MapConversationActivity extends AppCompatActivity {
             if (viewType == TYPE_VOCAB_HUB) {
                 View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_vocab_hub, parent, false);
                 return new VocabHubViewHolder(v);
+            }
+            if (viewType == TYPE_QUIZ_CTA) {
+                View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chat_quiz_cta, parent, false);
+                return new QuizCtaViewHolder(v);
             }
             int layout = (viewType == TYPE_AI) ? R.layout.item_chat_ai : R.layout.item_chat_user;
             View v = LayoutInflater.from(parent.getContext()).inflate(layout, parent, false);
@@ -1343,9 +1822,37 @@ public class MapConversationActivity extends AppCompatActivity {
                 return;
             }
 
+            if (holder instanceof QuizCtaViewHolder) {
+                QuizCtaViewHolder cta = (QuizCtaViewHolder) holder;
+                cta.btnQuizNow.setEnabled(!msg.quizCtaProcessing);
+                cta.btnQuizNow.setText(msg.quizCtaProcessing
+                        ? getString(R.string.map_conversation_quiz_cta_processing)
+                        : getString(R.string.map_conversation_quiz_cta_label));
+                cta.btnQuizNow.setOnClickListener(v -> handleQuizCtaClick(msg));
+                return;
+            }
+
             if (holder instanceof AiViewHolder) {
                 AiViewHolder ai = (AiViewHolder) holder;
                 ai.messageText.setText(msg.text);
+
+                boolean showHintButton = msg.hintEligible && msg.hintReady;
+                ai.hintActionRow.setVisibility(showHintButton ? View.VISIBLE : View.GONE);
+                ai.hintCoachBlock.setVisibility((msg.hintExpanded || msg.hintLoading) ? View.VISIBLE : View.GONE);
+                ai.btnHintCoach.setOnClickListener(v -> onHintCoachClicked(msg));
+
+                if (msg.hintExpanded || msg.hintLoading) {
+                    if (msg.hintLoading) {
+                        ai.hintTranslationText.setText(getString(R.string.map_conversation_hint_loading));
+                        ai.hintCoachLabel.setVisibility(View.GONE);
+                        ai.hintCoachText.setVisibility(View.GONE);
+                    } else {
+                        ai.hintTranslationText.setText(nonEmpty(msg.hintTranslationVi, getString(R.string.map_conversation_hint_translation_fallback)));
+                        ai.hintCoachLabel.setVisibility(View.VISIBLE);
+                        ai.hintCoachText.setVisibility(View.VISIBLE);
+                        ai.hintCoachText.setText(nonEmpty(msg.hintCoachVi, getString(R.string.map_conversation_hint_coach_fallback)));
+                    }
+                }
 
                 boolean hasVocab = msg.vocabWord != null && !msg.vocabWord.isEmpty();
                 ai.vocabActionBar.setVisibility(hasVocab ? View.VISIBLE : View.GONE);
@@ -1389,8 +1896,14 @@ public class MapConversationActivity extends AppCompatActivity {
             TextView tvVocabExampleVi;
             TextView correctionText;
             TextView correctionExplain;
+            View hintActionRow;
+            View hintCoachBlock;
+            TextView hintTranslationText;
+            TextView hintCoachLabel;
+            TextView hintCoachText;
             View btnSpeak;
             View btnSaveVocab;
+            View btnHintCoach;
 
             AiViewHolder(View v) {
                 super(v);
@@ -1405,8 +1918,14 @@ public class MapConversationActivity extends AppCompatActivity {
                 tvVocabExampleVi = v.findViewById(R.id.tvVocabExampleVi);
                 correctionText = v.findViewById(R.id.correctionText);
                 correctionExplain = v.findViewById(R.id.correctionExplain);
+                hintActionRow = v.findViewById(R.id.hintActionRow);
+                hintCoachBlock = v.findViewById(R.id.hintCoachBlock);
+                hintTranslationText = v.findViewById(R.id.hintTranslationText);
+                hintCoachLabel = v.findViewById(R.id.hintCoachLabel);
+                hintCoachText = v.findViewById(R.id.hintCoachText);
                 btnSpeak = v.findViewById(R.id.btnSpeak);
                 btnSaveVocab = v.findViewById(R.id.btnSaveVocab);
+                btnHintCoach = v.findViewById(R.id.btnHintCoach);
             }
         }
 
@@ -1418,6 +1937,15 @@ public class MapConversationActivity extends AppCompatActivity {
                 super(v);
                 container = v.findViewById(R.id.vocabListContainer);
                 btnStart = v.findViewById(R.id.btnStartRoleplay);
+            }
+        }
+
+        class QuizCtaViewHolder extends RecyclerView.ViewHolder {
+            com.google.android.material.button.MaterialButton btnQuizNow;
+
+            QuizCtaViewHolder(View v) {
+                super(v);
+                btnQuizNow = v.findViewById(R.id.btnQuizNow);
             }
         }
 

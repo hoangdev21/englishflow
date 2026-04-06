@@ -14,6 +14,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,6 +27,7 @@ import com.example.englishflow.data.JourneyLessonRepository;
 import com.example.englishflow.data.MapNodeItem;
 import com.example.englishflow.ui.MapConversationActivity;
 import com.example.englishflow.ui.views.MapPathView;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
@@ -35,11 +37,20 @@ import java.util.Locale;
 public class LearnMapFragment extends Fragment {
 
     private final List<Animator> runningAnimators = new ArrayList<>();
+    private final List<Animator> runningHeroAnimators = new ArrayList<>();
     private final List<View> nodeCircleViews = new ArrayList<>();
+    private final List<MapNodeItem> currentJourneyNodes = new ArrayList<>();
 
     private LinearLayout mapNodesContainer;
     private MapPathView mapPathView;
     private JourneyLessonRepository journeyLessonRepository;
+    private TextView mapStreakChip;
+    private MaterialButton mapSpeakQuickButton;
+    private ImageView mapHeroAvatar;
+    private View mapHeroGlowBase;
+    private View mapHeroPulseRingOuter;
+    private View mapHeroPulseRingInner;
+    private MapNodeItem heroSpeakTarget;
 
     @Nullable
     @Override
@@ -53,7 +64,20 @@ public class LearnMapFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         mapNodesContainer = view.findViewById(R.id.mapNodesContainer);
         mapPathView = view.findViewById(R.id.mapPathView);
+        mapStreakChip = view.findViewById(R.id.mapStreakChip);
+        mapSpeakQuickButton = view.findViewById(R.id.mapSpeakQuickButton);
+        mapHeroAvatar = view.findViewById(R.id.mapHeroAvatar);
+        mapHeroGlowBase = view.findViewById(R.id.mapHeroGlowBase);
+        mapHeroPulseRingOuter = view.findViewById(R.id.mapHeroPulseRingOuter);
+        mapHeroPulseRingInner = view.findViewById(R.id.mapHeroPulseRingInner);
         journeyLessonRepository = new JourneyLessonRepository();
+
+        if (mapSpeakQuickButton != null) {
+            mapSpeakQuickButton.setOnClickListener(v -> onSpeakQuickClicked());
+        }
+        configureSpeakQuickButton();
+        startHeroAnimations();
+        refreshHeroSummary();
 
         loadJourneyNodes();
 
@@ -79,6 +103,7 @@ public class LearnMapFragment extends Fragment {
         if (mapNodesContainer != null) {
             loadJourneyNodes();
         }
+        refreshHeroSummary();
     }
 
     private void loadJourneyNodes() {
@@ -96,10 +121,160 @@ public class LearnMapFragment extends Fragment {
             }
 
             List<MapNodeItem> nodes = applyProgressStatuses(lessons);
+            currentJourneyNodes.clear();
+            currentJourneyNodes.addAll(nodes);
             AppRepository.getInstance(requireContext()).setTotalMapNodeCount(nodes.size());
             buildNodeRows(nodes);
             mapNodesContainer.post(this::drawPath);
+            configureSpeakQuickButton();
         });
+    }
+
+    private void refreshHeroSummary() {
+        if (!isAdded()) {
+            return;
+        }
+
+        AppRepository.getInstance(requireContext()).getDashboardSnapshotAsync(snapshot -> {
+            if (!isAdded()) {
+                return;
+            }
+
+            int streak = 0;
+            if (snapshot != null && snapshot.userProgress != null) {
+                streak = Math.max(0, snapshot.userProgress.currentStreak);
+            }
+
+            if (mapStreakChip != null) {
+                mapStreakChip.setText(getString(R.string.learn_map_streak_chip_format, streak));
+            }
+        });
+    }
+
+    private void configureSpeakQuickButton() {
+        heroSpeakTarget = pickHeroSpeakTarget();
+        if (mapSpeakQuickButton == null) {
+            return;
+        }
+
+        boolean enabled = heroSpeakTarget != null;
+        mapSpeakQuickButton.setEnabled(enabled);
+        mapSpeakQuickButton.setAlpha(enabled ? 1f : 0.6f);
+    }
+
+    private MapNodeItem pickHeroSpeakTarget() {
+        MapNodeItem completedFallback = null;
+        MapNodeItem availableFallback = null;
+
+        for (MapNodeItem node : currentJourneyNodes) {
+            if (node == null || node.getStatus() == null) {
+                continue;
+            }
+
+            switch (node.getStatus()) {
+                case IN_PROGRESS:
+                    return node;
+                case AVAILABLE:
+                    if (availableFallback == null) {
+                        availableFallback = node;
+                    }
+                    break;
+                case COMPLETED:
+                    if (completedFallback == null) {
+                        completedFallback = node;
+                    }
+                    break;
+                case LOCKED:
+                default:
+                    break;
+            }
+        }
+
+        if (availableFallback != null) {
+            return availableFallback;
+        }
+        return completedFallback;
+    }
+
+    private void onSpeakQuickClicked() {
+        if (heroSpeakTarget == null) {
+            if (isAdded()) {
+                Toast.makeText(requireContext(), R.string.learn_map_speak_unavailable, Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+        openConversation(heroSpeakTarget);
+    }
+
+    private void startHeroAnimations() {
+        clearHeroAnimators();
+
+        if (mapHeroGlowBase != null) {
+            ObjectAnimator glowBreath = ObjectAnimator.ofPropertyValuesHolder(
+                    mapHeroGlowBase,
+                    PropertyValuesHolder.ofFloat(View.SCALE_X, 0.96f, 1.08f, 0.96f),
+                    PropertyValuesHolder.ofFloat(View.SCALE_Y, 0.96f, 1.08f, 0.96f),
+                    PropertyValuesHolder.ofFloat(View.ALPHA, 0.40f, 0.78f, 0.40f)
+            );
+            glowBreath.setDuration(3200L);
+            glowBreath.setRepeatCount(ObjectAnimator.INFINITE);
+            glowBreath.setRepeatMode(ObjectAnimator.RESTART);
+            glowBreath.start();
+            runningHeroAnimators.add(glowBreath);
+        }
+
+        startHeroPulseRing(mapHeroPulseRingOuter, 0L, 2600L);
+        startHeroPulseRing(mapHeroPulseRingInner, 1200L, 2600L);
+
+        if (mapHeroAvatar != null) {
+            ObjectAnimator avatarFloat = ObjectAnimator.ofPropertyValuesHolder(
+                    mapHeroAvatar,
+                    PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, 0f, -8f, 0f),
+                    PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.02f, 1f),
+                    PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.02f, 1f)
+            );
+            avatarFloat.setDuration(3600L);
+            avatarFloat.setRepeatCount(ObjectAnimator.INFINITE);
+            avatarFloat.setRepeatMode(ObjectAnimator.RESTART);
+            avatarFloat.start();
+            runningHeroAnimators.add(avatarFloat);
+        }
+
+        if (mapSpeakQuickButton != null) {
+            ObjectAnimator ctaBreath = ObjectAnimator.ofPropertyValuesHolder(
+                    mapSpeakQuickButton,
+                    PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.04f, 1f),
+                    PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.04f, 1f)
+            );
+            ctaBreath.setDuration(2200L);
+            ctaBreath.setRepeatCount(ObjectAnimator.INFINITE);
+            ctaBreath.setRepeatMode(ObjectAnimator.RESTART);
+            ctaBreath.start();
+            runningHeroAnimators.add(ctaBreath);
+        }
+    }
+
+    private void startHeroPulseRing(@Nullable View ring, long delayMs, long durationMs) {
+        if (ring == null) {
+            return;
+        }
+
+        ring.setScaleX(0.82f);
+        ring.setScaleY(0.82f);
+        ring.setAlpha(0f);
+
+        ObjectAnimator ringPulse = ObjectAnimator.ofPropertyValuesHolder(
+                ring,
+                PropertyValuesHolder.ofFloat(View.SCALE_X, 0.82f, 1.20f),
+                PropertyValuesHolder.ofFloat(View.SCALE_Y, 0.82f, 1.20f),
+                PropertyValuesHolder.ofFloat(View.ALPHA, 0f, 0.55f, 0f)
+        );
+        ringPulse.setStartDelay(delayMs);
+        ringPulse.setDuration(durationMs);
+        ringPulse.setRepeatCount(ObjectAnimator.INFINITE);
+        ringPulse.setRepeatMode(ObjectAnimator.RESTART);
+        ringPulse.start();
+        runningHeroAnimators.add(ringPulse);
     }
 
     private List<MapNodeItem> applyProgressStatuses(List<MapNodeItem> nodes) {
@@ -129,7 +304,7 @@ public class LearnMapFragment extends Fragment {
     }
 
     private void buildNodeRows(List<MapNodeItem> nodes) {
-        clearRunningAnimators();
+        clearNodeAnimators();
         nodeCircleViews.clear();
         mapNodesContainer.removeAllViews();
 
@@ -379,12 +554,35 @@ public class LearnMapFragment extends Fragment {
         super.onDestroyView();
         clearRunningAnimators();
         nodeCircleViews.clear();
+        currentJourneyNodes.clear();
+        heroSpeakTarget = null;
+
+        mapNodesContainer = null;
+        mapPathView = null;
+        mapStreakChip = null;
+        mapSpeakQuickButton = null;
+        mapHeroAvatar = null;
+        mapHeroGlowBase = null;
+        mapHeroPulseRingOuter = null;
+        mapHeroPulseRingInner = null;
     }
 
     private void clearRunningAnimators() {
+        clearNodeAnimators();
+        clearHeroAnimators();
+    }
+
+    private void clearNodeAnimators() {
         for (Animator animator : runningAnimators) {
             animator.cancel();
         }
         runningAnimators.clear();
+    }
+
+    private void clearHeroAnimators() {
+        for (Animator animator : runningHeroAnimators) {
+            animator.cancel();
+        }
+        runningHeroAnimators.clear();
     }
 }

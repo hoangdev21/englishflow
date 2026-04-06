@@ -15,16 +15,39 @@
         android:background="@drawable/bg_map_hero_gradient"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Background Glow behind the AI -->
+        <!-- Dynamic layered glow around the hero avatar -->
         <View
-            android:layout_width="400dp"
-            android:layout_height="400dp"
-            android:background="@drawable/bg_bot_halo"
-            android:alpha="0.4"
+            android:id="@+id/mapHeroGlowBase"
+            android:layout_width="420dp"
+            android:layout_height="420dp"
+            android:alpha="0.52"
+            android:background="@drawable/bg_map_hero_avatar_glow_soft"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <View
+            android:id="@+id/mapHeroPulseRingOuter"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:alpha="0"
+            android:background="@drawable/bg_map_hero_avatar_pulse_ring"
+            app:layout_constraintBottom_toBottomOf="@id/mapHeroAvatar"
+            app:layout_constraintEnd_toEndOf="@id/mapHeroAvatar"
+            app:layout_constraintStart_toStartOf="@id/mapHeroAvatar"
+            app:layout_constraintTop_toTopOf="@id/mapHeroAvatar" />
+
+        <View
+            android:id="@+id/mapHeroPulseRingInner"
+            android:layout_width="248dp"
+            android:layout_height="248dp"
+            android:alpha="0"
+            android:background="@drawable/bg_map_hero_avatar_pulse_ring"
+            app:layout_constraintBottom_toBottomOf="@id/mapHeroAvatar"
+            app:layout_constraintEnd_toEndOf="@id/mapHeroAvatar"
+            app:layout_constraintStart_toStartOf="@id/mapHeroAvatar"
+            app:layout_constraintTop_toTopOf="@id/mapHeroAvatar" />
 
         <!-- Back Button & Status Badges -->
         <ImageButton
@@ -41,27 +64,11 @@
             app:layout_constraintTop_toTopOf="parent"
             app:tint="@color/white" />
 
-        <TextView
-            android:id="@+id/mapLangChip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:background="@drawable/bg_badge_white_alpha"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
-            android:text="EN"
-            android:textColor="@color/white"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:elevation="4dp"
-            app:layout_constraintStart_toEndOf="@id/btnBack"
-            app:layout_constraintTop_toTopOf="@id/btnBack"
-            app:layout_constraintBottom_toBottomOf="@id/btnBack" />
-
         <LinearLayout
+            android:id="@+id/mapHeroStatusRow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="32dp"
             android:layout_marginEnd="24dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
@@ -70,18 +77,20 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <TextView
+                android:id="@+id/mapStreakChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="10dp"
                 android:background="@drawable/bg_badge_white_alpha"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="8dp"
-                android:text="🔥 12"
+                android:text="🔥 0"
                 android:textColor="@color/white"
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/mapTierChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_badge_white_alpha"
@@ -96,9 +105,9 @@
         <!-- AI Bot Hero View -->
         <ImageView
             android:id="@+id/mapHeroAvatar"
-            android:layout_width="220dp"
-            android:layout_height="220dp"
-            android:layout_marginBottom="-10dp"
+            android:layout_width="228dp"
+            android:layout_height="228dp"
+            android:layout_marginBottom="-12dp"
             android:contentDescription="AI Avatar"
             android:scaleType="fitCenter"
             android:src="@drawable/chat_bot_avatar"

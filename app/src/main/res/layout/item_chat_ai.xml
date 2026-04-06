@@ -46,6 +46,7 @@
             android:layout_height="wrap_content"
             android:background="@drawable/bg_bubble_ai_premium"
             android:elevation="2dp"
+            android:orientation="vertical"
             android:paddingHorizontal="16dp"
             android:paddingVertical="12dp">
 
@@ -57,6 +58,83 @@
                 android:textSize="15sp"
                 android:lineSpacingExtra="5dp"
                 android:letterSpacing="0.01" />
+
+            <LinearLayout
+                android:id="@+id/hintActionRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="end"
+                android:visibility="gone">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnHintCoach"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:background="@drawable/bg_icon_circle_amber"
+                    android:contentDescription="@string/map_conversation_hint_coach_cd"
+                    app:backgroundTint="@null"
+                    app:icon="@drawable/ic_lightbulb"
+                    app:iconGravity="textStart"
+                    app:iconSize="16dp"
+                    app:iconTint="@color/ef_hint_border" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/hintCoachBlock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_fill_blank_hint_box"
+            android:orientation="vertical"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="10dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/hintTranslationLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/map_conversation_hint_translation_label"
+                android:textColor="@color/ef_hint_border"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/hintTranslationText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:maxWidth="270dp"
+                android:textColor="@color/ef_text_primary"
+                android:textSize="13sp"
+                android:lineSpacingExtra="2dp" />
+
+            <TextView
+                android:id="@+id/hintCoachLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/map_conversation_hint_coach_label"
+                android:textColor="@color/ef_hint_border"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/hintCoachText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:maxWidth="270dp"
+                android:textColor="@color/ef_text_primary"
+                android:textSize="13sp"
+                android:lineSpacingExtra="2dp" />
         </LinearLayout>
 
         <!-- Vocabulary Action Bar — shown only when AI returns vocab data -->

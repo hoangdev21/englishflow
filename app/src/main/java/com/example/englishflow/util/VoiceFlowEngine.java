@@ -46,6 +46,7 @@ public class VoiceFlowEngine {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private boolean autoRelisten = false;
     private final AppSettingsStore settingsStore;
+    private float speechRateOverride = -1f;
     
     private final Locale localeEn = Locale.US;
     // Fix Deprecated constructor: use Locale.forLanguageTag()
@@ -79,7 +80,7 @@ public class VoiceFlowEngine {
             if (status == TextToSpeech.SUCCESS) {
                 ttsReady = true;
                 tts.setLanguage(localeEn);
-                tts.setSpeechRate(settingsStore.getVoiceSpeechRate());
+                tts.setSpeechRate(resolveSpeechRate());
                 tts.setPitch(1.0f);
             }
         });
@@ -126,7 +127,7 @@ public class VoiceFlowEngine {
             return;
         }
         
-        tts.setSpeechRate(settingsStore.getVoiceSpeechRate());
+        tts.setSpeechRate(resolveSpeechRate());
         requestAudioFocus();
         stopSpeaking();
         setState(State.SPEAKING);
@@ -244,10 +245,29 @@ public class VoiceFlowEngine {
     public void stopSpeaking() { if (ttsReady) tts.stop(); if (currentState == State.SPEAKING) setState(State.IDLE); }
     public void stopListening() { if (speechRecognizer != null) speechRecognizer.stopListening(); }
     public void setAutoRelisten(boolean enabled) { this.autoRelisten = enabled; }
+    public void setSpeechRateOverride(float speedRate) {
+        if (speedRate >= 0.6f && speedRate <= 2.2f) {
+            speechRateOverride = speedRate;
+        } else {
+            speechRateOverride = -1f;
+        }
+
+        if (ttsReady && tts != null) {
+            tts.setSpeechRate(resolveSpeechRate());
+        }
+    }
+
+    private float resolveSpeechRate() {
+        if (speechRateOverride > 0f) {
+            return speechRateOverride;
+        }
+        return settingsStore.getVoiceSpeechRate();
+    }
     public State getState() { return currentState; }
     public void shutdown() {
         isShutdown = true;
         autoRelisten = false;
+        speechRateOverride = -1f;
         stopListening();
         stopSpeaking();
         ttsReady = false;
