@@ -99,6 +99,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".ui.IpaPracticeActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.NotificationDetailActivity"
             android:exported="false"
             android:label="Chi tiết thông báo" />

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardPracticeWord"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="8dp"
+    app:cardBackgroundColor="@color/ef_surface"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="1dp"
+    app:strokeColor="@color/ef_outline_light"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvPracticeWord"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/nunito"
+                android:gravity="center"
+                android:minWidth="74dp"
+                android:text="word"
+                android:textAllCaps="false"
+                android:textColor="@color/ef_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPracticeWordIpa"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:fontFamily="@font/nunito"
+                android:minWidth="74dp"
+                android:text="/wɜːd/"
+                android:textColor="@color/ef_text_secondary"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/tvPracticeWordProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/nunito"
+                android:minWidth="74dp"
+                android:text="Đúng 0/3"
+                android:textColor="@color/ef_text_tertiary"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnPlayPracticeWord"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_premium_card_ripple"
+            android:contentDescription="@string/ipa_practice_play_symbol"
+            android:padding="6dp"
+            android:src="@drawable/ic_volume_up"
+            app:tint="@color/ef_secondary" />
+
+        <ImageView
+            android:id="@+id/ivWordState"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="6dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_lock_closed"
+            android:visibility="gone"
+            app:tint="@color/ef_text_tertiary" />
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

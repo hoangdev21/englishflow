@@ -1,13 +1,11 @@
 package com.example.englishflow.ui;
 
 import android.os.Bundle;
-import android.os.Handler;
-import android.speech.tts.TextToSpeech;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -19,12 +17,8 @@ import com.example.englishflow.R;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class IpaActivity extends AppCompatActivity {
-
-    private TextToSpeech tts;
-    private final Handler playbackHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +28,6 @@ public class IpaActivity extends AppCompatActivity {
 
         setupHeader();
         setupIpaGrids();
-        setupTts();
     }
 
     private void setupHeader() {
@@ -55,74 +48,9 @@ public class IpaActivity extends AppCompatActivity {
         consonantGrid.setAdapter(new IpaAdapter(getConsonants(), this::onSymbolClicked));
     }
 
-    private void setupTts() {
-        tts = new TextToSpeech(this, status -> {
-            if (status == TextToSpeech.SUCCESS) {
-                tts.setLanguage(Locale.US);
-            }
-        });
-    }
-
     private void onSymbolClicked(IpaItem item) {
-        if (tts != null) {
-            // Get a speakable version of the symbol (some IPA chars are silent in TTS)
-            String speakable = getSpeakablePhoneme(item.symbol);
-            
-            // First speak the phoneme
-            tts.speak(speakable, TextToSpeech.QUEUE_FLUSH, null, "phoneme");
-            
-            // Wait brief moment then speak the example word
-            playbackHandler.postDelayed(() -> {
-                tts.speak(item.word, TextToSpeech.QUEUE_ADD, null, "example_word");
-            }, 1000); // Increased delay for better clarity
-        }
-    }
-
-    /**
-     * Maps complex IPA symbols to strings that standard TTS engines can pronounce accurately.
-     */
-    private String getSpeakablePhoneme(String ipa) {
-        String clean = ipa.trim().toLowerCase();
-        
-        // Vowels mapping
-        if (clean.equals("ɑ:")) return "ah";
-        if (clean.equals("æ")) return "aah";
-        if (clean.equals("ʌ")) return "uh";
-        if (clean.equals("ɛ")) return "eh";
-        if (clean.equals("eɪ")) return "ay";
-        if (clean.equals("ɜ:")) return "er";
-        if (clean.equals("ɪ")) return "ee";
-        if (clean.equals("i:")) return "eee";
-        if (clean.equals("ə")) return "uh";
-        if (clean.equals("oʊ")) return "oh";
-        if (clean.equals("ʊ")) return "uuh";
-        if (clean.equals("u:")) return "ooo";
-        if (clean.equals("aʊ")) return "ow";
-        if (clean.equals("aɪ")) return "eye";
-        if (clean.equals("ɔɪ")) return "oy";
-        if (clean.equals("ɔ:")) return "aw";
-
-        // Consonants mapping
-        if (clean.equals("tʃ")) return "chah";
-        if (clean.equals("dʒ")) return "jah";
-        if (clean.equals("ŋ")) return "ng";
-        if (clean.equals("ʒ")) return "zh";
-        if (clean.equals("ʃ")) return "sh";
-        if (clean.equals("ð")) return "th";
-        if (clean.equals("θ")) return "th";
-        if (clean.equals("j")) return "yah";
-        
-        return clean;
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (tts != null) {
-            tts.stop();
-            tts.shutdown();
-        }
-        playbackHandler.removeCallbacksAndMessages(null);
-        super.onDestroy();
+        Intent intent = IpaPracticeActivity.createIntent(this, item.symbol, item.word);
+        startActivity(intent);
     }
 
     private List<IpaItem> getVowels() {
