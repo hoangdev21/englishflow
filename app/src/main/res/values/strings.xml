@@ -193,6 +193,10 @@
     <string name="ipa_practice_tts_unavailable">Giọng đọc mẫu tiếng Anh chưa sẵn sàng.</string>
     <string name="ipa_practice_empty_result">Không nghe rõ. Hãy đọc lại chậm, rõ và gần micro hơn.</string>
     <string name="ipa_practice_error_generic">Không thể nhận diện giọng nói, vui lòng thử lại.</string>
+    <string name="ipa_practice_error_language_unavailable">Thiết bị chưa sẵn gói nhận diện tiếng Anh. Hãy cập nhật Google Speech Services rồi thử lại.</string>
+    <string name="ipa_practice_switching_system_recognizer">Đang chuyển sang bộ nhận diện hệ thống để thử lại.</string>
+    <string name="ipa_practice_system_recognizer_prompt">Đọc rõ từ "%1$s"</string>
+    <string name="ipa_practice_system_recognizer_unavailable">Thiết bị chưa có ứng dụng nhận diện giọng nói hệ thống.</string>
     <string name="ipa_practice_word_locked_hint">Từ số %1$d đang khóa. Hãy đọc đúng %4$d lần ở từ hiện tại (mỗi lần đạt Tổng %2$d+ và Âm IPA %3$d+).</string>
     <string name="ipa_practice_current_word_correct_reads_format">Lần đọc đúng: %1$d/%2$d</string>
     <string name="ipa_practice_word_correct_progress_format">Đúng %1$d/%2$d</string>

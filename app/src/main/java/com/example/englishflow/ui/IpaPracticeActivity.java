@@ -1,6 +1,7 @@
 package com.example.englishflow.ui;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -87,6 +88,7 @@ public class IpaPracticeActivity extends AppCompatActivity {
     private static final long WEEK_WINDOW_MS = 7L * 24L * 60L * 60L * 1000L;
     private static final float AUDIO_GATE_LOW_RMS_PEAK_DB = 4.2f;
     private static final float AUDIO_GATE_NOISY_RMS_AVG_DB = 9.0f;
+    private static final float AUDIO_GATE_SPEECH_TRIGGER_RMS_DB = 1.8f;
     private static final String UTTERANCE_ID_AB_COMPARE_SAMPLE = "ipa_ab_compare_sample";
     private static final int AUDIO_ACTION_ASSESSMENT = 1;
     private static final int AUDIO_ACTION_COMPARE_RECORDING = 2;
@@ -100,6 +102,7 @@ public class IpaPracticeActivity extends AppCompatActivity {
     private static final int AUDIO_QUALITY_GATE_PASS = 0;
     private static final int AUDIO_QUALITY_GATE_LOW_INPUT = 1;
     private static final int AUDIO_QUALITY_GATE_NOISY = 2;
+    private static final int ASR_ERRORS_BEFORE_SYSTEM_FALLBACK = 2;
 
     private int pendingAudioAction = AUDIO_ACTION_ASSESSMENT;
 
@@ -116,6 +119,10 @@ public class IpaPracticeActivity extends AppCompatActivity {
                 }
                 pendingAudioAction = AUDIO_ACTION_ASSESSMENT;
             });
+
+    private final ActivityResultLauncher<Intent> systemRecognizerLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                    result -> handleSystemRecognizerActivityResult(result.getResultCode(), result.getData()));
 
     private AppSettingsStore settingsStore;
 
@@ -158,6 +165,7 @@ public class IpaPracticeActivity extends AppCompatActivity {
     private float listeningRmsSumDb;
     private int listeningRmsSamples;
     private boolean listeningSpeechDetected;
+    private int consecutiveAsrErrors;
 
     private TextView tvPracticeTitle;
     private TextView tvFocusLine;
@@ -443,6 +451,12 @@ public class IpaPracticeActivity extends AppCompatActivity {
             @Override
             public void onError(int error) {
                 setListeningState(false);
+                consecutiveAsrErrors += 1;
+                if (shouldLaunchSystemRecognizerFallback(error) && launchSystemRecognizerFallback()) {
+                    Toast.makeText(IpaPracticeActivity.this, R.string.ipa_practice_switching_system_recognizer, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 if (tvRecognized != null) {
                     tvRecognized.setText(R.string.ipa_practice_empty_result);
                 }
@@ -453,71 +467,7 @@ public class IpaPracticeActivity extends AppCompatActivity {
             @Override
             public void onResults(Bundle results) {
                 setListeningState(false);
-                RecognitionCandidate candidate = chooseBestCandidate(results, currentWord);
-                String recognized = candidate.word;
-                int audioGate = evaluateAudioQualityGate(candidate.hasConfidence() ? candidate.confidence : -1f);
-                if (audioGate != AUDIO_QUALITY_GATE_PASS) {
-                    renderAudioQualityBlockedState(recognized, audioGate);
-                    pushAttemptHistory(
-                            currentWord,
-                            recognized,
-                            0,
-                            0,
-                            R.string.ipa_practice_history_status_audio_quality
-                    );
-                        Toast.makeText(IpaPracticeActivity.this, audioQualityGateToast(audioGate), Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (TextUtils.isEmpty(recognized)) {
-                    if (tvRecognized != null) {
-                        tvRecognized.setText(R.string.ipa_practice_empty_result);
-                    }
-                    pushAttemptHistory(currentWord, "", 0, 0, R.string.ipa_practice_history_status_no_match);
-                    Toast.makeText(IpaPracticeActivity.this, R.string.ipa_practice_empty_result, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (candidate.hasConfidence() && candidate.confidence < MIN_ASR_CONFIDENCE_FOR_HARD_BLOCK) {
-                    renderConfidenceBlockedState(recognized);
-                    pushAttemptHistory(currentWord, recognized, 0, 0, R.string.ipa_practice_history_status_blocked);
-                    Toast.makeText(IpaPracticeActivity.this, R.string.ipa_practice_confidence_low, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (tvRecognized != null) {
-                    tvRecognized.setText(getString(R.string.ipa_practice_recognized_format, recognized));
-                }
-
-                PronunciationAssessment assessment = assessPronunciation(
-                    recognized,
-                    currentWord,
-                    profile,
-                    candidate.hasConfidence() ? candidate.confidence : -1f
-                );
-                int passOverallAtAttemptTime = adaptivePassOverall;
-                int passSoundAtAttemptTime = adaptivePassSound;
-                renderAssessment(assessment);
-                recordAssessmentForAdaptivePass(profile.symbol, assessment);
-                if (!assessment.detectedConfusionSymbol.isEmpty()
-                        && assessment.soundScore < passSoundAtAttemptTime) {
-                    recordConfusionObservation(profile.symbol, assessment.detectedConfusionSymbol);
-                }
-                boolean passed = assessment.overallScore >= passOverallAtAttemptTime
-                        && assessment.soundScore >= passSoundAtAttemptTime;
-                pushAttemptHistory(
-                        currentWord,
-                        recognized,
-                        assessment.overallScore,
-                        assessment.soundScore,
-                        passed
-                                ? R.string.ipa_practice_history_status_pass
-                                : R.string.ipa_practice_history_status_retry
-                );
-                if (passed) {
-                    registerSuccessfulRead(currentWord);
-                }
-                maybeUnlockNextWord(currentWord);
+                handleAssessmentResults(results, false);
             }
 
             @Override
@@ -697,19 +647,24 @@ public class IpaPracticeActivity extends AppCompatActivity {
         if (rmsdB < 0f) {
             return;
         }
+        if (rmsdB >= AUDIO_GATE_SPEECH_TRIGGER_RMS_DB) {
+            listeningSpeechDetected = true;
+        }
         listeningRmsPeakDb = Math.max(listeningRmsPeakDb, rmsdB);
         listeningRmsSumDb += rmsdB;
         listeningRmsSamples += 1;
     }
 
-    private int evaluateAudioQualityGate(float recognitionConfidence) {
-        if (!listeningSpeechDetected) {
+    private int evaluateAudioQualityGate(float recognitionConfidence,
+                                         @Nullable String recognizedWord) {
+        boolean hasRecognizedToken = !normalizeWord(recognizedWord).isEmpty();
+        if (!listeningSpeechDetected && !hasRecognizedToken && listeningRmsSamples == 0) {
             return AUDIO_QUALITY_GATE_LOW_INPUT;
         }
 
         if (listeningRmsSamples > 0) {
             float averageRms = listeningRmsSumDb / listeningRmsSamples;
-            if (listeningRmsPeakDb < AUDIO_GATE_LOW_RMS_PEAK_DB) {
+            if (listeningRmsPeakDb < AUDIO_GATE_LOW_RMS_PEAK_DB && !hasRecognizedToken) {
                 return AUDIO_QUALITY_GATE_LOW_INPUT;
             }
             if (averageRms > AUDIO_GATE_NOISY_RMS_AVG_DB
@@ -1191,35 +1146,56 @@ public class IpaPracticeActivity extends AppCompatActivity {
             return;
         }
 
-        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            Toast.makeText(this, R.string.ipa_practice_recognition_unavailable, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED) {
-            startListeningForAssessment();
+                != PackageManager.PERMISSION_GRANTED) {
+            pendingAudioAction = AUDIO_ACTION_ASSESSMENT;
+            audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
             return;
         }
 
-        pendingAudioAction = AUDIO_ACTION_ASSESSMENT;
-        audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
+        if (!SpeechRecognizer.isRecognitionAvailable(this) || speechRecognizer == null || speechIntent == null) {
+            if (!launchSystemRecognizerFallback()) {
+                Toast.makeText(this, R.string.ipa_practice_recognition_unavailable, Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
+        startListeningForAssessment();
     }
 
     private void startListeningForAssessment() {
         if (speechRecognizer == null || speechIntent == null) {
-            Toast.makeText(this, R.string.ipa_practice_recognition_unavailable, Toast.LENGTH_SHORT).show();
+            if (!launchSystemRecognizerFallback()) {
+                Toast.makeText(this, R.string.ipa_practice_recognition_unavailable, Toast.LENGTH_SHORT).show();
+            }
             return;
         }
 
         cancelAbCompareRecording();
         abPlaybackQueued = false;
         stopComparePlayback();
-        speechRecognizer.cancel();
+        resetListeningAudioStats();
+        setListeningState(true);
+        if (tvRecognized != null) {
+            tvRecognized.setText(R.string.ipa_practice_listening);
+        }
         try {
             speechRecognizer.startListening(speechIntent);
         } catch (IllegalStateException ex) {
-            Toast.makeText(this, R.string.ipa_practice_error_generic, Toast.LENGTH_SHORT).show();
+            try {
+                speechRecognizer.cancel();
+                speechRecognizer.startListening(speechIntent);
+            } catch (RuntimeException retryEx) {
+                if (!launchSystemRecognizerFallback()) {
+                    setListeningState(false);
+                    Toast.makeText(this, R.string.ipa_practice_error_generic, Toast.LENGTH_SHORT).show();
+                }
+            }
+        } catch (RuntimeException ex) {
+            if (!launchSystemRecognizerFallback()) {
+                setListeningState(false);
+                Toast.makeText(this, R.string.ipa_practice_error_generic, Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -1711,11 +1687,158 @@ public class IpaPracticeActivity extends AppCompatActivity {
             case SpeechRecognizer.ERROR_AUDIO:
             case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
                 return getString(R.string.ipa_practice_error_generic);
+            case SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED:
+            case SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE:
+                return getString(R.string.ipa_practice_error_language_unavailable);
             case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
                 return getString(R.string.ipa_practice_permission_denied);
             default:
                 return getString(R.string.ipa_practice_error_generic);
         }
+    }
+
+    private void handleAssessmentResults(@Nullable Bundle results, boolean skipAudioQualityGate) {
+        consecutiveAsrErrors = 0;
+        RecognitionCandidate candidate = chooseBestCandidate(results, currentWord);
+        String recognized = candidate.word;
+
+        if (!skipAudioQualityGate) {
+            int audioGate = evaluateAudioQualityGate(
+                    candidate.hasConfidence() ? candidate.confidence : -1f,
+                    recognized
+            );
+            if (audioGate != AUDIO_QUALITY_GATE_PASS) {
+                renderAudioQualityBlockedState(recognized, audioGate);
+                pushAttemptHistory(
+                        currentWord,
+                        recognized,
+                        0,
+                        0,
+                        R.string.ipa_practice_history_status_audio_quality
+                );
+                Toast.makeText(this, audioQualityGateToast(audioGate), Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        if (TextUtils.isEmpty(recognized)) {
+            if (tvRecognized != null) {
+                tvRecognized.setText(R.string.ipa_practice_empty_result);
+            }
+            pushAttemptHistory(currentWord, "", 0, 0, R.string.ipa_practice_history_status_no_match);
+            Toast.makeText(this, R.string.ipa_practice_empty_result, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (candidate.hasConfidence() && candidate.confidence < MIN_ASR_CONFIDENCE_FOR_HARD_BLOCK) {
+            renderConfidenceBlockedState(recognized);
+            pushAttemptHistory(currentWord, recognized, 0, 0, R.string.ipa_practice_history_status_blocked);
+            Toast.makeText(this, R.string.ipa_practice_confidence_low, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (tvRecognized != null) {
+            tvRecognized.setText(getString(R.string.ipa_practice_recognized_format, recognized));
+        }
+
+        PronunciationAssessment assessment = assessPronunciation(
+                recognized,
+                currentWord,
+                profile,
+                candidate.hasConfidence() ? candidate.confidence : -1f
+        );
+        int passOverallAtAttemptTime = adaptivePassOverall;
+        int passSoundAtAttemptTime = adaptivePassSound;
+        renderAssessment(assessment);
+        recordAssessmentForAdaptivePass(profile.symbol, assessment);
+        if (!assessment.detectedConfusionSymbol.isEmpty()
+                && assessment.soundScore < passSoundAtAttemptTime) {
+            recordConfusionObservation(profile.symbol, assessment.detectedConfusionSymbol);
+        }
+        boolean passed = assessment.overallScore >= passOverallAtAttemptTime
+                && assessment.soundScore >= passSoundAtAttemptTime;
+        pushAttemptHistory(
+                currentWord,
+                recognized,
+                assessment.overallScore,
+                assessment.soundScore,
+                passed
+                        ? R.string.ipa_practice_history_status_pass
+                        : R.string.ipa_practice_history_status_retry
+        );
+        if (passed) {
+            registerSuccessfulRead(currentWord);
+        }
+        maybeUnlockNextWord(currentWord);
+    }
+
+    private boolean shouldLaunchSystemRecognizerFallback(int errorCode) {
+        switch (errorCode) {
+            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
+                return false;
+            case SpeechRecognizer.ERROR_NO_MATCH:
+            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
+                return consecutiveAsrErrors >= ASR_ERRORS_BEFORE_SYSTEM_FALLBACK;
+            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
+            case SpeechRecognizer.ERROR_AUDIO:
+            case SpeechRecognizer.ERROR_SERVER:
+            case SpeechRecognizer.ERROR_CLIENT:
+            case SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED:
+            case SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE:
+            case SpeechRecognizer.ERROR_SERVER_DISCONNECTED:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private boolean launchSystemRecognizerFallback() {
+        Intent fallbackIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        fallbackIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        fallbackIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US.toLanguageTag());
+        fallbackIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
+        fallbackIntent.putExtra(
+                RecognizerIntent.EXTRA_PROMPT,
+                getString(R.string.ipa_practice_system_recognizer_prompt, currentWord)
+        );
+
+        try {
+            resetListeningAudioStats();
+            setListeningState(true);
+            if (tvRecognized != null) {
+                tvRecognized.setText(R.string.ipa_practice_listening);
+            }
+            systemRecognizerLauncher.launch(fallbackIntent);
+            return true;
+        } catch (ActivityNotFoundException ex) {
+            setListeningState(false);
+            Toast.makeText(this, R.string.ipa_practice_system_recognizer_unavailable, Toast.LENGTH_SHORT).show();
+            return false;
+        }
+    }
+
+    private void handleSystemRecognizerActivityResult(int resultCode, @Nullable Intent data) {
+        setListeningState(false);
+        if (resultCode != RESULT_OK) {
+            if (tvRecognized != null) {
+                tvRecognized.setText(R.string.ipa_practice_empty_result);
+            }
+            Toast.makeText(this, R.string.ipa_practice_empty_result, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Bundle bundle = new Bundle();
+        if (data != null) {
+            ArrayList<String> matches = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            if (matches != null) {
+                bundle.putStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION, matches);
+            }
+            float[] confidence = data.getFloatArrayExtra(RecognizerIntent.EXTRA_CONFIDENCE_SCORES);
+            if (confidence != null) {
+                bundle.putFloatArray(SpeechRecognizer.CONFIDENCE_SCORES, confidence);
+            }
+        }
+        handleAssessmentResults(bundle, true);
     }
 
     @NonNull
