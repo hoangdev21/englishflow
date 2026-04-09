@@ -7,6 +7,6 @@
     <gradient
         android:angle="270"
         android:endColor="@color/ef_surface_variant"
-        android:startColor="#F0F4F2"
+        android:startColor="@color/ef_surface"
         android:type="linear" />
 </shape>

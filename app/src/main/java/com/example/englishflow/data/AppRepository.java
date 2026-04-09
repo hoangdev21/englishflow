@@ -87,7 +87,7 @@ public class AppRepository {
     private static final int FLASHCARD_TRANSLATION_READ_TIMEOUT_MS = 3000;
     private static final int FILL_BLANK_BOOTSTRAP_MAX_RETRY = 6;
     private static final long FILL_BLANK_BOOTSTRAP_RETRY_DELAY_MS = 180L;
-    private static final long DASHBOARD_CACHE_TTL_MS = 5000L;
+    private static final long DASHBOARD_CACHE_TTL_MS = 10000L;
     private static final long DOMAINS_CACHE_TTL_MS = 30000L;
     private static final long CLOUD_SYNC_MIN_INTERVAL_MS = 15000L;
     private static final String COLLECTION_USERS = "users";
@@ -106,6 +106,7 @@ public class AppRepository {
     private final FirebaseFirestore firestore;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final ExecutorService backgroundExecutor = Executors.newFixedThreadPool(2);
+    private final ExecutorService uiDataExecutor = Executors.newFixedThreadPool(2);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Context appContext;
     private final Object cacheLock = new Object();
@@ -1130,7 +1131,7 @@ public class AppRepository {
     }
 
     public void getUserProgressAsync(DataCallback<UserProgress> callback) {
-        executorService.execute(() -> {
+        uiDataExecutor.execute(() -> {
             UserProgress progress = getUserProgress();
             mainHandler.post(() -> callback.onResult(progress));
         });
@@ -1140,12 +1141,9 @@ public class AppRepository {
         String email = getCurrentEmail();
         long now = System.currentTimeMillis();
 
-        synchronized (cacheLock) {
-            if (cachedDashboardSnapshot != null
-                    && email.equals(cachedDashboardEmail)
-                    && now - cachedDashboardAt <= DASHBOARD_CACHE_TTL_MS) {
-                return cachedDashboardSnapshot.copy();
-            }
+        DashboardSnapshot cachedSnapshot = getCachedDashboardSnapshotIfFresh(email, now);
+        if (cachedSnapshot != null) {
+            return cachedSnapshot;
         }
 
         DashboardSnapshot snapshot = buildDashboardSnapshot(email);
@@ -1157,8 +1155,25 @@ public class AppRepository {
         return snapshot;
     }
 
+    private DashboardSnapshot getCachedDashboardSnapshotIfFresh(String email, long now) {
+        synchronized (cacheLock) {
+            if (cachedDashboardSnapshot != null
+                    && email.equals(cachedDashboardEmail)
+                    && now - cachedDashboardAt <= DASHBOARD_CACHE_TTL_MS) {
+                return cachedDashboardSnapshot.copy();
+            }
+        }
+        return null;
+    }
+
     public void getDashboardSnapshotAsync(DataCallback<DashboardSnapshot> callback) {
         if (callback == null) {
+            return;
+        }
+
+        DashboardSnapshot cachedSnapshot = getCachedDashboardSnapshotIfFresh(getCurrentEmail(), System.currentTimeMillis());
+        if (cachedSnapshot != null) {
+            mainHandler.post(() -> callback.onResult(cachedSnapshot));
             return;
         }
 
@@ -1170,7 +1185,7 @@ public class AppRepository {
             dashboardRequestRunning = true;
         }
 
-        executorService.execute(() -> {
+        uiDataExecutor.execute(() -> {
             DashboardSnapshot snapshot = getDashboardSnapshot();
             List<DataCallback<DashboardSnapshot>> callbacks;
             synchronized (dashboardRequestLock) {
@@ -1613,7 +1628,11 @@ public class AppRepository {
     }
 
     public void getDomainsAsync(DataCallback<List<DomainItem>> callback) {
-        executorService.execute(() -> {
+        if (callback == null) {
+            return;
+        }
+
+        uiDataExecutor.execute(() -> {
             List<DomainItem> list = getDomains();
             mainHandler.post(() -> callback.onResult(list));
         });
@@ -1929,7 +1948,7 @@ public class AppRepository {
     }
 
     private String buildExampleTranslationFallback(String word, String meaning) {
-        return "Câu ví dụ minh họa cách dùng \"" + word + "\" với nghĩa \"" + meaning + "\".";
+        return "Hãy điền từ tiếng Anh phù hợp với ngữ cảnh câu trên (nghĩa: \"" + meaning + "\").";
     }
 
     private String buildUsageGuidance(String word, String meaning, String domain, String example) {
@@ -3898,8 +3917,8 @@ public class AppRepository {
     }
 
     public List<FillBlankQuestionItem> getFillBlankQuestions(String topic) {
-        // Keep first paint fast: avoid network translation work on the UI-critical path.
-        return buildFillBlankQuestionsForTopic(topic, true, false, false);
+        // Now enabling network translation since this is called on background executor
+        return buildFillBlankQuestionsForTopic(topic, true, true, false);
     }
 
     private boolean shouldRetryFillBlankBootstrap() {

@@ -29,6 +29,8 @@
     <color name="ef_surface_elevated">#FFFFFF</color>
     <color name="ef_outline">#DAE2DE</color>
     <color name="ef_outline_light">#ECF1EE</color>
+    <color name="ef_background_top">#E1F5FE</color>
+    <color name="ef_background_bottom">#F1F8E9</color>
 
     <!-- Semantic -->
     <color name="ef_success">#1DA370</color>
@@ -78,6 +80,7 @@
     <color name="ef_silver_border">#CBD5E1</color>
     <color name="ef_silver_shadow">#94A3B8</color>
     <color name="ef_hero_text_white">#F1F5F9</color>
+    <color name="ef_wave_color">@color/white</color>
     <color name="ef_hero_text_secondary">#94A3B8</color>
 
     <color name="ef_card_indigo">#EEF0FF</color>
@@ -132,4 +135,16 @@
     <color name="ef_orange_primary">#FF9800</color>
     <color name="ef_orange_dark">#E65100</color>
     <color name="ef_orange_light">#FFF3E0</color>
-</resources>
+
+    <!-- Learn Quick Actions (Pastel 3D Gradient) -->
+    <color name="ef_learn_tile_pink">#FFF0F7</color>
+    <color name="ef_learn_tile_blue">#EDF4FF</color>
+    <color name="ef_learn_tile_green">#E9FFF4</color>
+    <color name="ef_learn_tile_stroke">#A8FFFFFF</color>
+    <color name="ef_learn_tile_shadow">#12000000</color>
+    <color name="ef_learn_tile_inner_shadow">#14000000</color>
+    <color name="ef_learn_tile_gloss">#66FFFFFF</color>
+    <color name="ef_learn_card_pink">#FFF7FB</color>
+    <color name="ef_learn_card_blue">#F3F8FF</color>
+    <color name="ef_learn_card_green">#F1FFF8</color>
+</resources>

@@ -30,7 +30,7 @@
             android:fontFamily="@font/nunito"
             android:letterSpacing="-0.01"
             android:text="@string/fill_blank_select_topic_title"
-            android:textColor="@color/ef_primary_dark"
+            android:textColor="@color/ef_text_primary"
             android:textSize="23sp"
             android:textStyle="bold" />
 

@@ -20,7 +20,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EnglishFlow"
         android:usesCleartextTraffic="true"
-        android:extractNativeLibs="true"
         android:enableOnBackInvokedCallback="true">
 
         <!-- Splash Activity - Entry Point -->

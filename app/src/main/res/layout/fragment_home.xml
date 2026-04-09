@@ -44,7 +44,7 @@
                 android:layout_marginTop="145dp"
                 android:scaleType="fitXY"
                 android:src="@drawable/bg_wave_bottom"
-                app:tint="@color/white" />
+                app:tint="@color/ef_wave_color" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/btnHomeHeroNotification"
@@ -342,6 +342,7 @@
             android:layout_marginTop="-28dp"
             android:scaleType="fitXY"
             android:src="@drawable/bg_wave_bottom"
+            app:tint="@color/ef_wave_color"
             android:elevation="4dp"
             android:translationZ="2dp" />
 

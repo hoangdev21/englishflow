@@ -3,6 +3,9 @@ package com.example.englishflow;
 import android.app.Application;
 import android.util.Log;
 
+import androidx.appcompat.app.AppCompatDelegate;
+
+import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.UserPresenceTracker;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -17,6 +20,9 @@ public class EnglishFlowApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        AppSettingsStore settingsStore = new AppSettingsStore(this);
+        AppCompatDelegate.setDefaultNightMode(settingsStore.getNightModeValue());
 
         FirebaseApp firebaseApp = FirebaseApp.initializeApp(this);
         if (firebaseApp == null) {

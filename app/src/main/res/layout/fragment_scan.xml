@@ -225,7 +225,7 @@
                     android:layout_width="0dp"
                     android:layout_height="46dp"
                     android:layout_weight="1"
-                    android:text="Bật Magic Lens"
+                    android:text="Bật Magic"
                     app:icon="@drawable/ic_ai_stars"
                     app:iconPadding="6dp"
                     app:iconTint="@color/white"
@@ -398,7 +398,6 @@
                             android:layout_marginTop="18dp"
                             android:orientation="vertical"
                             android:background="@drawable/bg_bubble_ai"
-                            android:backgroundTint="#F8FCFF"
                             android:padding="16dp">
                             <TextView
                                 android:layout_width="wrap_content"

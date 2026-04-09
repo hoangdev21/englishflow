@@ -112,6 +112,7 @@ dependencies {
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("com.airbnb.android:lottie:6.6.4")
     implementation(libs.dotlottie.android)
+    implementation("androidx.webkit:webkit:1.12.1")
 
     implementation("com.google.code.gson:gson:2.10.1")
     testImplementation(libs.junit)

@@ -5,327 +5,3047 @@
     "title": "Chào hỏi & Làm quen",
     "emoji": "👋",
     "min_level": "A1",
-    "prompt_key": "greetings_intro",
-    "role_description": "You are Flow, a friendly AI tutor meeting the learner for the first time.",
-    "min_exchanges": 4,
-    "keywords": ["Hello", "Good morning", "Name"],
+    "prompt_key": "greetings_getting_started",
+    "role_description": "You are Flow, a friendly tutor helping the learner greet naturally and confidently.",
+    "min_exchanges": 5,
+    "keywords": [
+      "Hello",
+      "Hi",
+      "Nice to meet you",
+      "Introduce",
+      "Name",
+      "Good morning",
+      "Good evening",
+      "Polite"
+    ],
     "status": "available",
     "flow_steps": [
       {
         "type": "intro",
-        "content": "Chào bạn! Mình là Flow. Hôm nay mình và bạn bắt đầu bài đầu tiên về chào hỏi nhé."
+        "content": "Chúng ta bắt đầu bằng các mẫu chào hỏi cơ bản để tự tin mở đầu cuộc trò chuyện."
       },
       {
         "type": "vocabulary",
-        "word": "Good morning",
-        "ipa": "/gʊd ˈmɔːrnɪŋ/",
-        "meaning": "Chào buổi sáng",
-        "instruction": "Nhấn mic và đọc theo: Good morning.",
-        "hint": "Nhớ nhấn mạnh vào âm MOR."
+        "word": "Hello",
+        "ipa": "/həˈloʊ/",
+        "meaning": "Xin chào",
+        "instruction": "Đọc theo: Hello, I am Minh.",
+        "hint": "Âm 'loʊ' cần rõ và nhẹ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Nice to meet you",
+        "ipa": "/naɪs tə miːt juː/",
+        "meaning": "Rất vui được gặp bạn",
+        "instruction": "Đọc theo: Nice to meet you.",
+        "hint": "Nối trơn cụm 'meet you'."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Introduce",
+        "ipa": "/ˌɪntrəˈduːs/",
+        "meaning": "Giới thiệu",
+        "instruction": "Đọc theo: Let me introduce myself.",
+        "hint": "Nhấn âm ở 'duce'."
       },
       {
         "type": "situational_quiz",
-        "question": "Khi vừa ngủ dậy và gặp mẹ, bạn nên chào gì?",
-        "expected_keyword": "good morning",
-        "accepted_answers": ["good morning", "morning"],
-        "hint": "Từ khóa cần có: good morning"
+        "question": "Khi gặp bạn mới lần đầu, bạn nên nói câu nào để lịch sự?",
+        "expected_keyword": "nice to meet you",
+        "accepted_answers": [
+          "nice to meet you",
+          "hello nice to meet you"
+        ],
+        "hint": "Dùng cụm: nice to meet you."
       }
     ]
   },
   {
     "lesson_id": "lesson_02",
     "order": 2,
-    "title": "Cảm xúc ngày mới",
-    "emoji": "😊",
+    "title": "Giới thiệu bản thân",
+    "emoji": "🪪",
     "min_level": "A1",
-    "prompt_key": "morning_mood",
-    "role_description": "You are a caring friend asking about the learner's mood.",
-    "min_exchanges": 4,
-    "keywords": ["Happy", "Sad", "Tired", "Excited", "Hungry"],
+    "prompt_key": "self_introduction_basic",
+    "role_description": "You coach the learner to present name, origin, and personal interests clearly.",
+    "min_exchanges": 5,
+    "keywords": [
+      "Name",
+      "From",
+      "Live",
+      "Hobby",
+      "Student",
+      "Work",
+      "Age",
+      "Introduce"
+    ],
     "status": "available",
     "flow_steps": [
       {
         "type": "intro",
-        "content": "Hôm nay bạn thấy thế nào? Mình sẽ giúp bạn diễn tả cảm xúc bằng tiếng Anh."
+        "content": "Bài này tập trung vào giới thiệu bản thân ngắn gọn nhưng đầy đủ thông tin."
       },
       {
         "type": "vocabulary",
-        "word": "Happy",
-        "ipa": "/ˈhæpi/",
-        "meaning": "Vui",
-        "instruction": "Đọc theo: I feel happy.",
-        "hint": "Âm cuối là pi, phát âm ngắn gọn."
+        "word": "Name",
+        "ipa": "/neɪm/",
+        "meaning": "Tên",
+        "instruction": "Đọc theo: My name is Lan.",
+        "hint": "Âm /eɪ/ kéo nhẹ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "From",
+        "ipa": "/frʌm/",
+        "meaning": "Đến từ",
+        "instruction": "Đọc theo: I am from Da Nang.",
+        "hint": "Âm /ʌ/ ngắn gọn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Hobby",
+        "ipa": "/ˈhɑːbi/",
+        "meaning": "Sở thích",
+        "instruction": "Đọc theo: My hobby is reading.",
+        "hint": "Nhấn âm đầu 'HOB'."
       },
       {
         "type": "situational_quiz",
-        "question": "Nếu bạn rất vui hôm nay, bạn nói câu nào?",
-        "expected_keyword": "happy",
-        "accepted_answers": ["i feel happy", "happy"],
-        "hint": "Dùng từ happy trong câu."
+        "question": "Nếu bạn muốn nói mình đến từ Hà Nội, bạn nói thế nào?",
+        "expected_keyword": "from",
+        "accepted_answers": [
+          "i am from ha noi",
+          "from ha noi"
+        ],
+        "hint": "Sử dụng câu có từ from."
       }
     ]
   },
   {
     "lesson_id": "lesson_03",
     "order": 3,
-    "title": "Gia đình yêu thương",
-    "emoji": "👨‍👩‍👧",
+    "title": "Quốc gia & Ngôn ngữ",
+    "emoji": "🌏",
     "min_level": "A1",
-    "prompt_key": "family_talk",
-    "role_description": "You ask the learner to describe family members and home routines.",
-    "min_exchanges": 4,
-    "keywords": ["Father", "Mother", "Sister", "Brother", "Cook"],
+    "prompt_key": "country_and_language",
+    "role_description": "You help the learner describe nationality and language in simple, accurate sentences.",
+    "min_exchanges": 5,
+    "keywords": [
+      "Country",
+      "Nationality",
+      "Language",
+      "Vietnamese",
+      "English",
+      "Speak",
+      "Citizen",
+      "International"
+    ],
     "status": "available",
     "flow_steps": [
       {
         "type": "intro",
-        "content": "Hãy giới thiệu một thành viên trong gia đình của bạn."
+        "content": "Bạn sẽ học cách nói về quốc gia, quốc tịch và ngôn ngữ một cách tự nhiên."
       },
       {
         "type": "vocabulary",
-        "word": "Cook",
-        "ipa": "/kʊk/",
-        "meaning": "Nấu ăn",
-        "instruction": "Đọc theo: My mother can cook.",
-        "hint": "Chú ý âm cuối /k/ ngắn."
+        "word": "Country",
+        "ipa": "/ˈkʌntri/",
+        "meaning": "Quốc gia",
+        "instruction": "Đọc theo: Vietnam is my country.",
+        "hint": "Âm đầu 'CUN' rõ ràng."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Nationality",
+        "ipa": "/ˌnæʃəˈnæləti/",
+        "meaning": "Quốc tịch",
+        "instruction": "Đọc theo: My nationality is Vietnamese.",
+        "hint": "Nhấn âm ở 'nal'."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Language",
+        "ipa": "/ˈlæŋɡwɪdʒ/",
+        "meaning": "Ngôn ngữ",
+        "instruction": "Đọc theo: English is an international language.",
+        "hint": "Chú ý âm cuối /dʒ/."
       },
       {
         "type": "situational_quiz",
-        "question": "Ai là người nấu ăn giỏi nhất trong nhà bạn?",
-        "expected_keyword": "cook",
-        "accepted_answers": ["cook", "my mother cooks", "my father cooks"],
-        "hint": "Trả lời cần có từ cook."
+        "question": "Nếu bạn nói được tiếng Anh và tiếng Việt, bạn trả lời sao?",
+        "expected_keyword": "language",
+        "accepted_answers": [
+          "i speak two languages",
+          "english and vietnamese"
+        ],
+        "hint": "Dùng từ language hoặc languages."
       }
     ]
   },
   {
     "lesson_id": "lesson_04",
     "order": 4,
-    "title": "Bữa sáng ngon miệng",
-    "emoji": "☕",
+    "title": "Gia đình và mối quan hệ",
+    "emoji": "👨‍👩‍👧‍👦",
     "min_level": "A1",
-    "prompt_key": "breakfast_order",
-    "role_description": "You are a waiter taking breakfast orders politely.",
+    "prompt_key": "family_relationships",
+    "role_description": "You guide the learner to talk about family members and relationships politely.",
     "min_exchanges": 5,
-    "keywords": ["Coffee", "Tea", "Bread", "Breakfast", "Delicious"],
+    "keywords": [
+      "Parents",
+      "Sibling",
+      "Relative",
+      "Family",
+      "Married",
+      "Single",
+      "Children",
+      "Relationship"
+    ],
     "status": "available",
     "flow_steps": [
       {
         "type": "intro",
-        "content": "Mình đóng vai phục vụ. Bạn thử gọi món bằng tiếng Anh nhé."
+        "content": "Chúng ta luyện cách mô tả thành viên gia đình và mối quan hệ thân thuộc."
       },
       {
         "type": "vocabulary",
-        "word": "Coffee",
-        "ipa": "/ˈkɔːfi/",
-        "meaning": "Cà phê",
-        "instruction": "Đọc theo: I would like coffee.",
-        "hint": "Phát âm rõ âm /kɔː/."
+        "word": "Parents",
+        "ipa": "/ˈperənts/",
+        "meaning": "Cha mẹ",
+        "instruction": "Đọc theo: My parents live in Hue.",
+        "hint": "Âm 'pa' nhẹ và ngắn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Sibling",
+        "ipa": "/ˈsɪblɪŋ/",
+        "meaning": "Anh chị em ruột",
+        "instruction": "Đọc theo: I have one sibling.",
+        "hint": "Nhấn âm đầu 'SIB'."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Relative",
+        "ipa": "/ˈrelətɪv/",
+        "meaning": "Người thân",
+        "instruction": "Đọc theo: My relatives are very kind.",
+        "hint": "Âm cuối /tɪv/ rõ."
       },
       {
         "type": "situational_quiz",
-        "question": "Nếu bạn muốn gọi trà, bạn sẽ nói gì?",
-        "expected_keyword": "tea",
-        "accepted_answers": ["tea", "i would like tea"],
-        "hint": "Dùng từ tea trong câu."
+        "question": "Nếu bạn có hai anh em ruột, bạn sẽ nói thế nào?",
+        "expected_keyword": "sibling",
+        "accepted_answers": [
+          "i have two siblings",
+          "two siblings"
+        ],
+        "hint": "Sử dụng từ sibling hoặc siblings."
       }
     ]
   },
   {
     "lesson_id": "lesson_05",
     "order": 5,
-    "title": "Công việc & Ước mơ",
-    "emoji": "💼",
+    "title": "Lịch trình hàng ngày",
+    "emoji": "⏰",
     "min_level": "A1",
-    "prompt_key": "job_and_dream",
-    "role_description": "You are a mentor asking about jobs and dreams.",
+    "prompt_key": "daily_routine_schedule",
+    "role_description": "You coach the learner to describe daily routine with clear time expressions.",
     "min_exchanges": 5,
-    "keywords": ["Teacher", "Doctor", "Student", "Dream", "Work"],
+    "keywords": [
+      "Wake up",
+      "Breakfast",
+      "Commute",
+      "Schedule",
+      "Morning",
+      "Evening",
+      "Routine",
+      "Usually"
+    ],
     "status": "available",
     "flow_steps": [
       {
         "type": "intro",
-        "content": "Bây giờ mình sẽ hỏi bạn về công việc và ước mơ."
+        "content": "Bài này giúp bạn kể về một ngày điển hình từ sáng đến tối."
       },
       {
         "type": "vocabulary",
-        "word": "Dream",
-        "ipa": "/driːm/",
-        "meaning": "Ước mơ",
-        "instruction": "Đọc theo: My dream is to be a teacher.",
-        "hint": "Kéo dài âm /iː/ trong dream."
+        "word": "Wake up",
+        "ipa": "/weɪk ʌp/",
+        "meaning": "Thức dậy",
+        "instruction": "Đọc theo: I wake up at six.",
+        "hint": "Nối liền 'wake up'."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Commute",
+        "ipa": "/kəˈmjuːt/",
+        "meaning": "Di chuyển đến nơi học/làm",
+        "instruction": "Đọc theo: I commute by bus.",
+        "hint": "Nhấn âm ở /mjuːt/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Schedule",
+        "ipa": "/ˈskedʒuːl/",
+        "meaning": "Lịch trình",
+        "instruction": "Đọc theo: My schedule is busy.",
+        "hint": "Âm đầu /ske/ rõ ràng."
       },
       {
         "type": "situational_quiz",
-        "question": "Nếu bạn ước mơ trở thành bác sĩ, bạn nói gì?",
-        "expected_keyword": "doctor",
-        "accepted_answers": ["doctor", "my dream is to be a doctor"],
-        "hint": "Cần có từ doctor."
+        "question": "Nếu bạn đi làm bằng xe buýt mỗi sáng, bạn nói gì?",
+        "expected_keyword": "commute",
+        "accepted_answers": [
+          "i commute by bus",
+          "commute by bus"
+        ],
+        "hint": "Cần có từ commute."
       }
     ]
   },
   {
     "lesson_id": "lesson_06",
     "order": 6,
-    "title": "Thời trang & Màu sắc",
-    "emoji": "👕",
+    "title": "Màu sắc & Trang phục",
+    "emoji": "👔",
     "min_level": "A1",
-    "prompt_key": "fashion_colors",
-    "role_description": "You are a stylist helping the learner describe outfits.",
+    "prompt_key": "colors_and_outfits",
+    "role_description": "You help the learner describe clothing style and color choice in natural English.",
     "min_exchanges": 5,
-    "keywords": ["Blue", "Red", "Shirt", "Wear", "Favorite"],
+    "keywords": [
+      "Color",
+      "Shirt",
+      "Dress",
+      "Casual",
+      "Formal",
+      "Style",
+      "Wear",
+      "Favorite"
+    ],
     "status": "available",
     "flow_steps": [
       {
         "type": "intro",
-        "content": "Hãy mô tả trang phục hôm nay bằng tiếng Anh."
+        "content": "Chúng ta luyện mô tả trang phục và màu sắc phù hợp từng tình huống."
       },
       {
         "type": "vocabulary",
-        "word": "Shirt",
-        "ipa": "/ʃɜːrt/",
-        "meaning": "Áo sơ mi",
-        "instruction": "Đọc theo: I wear a blue shirt.",
-        "hint": "Nhớ âm /ʃ/ ở đầu từ."
+        "word": "Color",
+        "ipa": "/ˈkʌlər/",
+        "meaning": "Màu sắc",
+        "instruction": "Đọc theo: Blue is my favorite color.",
+        "hint": "Âm /ʌ/ ngắn gọn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Casual",
+        "ipa": "/ˈkæʒuəl/",
+        "meaning": "Phong cách thường ngày",
+        "instruction": "Đọc theo: I wear casual clothes on weekends.",
+        "hint": "Nhấn âm đầu 'CA'."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Formal",
+        "ipa": "/ˈfɔːrməl/",
+        "meaning": "Trang trọng",
+        "instruction": "Đọc theo: This is a formal suit.",
+        "hint": "Âm /fɔːr/ rõ ràng."
       },
       {
         "type": "situational_quiz",
-        "question": "Nếu màu yêu thích của bạn là đỏ, bạn nói gì?",
-        "expected_keyword": "red",
-        "accepted_answers": ["red", "my favorite color is red"],
-        "hint": "Dùng từ red trong câu."
+        "question": "Trang phục lịch sự khi đi họp thường được gọi là gì?",
+        "expected_keyword": "formal",
+        "accepted_answers": [
+          "formal",
+          "formal outfit"
+        ],
+        "hint": "Từ khóa là formal."
       }
     ]
   },
   {
     "lesson_id": "lesson_07",
     "order": 7,
-    "title": "Thời tiết hôm nay",
-    "emoji": "🌤️",
+    "title": "Nhà cửa & Khu dân cư",
+    "emoji": "🏠",
     "min_level": "A1",
-    "prompt_key": "weather_today",
-    "role_description": "You are a weather reporter asking about outdoor conditions.",
+    "prompt_key": "home_and_neighborhood",
+    "role_description": "You guide the learner to describe home type and neighborhood facilities.",
     "min_exchanges": 5,
-    "keywords": ["Sunny", "Rainy", "Cold", "Hot", "Weather"],
+    "keywords": [
+      "Apartment",
+      "Kitchen",
+      "Bedroom",
+      "Neighborhood",
+      "Quiet",
+      "Convenient",
+      "Rent",
+      "Nearby"
+    ],
     "status": "available",
     "flow_steps": [
       {
         "type": "intro",
-        "content": "Mình sẽ đóng vai MC dự báo thời tiết."
+        "content": "Bạn sẽ học cách giới thiệu nơi ở và khu vực xung quanh."
       },
       {
         "type": "vocabulary",
-        "word": "Weather",
-        "ipa": "/ˈweðər/",
-        "meaning": "Thời tiết",
-        "instruction": "Đọc theo: The weather is sunny.",
-        "hint": "Âm /ð/ cần đặt lưỡi giữa răng."
+        "word": "Apartment",
+        "ipa": "/əˈpɑːrtmənt/",
+        "meaning": "Căn hộ",
+        "instruction": "Đọc theo: I live in a small apartment.",
+        "hint": "Nhấn âm /pɑːrt/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Kitchen",
+        "ipa": "/ˈkɪtʃən/",
+        "meaning": "Nhà bếp",
+        "instruction": "Đọc theo: The kitchen is clean.",
+        "hint": "Âm /tʃ/ cần rõ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Neighborhood",
+        "ipa": "/ˈneɪbərhʊd/",
+        "meaning": "Khu dân cư",
+        "instruction": "Đọc theo: My neighborhood is peaceful.",
+        "hint": "Tách nhịp: neigh-bor-hood."
       },
       {
         "type": "situational_quiz",
-        "question": "Nếu ngoài trời đang mưa, bạn nói gì?",
-        "expected_keyword": "rainy",
-        "accepted_answers": ["rainy", "it is rainy"],
-        "hint": "Trả lời cần có rainy."
+        "question": "Nếu bạn sống trong căn hộ gần trung tâm, bạn nói sao?",
+        "expected_keyword": "apartment",
+        "accepted_answers": [
+          "i live in an apartment near downtown",
+          "apartment"
+        ],
+        "hint": "Sử dụng từ apartment."
       }
     ]
   },
   {
     "lesson_id": "lesson_08",
     "order": 8,
-    "title": "Ngôi nhà ấm cúng",
-    "emoji": "🏠",
+    "title": "Đồ ăn hàng ngày",
+    "emoji": "🥗",
     "min_level": "A1",
-    "prompt_key": "home_space",
-    "role_description": "You ask the learner to describe objects in a room.",
+    "prompt_key": "daily_food_vocabulary",
+    "role_description": "You train the learner to talk about meals and healthy food choices.",
     "min_exchanges": 5,
-    "keywords": ["Bed", "Chair", "Table", "Room", "Home"],
+    "keywords": [
+      "Breakfast",
+      "Lunch",
+      "Dinner",
+      "Vegetable",
+      "Protein",
+      "Healthy",
+      "Cook",
+      "Meal"
+    ],
     "status": "available",
     "flow_steps": [
       {
         "type": "intro",
-        "content": "Chúng ta sẽ mô tả đồ vật trong phòng của bạn."
+        "content": "Trong bài này, bạn luyện từ vựng về bữa ăn và chế độ ăn lành mạnh."
       },
       {
         "type": "vocabulary",
-        "word": "Bed",
-        "ipa": "/bed/",
-        "meaning": "Giường",
-        "instruction": "Đọc theo: I sleep on the bed.",
-        "hint": "Âm /e/ ngắn và rõ."
+        "word": "Breakfast",
+        "ipa": "/ˈbrekfəst/",
+        "meaning": "Bữa sáng",
+        "instruction": "Đọc theo: I never skip breakfast.",
+        "hint": "Âm /brek/ rõ ràng."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Vegetable",
+        "ipa": "/ˈvedʒtəbəl/",
+        "meaning": "Rau củ",
+        "instruction": "Đọc theo: I eat vegetables every day.",
+        "hint": "Âm đầu /vedʒ/ ngắn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Protein",
+        "ipa": "/ˈproʊtiːn/",
+        "meaning": "Đạm",
+        "instruction": "Đọc theo: Eggs are rich in protein.",
+        "hint": "Nhấn âm đầu 'PRO'."
       },
       {
         "type": "situational_quiz",
-        "question": "Nếu bạn đang ngồi trên ghế, bạn nói gì?",
-        "expected_keyword": "chair",
-        "accepted_answers": ["chair", "i sit on the chair"],
-        "hint": "Dùng từ chair."
+        "question": "Nếu bạn muốn nói bữa tối cân bằng với nhiều rau, bạn nói gì?",
+        "expected_keyword": "vegetable",
+        "accepted_answers": [
+          "my dinner has many vegetables",
+          "vegetables"
+        ],
+        "hint": "Cần có từ vegetables."
       }
     ]
   },
   {
     "lesson_id": "lesson_09",
     "order": 9,
-    "title": "Sở thích cuối tuần",
-    "emoji": "🎬",
+    "title": "Đồ uống & Quán cà phê",
+    "emoji": "☕",
     "min_level": "A1",
-    "prompt_key": "weekend_hobby",
-    "role_description": "You invite the learner to weekend activities.",
+    "prompt_key": "beverage_and_cafe_order",
+    "role_description": "You play a barista and help the learner order drinks politely.",
     "min_exchanges": 5,
-    "keywords": ["Football", "Movie", "Music", "Free time", "Play"],
+    "keywords": [
+      "Beverage",
+      "Coffee",
+      "Tea",
+      "Order",
+      "Ice",
+      "Sugar",
+      "Receipt",
+      "Takeaway"
+    ],
     "status": "available",
     "flow_steps": [
       {
         "type": "intro",
-        "content": "Cuối tuần rồi, mình rủ bạn đi chơi nhé."
+        "content": "Bạn sẽ đóng vai khách hàng để gọi đồ uống tại quán cà phê."
       },
       {
         "type": "vocabulary",
-        "word": "Football",
-        "ipa": "/ˈfʊtbɔːl/",
-        "meaning": "Bóng đá",
-        "instruction": "Đọc theo: I play football on weekends.",
-        "hint": "Foot đọc ngắn gọn."
+        "word": "Beverage",
+        "ipa": "/ˈbevərɪdʒ/",
+        "meaning": "Đồ uống",
+        "instruction": "Đọc theo: What beverage do you recommend?",
+        "hint": "Âm cuối /dʒ/ rõ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Order",
+        "ipa": "/ˈɔːrdər/",
+        "meaning": "Gọi món",
+        "instruction": "Đọc theo: I would like to order a latte.",
+        "hint": "Âm /ɔːr/ tròn môi."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Receipt",
+        "ipa": "/rɪˈsiːt/",
+        "meaning": "Hóa đơn",
+        "instruction": "Đọc theo: Can I have the receipt?",
+        "hint": "Chú ý âm /siːt/ dài."
       },
       {
         "type": "situational_quiz",
-        "question": "Nếu bạn thích xem phim lúc rảnh, bạn nói gì?",
-        "expected_keyword": "movie",
-        "accepted_answers": ["movie", "i like watching movies"],
-        "hint": "Cần có từ movie."
+        "question": "Nếu bạn muốn gọi trà ít đường mang đi, bạn sẽ nói sao?",
+        "expected_keyword": "order",
+        "accepted_answers": [
+          "i want to order a tea with less sugar to go",
+          "order tea"
+        ],
+        "hint": "Bắt đầu bằng: I want to order..."
       }
     ]
   },
   {
     "lesson_id": "lesson_10",
     "order": 10,
-    "title": "Hẹn gặp lại",
-    "emoji": "👋",
+    "title": "Mua sắm siêu thị",
+    "emoji": "🛒",
     "min_level": "A1",
-    "prompt_key": "farewell",
-    "role_description": "You summarize the first journey and say goodbye warmly.",
-    "min_exchanges": 4,
-    "keywords": ["Goodbye", "See you", "Awesome", "Journey"],
+    "prompt_key": "supermarket_shopping",
+    "role_description": "You help the learner ask for price, discount, and checkout support.",
+    "min_exchanges": 5,
+    "keywords": [
+      "Price",
+      "Discount",
+      "Checkout",
+      "Aisle",
+      "Basket",
+      "Cash",
+      "Card",
+      "Total"
+    ],
     "status": "available",
     "flow_steps": [
       {
         "type": "intro",
-        "content": "Bạn đã hoàn thành hành trình đầu tiên. Mình rất tự hào về bạn."
+        "content": "Bài này luyện các mẫu câu mua sắm cơ bản trong siêu thị."
       },
       {
         "type": "vocabulary",
-        "word": "Goodbye",
-        "ipa": "/ˌɡʊdˈbaɪ/",
-        "meaning": "Tạm biệt",
-        "instruction": "Đọc theo: Goodbye and see you soon.",
-        "hint": "Nhấn âm vào /baɪ/."
+        "word": "Discount",
+        "ipa": "/ˈdɪskaʊnt/",
+        "meaning": "Giảm giá",
+        "instruction": "Đọc theo: Is there any discount today?",
+        "hint": "Âm /aʊ/ rõ trong discount."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Checkout",
+        "ipa": "/ˈtʃekaʊt/",
+        "meaning": "Quầy thanh toán",
+        "instruction": "Đọc theo: The checkout is over there.",
+        "hint": "Nhấn âm đầu 'CHECK'."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Aisle",
+        "ipa": "/aɪl/",
+        "meaning": "Dãy hàng",
+        "instruction": "Đọc theo: Milk is in aisle five.",
+        "hint": "Từ ngắn, âm /aɪl/."
       },
       {
         "type": "situational_quiz",
-        "question": "Nếu bạn muốn kết thúc buổi học lịch sự, bạn nói gì?",
-        "expected_keyword": "goodbye",
-        "accepted_answers": ["goodbye", "see you"],
-        "hint": "Sử dụng goodbye hoặc see you."
+        "question": "Muốn hỏi sữa ở dãy hàng nào, bạn hỏi như thế nào?",
+        "expected_keyword": "aisle",
+        "accepted_answers": [
+          "which aisle has milk",
+          "aisle five"
+        ],
+        "hint": "Dùng từ aisle để hỏi dãy hàng."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_11",
+    "order": 11,
+    "title": "Trường học & Môn học",
+    "emoji": "📚",
+    "min_level": "A2",
+    "prompt_key": "school_subjects_assignments",
+    "role_description": "You support the learner in discussing school tasks and academic planning.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Subject",
+      "Assignment",
+      "Deadline",
+      "Exam",
+      "Homework",
+      "Classmate",
+      "Professor",
+      "Review"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Chúng ta sẽ luyện cách nói về môn học, bài tập và hạn nộp."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Subject",
+        "ipa": "/ˈsʌbdʒɪkt/",
+        "meaning": "Môn học",
+        "instruction": "Đọc theo: Math is my favorite subject.",
+        "hint": "Âm /dʒ/ ở cuối rõ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Assignment",
+        "ipa": "/əˈsaɪnmənt/",
+        "meaning": "Bài tập",
+        "instruction": "Đọc theo: I finished the assignment.",
+        "hint": "Nhấn âm ở /saɪn/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Deadline",
+        "ipa": "/ˈdedlaɪn/",
+        "meaning": "Hạn chót",
+        "instruction": "Đọc theo: The deadline is Friday.",
+        "hint": "Tách nhịp dead-line."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu hạn nộp bài là thứ Sáu, bạn nói thế nào?",
+        "expected_keyword": "deadline",
+        "accepted_answers": [
+          "the deadline is friday",
+          "deadline friday"
+        ],
+        "hint": "Nhớ sử dụng từ deadline."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_12",
+    "order": 12,
+    "title": "Nghề nghiệp & Kinh nghiệm",
+    "emoji": "💼",
+    "min_level": "A2",
+    "prompt_key": "career_positions_experience",
+    "role_description": "You coach the learner to discuss job position and work experience professionally.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Position",
+      "Experience",
+      "Responsibility",
+      "Team",
+      "Manager",
+      "Intern",
+      "Promotion",
+      "Skill"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài này giúp bạn nói về công việc hiện tại và kinh nghiệm đã có."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Position",
+        "ipa": "/pəˈzɪʃən/",
+        "meaning": "Vị trí công việc",
+        "instruction": "Đọc theo: I applied for a marketing position.",
+        "hint": "Nhấn âm ở /zɪʃ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Experience",
+        "ipa": "/ɪkˈspɪriəns/",
+        "meaning": "Kinh nghiệm",
+        "instruction": "Đọc theo: I have three years of experience.",
+        "hint": "Nối liền /ksp/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Responsibility",
+        "ipa": "/rɪˌspɑːnsəˈbɪləti/",
+        "meaning": "Trách nhiệm",
+        "instruction": "Đọc theo: My responsibility is client support.",
+        "hint": "Nhấn âm ở /bɪ/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn có 2 năm kinh nghiệm chăm sóc khách hàng, bạn nói sao?",
+        "expected_keyword": "experience",
+        "accepted_answers": [
+          "i have two years of experience in customer service",
+          "two years of experience"
+        ],
+        "hint": "Dùng câu có từ experience."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_13",
+    "order": 13,
+    "title": "Văn phòng cơ bản",
+    "emoji": "🏢",
+    "min_level": "A2",
+    "prompt_key": "office_daily_operations",
+    "role_description": "You act as a colleague discussing office schedule and daily coordination.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Agenda",
+      "Meeting",
+      "Minutes",
+      "Follow-up",
+      "Task",
+      "Priority",
+      "Colleague",
+      "Update"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ học mẫu câu dùng trong văn phòng để phối hợp công việc hiệu quả."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Agenda",
+        "ipa": "/əˈdʒendə/",
+        "meaning": "Nội dung cuộc họp",
+        "instruction": "Đọc theo: Please share the agenda.",
+        "hint": "Nhấn âm /dʒen/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Minutes",
+        "ipa": "/ˈmɪnɪts/",
+        "meaning": "Biên bản họp",
+        "instruction": "Đọc theo: I will send the meeting minutes.",
+        "hint": "Âm /mɪ/ ngắn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Follow-up",
+        "ipa": "/ˈfɑːloʊ ʌp/",
+        "meaning": "Theo dõi sau họp",
+        "instruction": "Đọc theo: Let's do a follow-up tomorrow.",
+        "hint": "Nối liền follow + up."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Sau cuộc họp, bạn muốn gửi biên bản cho nhóm. Bạn nói gì?",
+        "expected_keyword": "minutes",
+        "accepted_answers": [
+          "i will send the meeting minutes",
+          "send minutes"
+        ],
+        "hint": "Từ khóa: minutes."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_14",
+    "order": 14,
+    "title": "Email chuyên nghiệp",
+    "emoji": "📧",
+    "min_level": "A2",
+    "prompt_key": "professional_email_writing",
+    "role_description": "You train the learner to write concise and polite professional emails.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Attachment",
+      "Subject line",
+      "Clarify",
+      "Reply",
+      "Forward",
+      "Deadline",
+      "Regards",
+      "Polite"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài này giúp bạn viết email rõ ràng, lịch sự và đúng mục tiêu."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Attachment",
+        "ipa": "/əˈtætʃmənt/",
+        "meaning": "File đính kèm",
+        "instruction": "Đọc theo: Please check the attachment.",
+        "hint": "Nhấn âm ở /tætʃ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Subject line",
+        "ipa": "/ˈsʌbdʒɪkt laɪn/",
+        "meaning": "Tiêu đề email",
+        "instruction": "Đọc theo: Write a clear subject line.",
+        "hint": "Nói rõ từng từ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Clarify",
+        "ipa": "/ˈklærəfaɪ/",
+        "meaning": "Làm rõ",
+        "instruction": "Đọc theo: Could you clarify this point?",
+        "hint": "Âm cuối /faɪ/ rõ."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi cần người nhận làm rõ một thông tin, bạn viết sao?",
+        "expected_keyword": "clarify",
+        "accepted_answers": [
+          "could you clarify this point",
+          "please clarify"
+        ],
+        "hint": "Sử dụng động từ clarify."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_15",
+    "order": 15,
+    "title": "Họp nhóm hiệu quả",
+    "emoji": "🗂️",
+    "min_level": "A2",
+    "prompt_key": "effective_team_meeting",
+    "role_description": "You moderate a team meeting and prompt concise, action-oriented responses.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Agenda",
+      "Action item",
+      "Owner",
+      "Timeline",
+      "Risk",
+      "Decision",
+      "Summary",
+      "Follow-up"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ tập cách đóng góp ý kiến ngắn gọn trong cuộc họp nhóm."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Action item",
+        "ipa": "/ˈækʃən ˈaɪtəm/",
+        "meaning": "Hạng mục hành động",
+        "instruction": "Đọc theo: Let's assign an action item.",
+        "hint": "Nhấn âm ở action."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Owner",
+        "ipa": "/ˈoʊnər/",
+        "meaning": "Người phụ trách",
+        "instruction": "Đọc theo: Who is the owner of this task?",
+        "hint": "Âm đầu /oʊ/ dài."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Summary",
+        "ipa": "/ˈsʌməri/",
+        "meaning": "Tóm tắt",
+        "instruction": "Đọc theo: Here is a quick summary.",
+        "hint": "Âm /sʌm/ ngắn gọn."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Cuối cuộc họp, bạn muốn tóm tắt nội dung chính. Bạn nói gì?",
+        "expected_keyword": "summary",
+        "accepted_answers": [
+          "here is a quick summary",
+          "quick summary"
+        ],
+        "hint": "Dùng từ summary."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_16",
+    "order": 16,
+    "title": "Thuyết trình tự tin",
+    "emoji": "🎤",
+    "min_level": "A2",
+    "prompt_key": "confident_presentation",
+    "role_description": "You coach the learner to open and deliver a short presentation clearly.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Audience",
+      "Slide",
+      "Confidence",
+      "Opening",
+      "Point",
+      "Transition",
+      "Conclusion",
+      "Question"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài học giúp bạn trình bày ý tưởng mạch lạc và tự tin hơn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Audience",
+        "ipa": "/ˈɔːdiəns/",
+        "meaning": "Khán giả",
+        "instruction": "Đọc theo: Good morning, everyone in the audience.",
+        "hint": "Âm /ɔː/ mở rộng."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Slide",
+        "ipa": "/slaɪd/",
+        "meaning": "Trang trình chiếu",
+        "instruction": "Đọc theo: Let's move to the next slide.",
+        "hint": "Âm /aɪ/ dài."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Confidence",
+        "ipa": "/ˈkɑːnfɪdəns/",
+        "meaning": "Sự tự tin",
+        "instruction": "Đọc theo: Speak with confidence.",
+        "hint": "Nhấn âm đầu con."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi chuyển sang trang tiếp theo, bạn nói câu nào?",
+        "expected_keyword": "slide",
+        "accepted_answers": [
+          "let's move to the next slide",
+          "next slide"
+        ],
+        "hint": "Sử dụng từ slide."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_17",
+    "order": 17,
+    "title": "Quản lý dự án",
+    "emoji": "📈",
+    "min_level": "A2",
+    "prompt_key": "project_management_core",
+    "role_description": "You help the learner discuss milestones, timelines, and deliverables.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Milestone",
+      "Timeline",
+      "Deliverable",
+      "Scope",
+      "Risk",
+      "Resource",
+      "Progress",
+      "Plan"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ luyện từ vựng cốt lõi để theo dõi và điều phối dự án."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Milestone",
+        "ipa": "/ˈmaɪlstoʊn/",
+        "meaning": "Cột mốc",
+        "instruction": "Đọc theo: We reached the first milestone.",
+        "hint": "Âm /maɪl/ rõ ràng."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Timeline",
+        "ipa": "/ˈtaɪmlaɪn/",
+        "meaning": "Tiến độ thời gian",
+        "instruction": "Đọc theo: The timeline is realistic.",
+        "hint": "Nói rõ hai âm /taɪm/ + /laɪn/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Deliverable",
+        "ipa": "/dɪˈlɪvərəbəl/",
+        "meaning": "Sản phẩm bàn giao",
+        "instruction": "Đọc theo: The deliverable is due Monday.",
+        "hint": "Nhấn âm /lɪv/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu sản phẩm bàn giao nộp vào thứ Hai, bạn sẽ nói gì?",
+        "expected_keyword": "deliverable",
+        "accepted_answers": [
+          "the deliverable is due monday",
+          "deliverable due monday"
+        ],
+        "hint": "Cần có từ deliverable."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_18",
+    "order": 18,
+    "title": "Chăm sóc khách hàng",
+    "emoji": "🎧",
+    "min_level": "A2",
+    "prompt_key": "customer_service_response",
+    "role_description": "You simulate support calls and guide polite, solution-focused replies.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Inquiry",
+      "Issue",
+      "Resolve",
+      "Refund",
+      "Apology",
+      "Policy",
+      "Support",
+      "Satisfaction"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài này tập trung vào cách phản hồi khách hàng chuyên nghiệp."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Inquiry",
+        "ipa": "/ɪnˈkwaɪri/",
+        "meaning": "Yêu cầu/hồi đáp",
+        "instruction": "Đọc theo: Thank you for your inquiry.",
+        "hint": "Nhấn âm /kwaɪ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Resolve",
+        "ipa": "/rɪˈzɑːlv/",
+        "meaning": "Giải quyết",
+        "instruction": "Đọc theo: We will resolve this issue today.",
+        "hint": "Âm /zɑːlv/ rõ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Refund",
+        "ipa": "/ˈriːfʌnd/",
+        "meaning": "Hoàn tiền",
+        "instruction": "Đọc theo: You are eligible for a refund.",
+        "hint": "Nhấn âm đầu /riː/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi đồng ý hoàn tiền cho khách, bạn nói sao?",
+        "expected_keyword": "refund",
+        "accepted_answers": [
+          "you are eligible for a refund",
+          "refund"
+        ],
+        "hint": "Từ khóa chính là refund."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_19",
+    "order": 19,
+    "title": "Bán hàng thực chiến",
+    "emoji": "🧾",
+    "min_level": "A2",
+    "prompt_key": "sales_practical_conversation",
+    "role_description": "You train the learner to qualify leads and present value clearly.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Lead",
+      "Quotation",
+      "Contract",
+      "Value",
+      "Benefit",
+      "Price",
+      "Close",
+      "Client"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ luyện mẫu hỏi đáp khi tư vấn và chốt đơn hàng."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Lead",
+        "ipa": "/liːd/",
+        "meaning": "Khách hàng tiềm năng",
+        "instruction": "Đọc theo: This lead is highly interested.",
+        "hint": "Âm /liːd/ dài."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Quotation",
+        "ipa": "/kwoʊˈteɪʃən/",
+        "meaning": "Báo giá",
+        "instruction": "Đọc theo: I will send the quotation today.",
+        "hint": "Nhấn âm /teɪ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Contract",
+        "ipa": "/ˈkɑːntrækt/",
+        "meaning": "Hợp đồng",
+        "instruction": "Đọc theo: The contract is ready to sign.",
+        "hint": "Đánh dấu âm đầu con-."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn sắp gửi báo giá cho khách, bạn nói gì?",
+        "expected_keyword": "quotation",
+        "accepted_answers": [
+          "i will send the quotation today",
+          "send quotation"
+        ],
+        "hint": "Dùng từ quotation."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_20",
+    "order": 20,
+    "title": "Marketing căn bản",
+    "emoji": "📣",
+    "min_level": "A2",
+    "prompt_key": "marketing_fundamentals",
+    "role_description": "You help the learner discuss campaign goals and audience targeting.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Campaign",
+      "Target audience",
+      "Conversion",
+      "Channel",
+      "Content",
+      "Reach",
+      "Engagement",
+      "KPI"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài học giúp bạn nói về chiến dịch marketing một cách có hệ thống."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Campaign",
+        "ipa": "/kæmˈpeɪn/",
+        "meaning": "Chiến dịch",
+        "instruction": "Đọc theo: We launched a new campaign.",
+        "hint": "Nhấn âm /peɪn/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Target audience",
+        "ipa": "/ˈtɑːrɡɪt ˈɔːdiəns/",
+        "meaning": "Đối tượng mục tiêu",
+        "instruction": "Đọc theo: Define the target audience first.",
+        "hint": "Nói rõ hai cụm từ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Conversion",
+        "ipa": "/kənˈvɜːrʒən/",
+        "meaning": "Chuyển đổi",
+        "instruction": "Đọc theo: Our conversion rate improved.",
+        "hint": "Nhấn âm /vɜːr/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi lập chiến dịch, bước đầu tiên là xác định đối tượng gì?",
+        "expected_keyword": "target audience",
+        "accepted_answers": [
+          "target audience",
+          "define the target audience"
+        ],
+        "hint": "Cụm cần nhớ: target audience."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_21",
+    "order": 21,
+    "title": "Tài chính cá nhân",
+    "emoji": "💳",
+    "min_level": "B1",
+    "prompt_key": "personal_finance_planning",
+    "role_description": "You coach the learner to discuss budgeting, expenses, and savings goals.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Budget",
+      "Expense",
+      "Savings",
+      "Income",
+      "Debt",
+      "Plan",
+      "Emergency fund",
+      "Goal"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ luyện cách trình bày kế hoạch tài chính cá nhân rõ ràng."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Budget",
+        "ipa": "/ˈbʌdʒɪt/",
+        "meaning": "Ngân sách",
+        "instruction": "Đọc theo: I track my monthly budget.",
+        "hint": "Âm /bʌ/ ngắn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Expense",
+        "ipa": "/ɪkˈspens/",
+        "meaning": "Chi phí",
+        "instruction": "Đọc theo: Rent is my biggest expense.",
+        "hint": "Nhấn âm /spens/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Savings",
+        "ipa": "/ˈseɪvɪŋz/",
+        "meaning": "Tiết kiệm",
+        "instruction": "Đọc theo: I put 20% into savings.",
+        "hint": "Âm /seɪ/ dài."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn tiết kiệm 20% thu nhập mỗi tháng, bạn nói sao?",
+        "expected_keyword": "savings",
+        "accepted_answers": [
+          "i put twenty percent into savings",
+          "into savings"
+        ],
+        "hint": "Cần có từ savings."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_22",
+    "order": 22,
+    "title": "Ngân hàng & Thanh toán",
+    "emoji": "🏦",
+    "min_level": "B1",
+    "prompt_key": "banking_and_payments",
+    "role_description": "You simulate bank interactions about transfers, balances, and transactions.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Balance",
+      "Transfer",
+      "Transaction",
+      "Account",
+      "Fee",
+      "Statement",
+      "Mobile banking",
+      "PIN"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài này giúp bạn sử dụng tiếng Anh khi làm việc với ngân hàng."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Balance",
+        "ipa": "/ˈbæləns/",
+        "meaning": "Số dư",
+        "instruction": "Đọc theo: Please check my balance.",
+        "hint": "Âm đầu /bæ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Transfer",
+        "ipa": "/trænsˈfɜːr/",
+        "meaning": "Chuyển khoản",
+        "instruction": "Đọc theo: I need to transfer money.",
+        "hint": "Nhấn âm /fɜːr/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Transaction",
+        "ipa": "/trænˈzækʃən/",
+        "meaning": "Giao dịch",
+        "instruction": "Đọc theo: This transaction failed.",
+        "hint": "Nhấn âm /zæk/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi cần chuyển tiền vào tài khoản khác, bạn nói gì?",
+        "expected_keyword": "transfer",
+        "accepted_answers": [
+          "i need to transfer money",
+          "transfer money"
+        ],
+        "hint": "Từ khóa là transfer."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_23",
+    "order": 23,
+    "title": "Sức khỏe thường gặp",
+    "emoji": "🩺",
+    "min_level": "B1",
+    "prompt_key": "common_health_cases",
+    "role_description": "You guide the learner through common clinic conversations and symptom reporting.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Symptom",
+      "Prescription",
+      "Appointment",
+      "Fever",
+      "Cough",
+      "Headache",
+      "Doctor",
+      "Pharmacy"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ học cách mô tả triệu chứng khi đi khám bệnh."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Symptom",
+        "ipa": "/ˈsɪmptəm/",
+        "meaning": "Triệu chứng",
+        "instruction": "Đọc theo: My main symptom is a sore throat.",
+        "hint": "Cụm /mpt/ đọc nhanh gọn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Prescription",
+        "ipa": "/prɪˈskrɪpʃən/",
+        "meaning": "Đơn thuốc",
+        "instruction": "Đọc theo: The doctor gave me a prescription.",
+        "hint": "Nhấn âm /skrɪp/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Appointment",
+        "ipa": "/əˈpɔɪntmənt/",
+        "meaning": "Lịch hẹn",
+        "instruction": "Đọc theo: I booked an appointment.",
+        "hint": "Nhấn âm /pɔɪnt/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bác sĩ kê đơn thuốc cho bạn, bạn nói câu nào?",
+        "expected_keyword": "prescription",
+        "accepted_answers": [
+          "the doctor gave me a prescription",
+          "prescription"
+        ],
+        "hint": "Dùng từ prescription."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_24",
+    "order": 24,
+    "title": "Tập luyện & Thể thao",
+    "emoji": "🏃",
+    "min_level": "B1",
+    "prompt_key": "fitness_and_sports",
+    "role_description": "You act as a coach helping the learner discuss workout plans and stamina.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Stretch",
+      "Workout",
+      "Endurance",
+      "Cardio",
+      "Strength",
+      "Recovery",
+      "Routine",
+      "Trainer"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài học luyện từ vựng về tập luyện để giao tiếp tại phòng gym."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Stretch",
+        "ipa": "/stretʃ/",
+        "meaning": "Giãn cơ",
+        "instruction": "Đọc theo: Stretch before exercise.",
+        "hint": "Âm cuối /tʃ/ rõ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Workout",
+        "ipa": "/ˈwɜːrkaʊt/",
+        "meaning": "Buổi tập",
+        "instruction": "Đọc theo: My workout lasts forty minutes.",
+        "hint": "Nhấn âm đầu 'WORK'."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Endurance",
+        "ipa": "/ɪnˈdʊrəns/",
+        "meaning": "Sức bền",
+        "instruction": "Đọc theo: Running builds endurance.",
+        "hint": "Nhấn âm /dʊr/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu chạy bộ giúp tăng sức bền, bạn nói sao?",
+        "expected_keyword": "endurance",
+        "accepted_answers": [
+          "running builds endurance",
+          "build endurance"
+        ],
+        "hint": "Từ khóa: endurance."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_25",
+    "order": 25,
+    "title": "Di chuyển trong thành phố",
+    "emoji": "🚇",
+    "min_level": "B1",
+    "prompt_key": "urban_transportation",
+    "role_description": "You help the learner discuss commuting options and city traffic conditions.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Subway",
+      "Bus",
+      "Traffic",
+      "Station",
+      "Route",
+      "Delay",
+      "Commute",
+      "Peak hour"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ luyện nói về các phương tiện đi lại trong đô thị."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Station",
+        "ipa": "/ˈsteɪʃən/",
+        "meaning": "Nhà ga",
+        "instruction": "Đọc theo: The station is two blocks away.",
+        "hint": "Nhấn âm đầu 'STA'."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Traffic",
+        "ipa": "/ˈtræfɪk/",
+        "meaning": "Giao thông",
+        "instruction": "Đọc theo: Traffic is heavy this morning.",
+        "hint": "Âm /træ/ mở rộng."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Route",
+        "ipa": "/ruːt/",
+        "meaning": "Tuyến đường",
+        "instruction": "Đọc theo: This route is faster.",
+        "hint": "Âm /ruːt/ dài."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi giao thông buổi sáng rất động, bạn nói gì?",
+        "expected_keyword": "traffic",
+        "accepted_answers": [
+          "traffic is heavy this morning",
+          "heavy traffic"
+        ],
+        "hint": "Cần có từ traffic."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_26",
+    "order": 26,
+    "title": "Hỏi đường & Bản đồ",
+    "emoji": "🧭",
+    "min_level": "B1",
+    "prompt_key": "asking_for_directions",
+    "role_description": "You guide practical direction dialogues with clear landmarks and turns.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Landmark",
+      "Intersection",
+      "Turn left",
+      "Straight ahead",
+      "Corner",
+      "Block",
+      "Map",
+      "Direction"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài này giúp bạn hỏi đường nhanh, dễ hiểu khi đang đi ngoài đường."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Landmark",
+        "ipa": "/ˈlændmɑːrk/",
+        "meaning": "Mốc dễ nhận biết",
+        "instruction": "Đọc theo: The bank is a good landmark.",
+        "hint": "Âm /lænd/ rõ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Intersection",
+        "ipa": "/ˌɪntərˈsekʃən/",
+        "meaning": "Ngã tư",
+        "instruction": "Đọc theo: Turn right at the intersection.",
+        "hint": "Nhấn âm /sek/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Straight ahead",
+        "ipa": "/streɪt əˈhed/",
+        "meaning": "Đi thẳng",
+        "instruction": "Đọc theo: Go straight ahead for two blocks.",
+        "hint": "Nói rõ cụm ahead."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Muốn hướng dẫn đi thẳng hai dãy phố, bạn nói sao?",
+        "expected_keyword": "straight ahead",
+        "accepted_answers": [
+          "go straight ahead for two blocks",
+          "straight ahead"
+        ],
+        "hint": "Sử dụng cụm straight ahead."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_27",
+    "order": 27,
+    "title": "Du lịch sân bay",
+    "emoji": "✈️",
+    "min_level": "B1",
+    "prompt_key": "airport_travel_process",
+    "role_description": "You simulate airport check-in conversations and travel document checks.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Itinerary",
+      "Passport",
+      "Luggage",
+      "Boarding pass",
+      "Gate",
+      "Security",
+      "Customs",
+      "Delay"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ luyện hỏi đáp ở sân bay từ lúc check-in đến lên máy bay."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Itinerary",
+        "ipa": "/aɪˈtɪnəˌreri/",
+        "meaning": "Lộ trình chuyến đi",
+        "instruction": "Đọc theo: Here is my itinerary.",
+        "hint": "Nhấn âm /tɪn/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Passport",
+        "ipa": "/ˈpæspɔːrt/",
+        "meaning": "Hộ chiếu",
+        "instruction": "Đọc theo: Please check my passport.",
+        "hint": "Âm /pæs/ ngắn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Luggage",
+        "ipa": "/ˈlʌɡɪdʒ/",
+        "meaning": "Hành lý",
+        "instruction": "Đọc theo: My luggage is overweight.",
+        "hint": "Âm cuối /dʒ/ rõ."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi nhân viên yêu cầu giấy tờ, bạn đưa gì?",
+        "expected_keyword": "passport",
+        "accepted_answers": [
+          "here is my passport",
+          "passport"
+        ],
+        "hint": "Từ khóa cần nhớ: passport."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_28",
+    "order": 28,
+    "title": "Khách sạn & Lưu trú",
+    "emoji": "🛎️",
+    "min_level": "B1",
+    "prompt_key": "hotel_stay_support",
+    "role_description": "You role-play a hotel receptionist handling reservation and check-in requests.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Reservation",
+      "Check-in",
+      "Amenities",
+      "Room type",
+      "Late checkout",
+      "Reception",
+      "Invoice",
+      "Service"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài này giúp bạn xử lý tình huống đặt phòng và nhận phòng tự tin."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Reservation",
+        "ipa": "/ˌrezərˈveɪʃən/",
+        "meaning": "Đặt phòng",
+        "instruction": "Đọc theo: I have a reservation under Minh.",
+        "hint": "Nhấn âm /veɪ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Check-in",
+        "ipa": "/ˈtʃek ɪn/",
+        "meaning": "Nhận phòng",
+        "instruction": "Đọc theo: What time is check-in?",
+        "hint": "Nối liền check + in."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Amenities",
+        "ipa": "/əˈmenətiz/",
+        "meaning": "Tiện ích",
+        "instruction": "Đọc theo: Does the room include amenities?",
+        "hint": "Nhấn âm /men/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi tới khách sạn và đã đặt phòng trước, bạn nói gì?",
+        "expected_keyword": "reservation",
+        "accepted_answers": [
+          "i have a reservation",
+          "reservation under minh"
+        ],
+        "hint": "Mở đầu bằng: I have a reservation..."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_29",
+    "order": 29,
+    "title": "Nhà hàng & Gọi món",
+    "emoji": "🍽️",
+    "min_level": "B1",
+    "prompt_key": "restaurant_ordering",
+    "role_description": "You act as a waiter helping the learner order food and ask for recommendations.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Menu",
+      "Recommendation",
+      "Bill",
+      "Allergy",
+      "Spicy",
+      "Medium",
+      "Dessert",
+      "Service"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn luyện mẫu câu gọi món, hỏi gợi ý và thanh toán tại nhà hàng."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Menu",
+        "ipa": "/ˈmenjuː/",
+        "meaning": "Thực đơn",
+        "instruction": "Đọc theo: Could I see the menu?",
+        "hint": "Âm /men/ ngắn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Recommendation",
+        "ipa": "/ˌrekəmenˈdeɪʃən/",
+        "meaning": "Gợi ý",
+        "instruction": "Đọc theo: Do you have any recommendation?",
+        "hint": "Nhấn âm /deɪ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Allergy",
+        "ipa": "/ˈælərdʒi/",
+        "meaning": "Dị ứng",
+        "instruction": "Đọc theo: I have a peanut allergy.",
+        "hint": "Âm đầu /æl/ rõ."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn bị dị ứng lạc, bạn cần nói gì với nhân viên?",
+        "expected_keyword": "allergy",
+        "accepted_answers": [
+          "i have a peanut allergy",
+          "peanut allergy"
+        ],
+        "hint": "Dùng từ allergy để cảnh báo."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_30",
+    "order": 30,
+    "title": "Văn hóa & Phép lịch sự",
+    "emoji": "🤝",
+    "min_level": "B1",
+    "prompt_key": "culture_and_politeness",
+    "role_description": "You discuss cross-cultural manners and respectful communication in public.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Custom",
+      "Polite",
+      "Gesture",
+      "Respect",
+      "Apologize",
+      "Permission",
+      "Queue",
+      "Tone"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài này giúp bạn hiểu và ứng xử phù hợp trong môi trường đa văn hóa."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Custom",
+        "ipa": "/ˈkʌstəm/",
+        "meaning": "Phong tục",
+        "instruction": "Đọc theo: Every country has different customs.",
+        "hint": "Âm /kʌs/ ngắn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Polite",
+        "ipa": "/pəˈlaɪt/",
+        "meaning": "Lịch sự",
+        "instruction": "Đọc theo: Please be polite to everyone.",
+        "hint": "Nhấn âm ở /laɪt/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Gesture",
+        "ipa": "/ˈdʒestʃər/",
+        "meaning": "Cử chỉ",
+        "instruction": "Đọc theo: That gesture may be rude here.",
+        "hint": "Âm /dʒes/ rõ ràng."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn muốn nhắc nhở ai đó lịch sự hơn, bạn nói câu nào?",
+        "expected_keyword": "polite",
+        "accepted_answers": [
+          "please be polite",
+          "be polite"
+        ],
+        "hint": "Cần có từ polite."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_31",
+    "order": 31,
+    "title": "Phỏng vấn xin việc",
+    "emoji": "🧑‍💼",
+    "min_level": "B1",
+    "prompt_key": "job_interview_dialogue",
+    "role_description": "You act as an interviewer and train concise, confident interview responses.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Strength",
+      "Experience",
+      "Achievement",
+      "Challenge",
+      "Motivation",
+      "Role",
+      "Company",
+      "Interview"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ tập trả lời các câu hỏi phỏng vấn thường gặp."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Strength",
+        "ipa": "/streŋkθ/",
+        "meaning": "Điểm mạnh",
+        "instruction": "Đọc theo: My strength is problem solving.",
+        "hint": "Cụm cuối /ŋkθ/ đọc gọn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Achievement",
+        "ipa": "/əˈtʃiːvmənt/",
+        "meaning": "Thành tích",
+        "instruction": "Đọc theo: My biggest achievement was leading a project.",
+        "hint": "Nhấn âm /tʃiːv/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Motivation",
+        "ipa": "/ˌmoʊtəˈveɪʃən/",
+        "meaning": "Động lực",
+        "instruction": "Đọc theo: My motivation is continuous growth.",
+        "hint": "Nhấn âm /veɪ/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu nhà tuyển dụng hỏi điểm mạnh của bạn, bạn trả lời sao?",
+        "expected_keyword": "strength",
+        "accepted_answers": [
+          "my strength is problem solving",
+          "my strength is communication"
+        ],
+        "hint": "Bắt đầu bằng: My strength is..."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_32",
+    "order": 32,
+    "title": "Viết CV chuyên nghiệp",
+    "emoji": "📄",
+    "min_level": "B1",
+    "prompt_key": "resume_and_cv_writing",
+    "role_description": "You guide the learner to build a clear CV with measurable achievements.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Resume",
+      "Portfolio",
+      "Reference",
+      "Certificate",
+      "Achievement",
+      "Skill",
+      "Summary",
+      "Profile"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài học hướng dẫn cách trình bày CV ngắn gọn nhưng thuyết phục."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Resume",
+        "ipa": "/ˈrezəmeɪ/",
+        "meaning": "Sơ yếu lý lịch",
+        "instruction": "Đọc theo: I updated my resume.",
+        "hint": "Nhấn âm đầu /re/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Portfolio",
+        "ipa": "/pɔːrtˈfoʊlioʊ/",
+        "meaning": "Hồ sơ năng lực",
+        "instruction": "Đọc theo: Please review my portfolio.",
+        "hint": "Nhấn âm /foʊ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Reference",
+        "ipa": "/ˈrefrəns/",
+        "meaning": "Người tham chiếu",
+        "instruction": "Đọc theo: I can provide references upon request.",
+        "hint": "Âm /ref/ rõ."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn có thể cung cấp người tham chiếu khi cần, bạn nói sao?",
+        "expected_keyword": "reference",
+        "accepted_answers": [
+          "i can provide references upon request",
+          "provide references"
+        ],
+        "hint": "Cần có từ references."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_33",
+    "order": 33,
+    "title": "Lam viec nhom",
+    "emoji": "👥",
+    "min_level": "B1",
+    "prompt_key": "team_collaboration",
+    "role_description": "You train collaborative language for planning, feedback, and alignment.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Collaborate",
+      "Feedback",
+      "Alignment",
+      "Support",
+      "Ownership",
+      "Trust",
+      "Goal",
+      "Coordination"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ học cách trao đổi để phối hợp nhóm trơn tru hơn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Collaborate",
+        "ipa": "/kəˈlæbəreɪt/",
+        "meaning": "Hợp tác",
+        "instruction": "Đọc theo: We collaborate across departments.",
+        "hint": "Nhấn âm /læb/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Feedback",
+        "ipa": "/ˈfiːdbæk/",
+        "meaning": "Phản hồi",
+        "instruction": "Đọc theo: Thanks for your feedback.",
+        "hint": "Âm /fiːd/ dài."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Alignment",
+        "ipa": "/əˈlaɪnmənt/",
+        "meaning": "Sự thống nhất",
+        "instruction": "Đọc theo: We need alignment on priorities.",
+        "hint": "Nhấn âm /laɪn/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi cần thống nhất ưu tiên của nhóm, bạn nói gì?",
+        "expected_keyword": "alignment",
+        "accepted_answers": [
+          "we need alignment on priorities",
+          "need alignment"
+        ],
+        "hint": "Từ khóa quan trọng: alignment."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_34",
+    "order": 34,
+    "title": "Đàm phán công việc",
+    "emoji": "🤝",
+    "min_level": "B1",
+    "prompt_key": "workplace_negotiation",
+    "role_description": "You guide practical negotiation language for proposals and agreements.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Proposal",
+      "Agreement",
+      "Compromise",
+      "Term",
+      "Condition",
+      "Value",
+      "Counteroffer",
+      "Mutual"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài học tập trung vào cách đàm phán lịch sự nhưng hiệu quả."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Proposal",
+        "ipa": "/prəˈpoʊzəl/",
+        "meaning": "Đề xuất",
+        "instruction": "Đọc theo: I have a proposal for the timeline.",
+        "hint": "Nhấn âm /poʊ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Agreement",
+        "ipa": "/əˈɡriːmənt/",
+        "meaning": "Thỏa thuận",
+        "instruction": "Đọc theo: We reached an agreement.",
+        "hint": "Nhấn âm /griː/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Compromise",
+        "ipa": "/ˈkɑːmprəmaɪz/",
+        "meaning": "Thỏa hiệp",
+        "instruction": "Đọc theo: Let's find a compromise.",
+        "hint": "Nhấn âm đầu /kɑːm/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi hai bên cần tìm điểm chung, bạn nói thế nào?",
+        "expected_keyword": "compromise",
+        "accepted_answers": [
+          "let's find a compromise",
+          "find a compromise"
+        ],
+        "hint": "Sử dụng từ compromise."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_35",
+    "order": 35,
+    "title": "Giải quyết xung đột",
+    "emoji": "🧩",
+    "min_level": "B1",
+    "prompt_key": "conflict_resolution",
+    "role_description": "You model calm language for clarifying misunderstandings and resolving conflict.",
+    "min_exchanges": 6,
+    "keywords": [
+      "Conflict",
+      "Misunderstanding",
+      "Mediation",
+      "Clarify",
+      "Respect",
+      "Solution",
+      "Listen",
+      "Resolve"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ luyện cách xử lý mâu thuẫn trong công việc một cách chuyên nghiệp."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Conflict",
+        "ipa": "/ˈkɑːnflɪkt/",
+        "meaning": "Xung đột",
+        "instruction": "Đọc theo: We should address the conflict early.",
+        "hint": "Nhấn âm đầu /kɑːn/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Misunderstanding",
+        "ipa": "/ˌmɪsʌndərˈstændɪŋ/",
+        "meaning": "Hiểu lầm",
+        "instruction": "Đọc theo: It was a misunderstanding.",
+        "hint": "Nhấn âm /stænd/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Mediation",
+        "ipa": "/ˌmiːdiˈeɪʃən/",
+        "meaning": "Hòa giải",
+        "instruction": "Đọc theo: Mediation can help both sides.",
+        "hint": "Nhấn âm /eɪ/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu chỉ là hiểu lầm, bạn sẽ nói câu nào để hạ nhiệt tình huống?",
+        "expected_keyword": "misunderstanding",
+        "accepted_answers": [
+          "it was a misunderstanding",
+          "a misunderstanding"
+        ],
+        "hint": "Từ khóa: misunderstanding."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_36",
+    "order": 36,
+    "title": "Quản lý thời gian",
+    "emoji": "⏳",
+    "min_level": "B2",
+    "prompt_key": "time_management_advanced",
+    "role_description": "You coach productivity language for prioritizing work and reducing distractions.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Prioritize",
+      "Distraction",
+      "Focus",
+      "Schedule",
+      "Deadline buffer",
+      "Deep work",
+      "Routine",
+      "Efficiency"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài này giúp bạn trình bày cách sắp xếp công việc khoa học hơn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Prioritize",
+        "ipa": "/praɪˈɔːrətaɪz/",
+        "meaning": "Ưu tiên",
+        "instruction": "Đọc theo: I prioritize urgent tasks first.",
+        "hint": "Nhấn âm /ɔːr/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Distraction",
+        "ipa": "/dɪˈstrækʃən/",
+        "meaning": "Sao nhãng",
+        "instruction": "Đọc theo: I turn off notifications to avoid distraction.",
+        "hint": "Nhấn âm /stræk/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Focus",
+        "ipa": "/ˈfoʊkəs/",
+        "meaning": "Tập trung",
+        "instruction": "Đọc theo: I need two hours of focus.",
+        "hint": "Âm /foʊ/ dài."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn ưu tiên việc gấp trước, bạn sẽ nói gì?",
+        "expected_keyword": "prioritize",
+        "accepted_answers": [
+          "i prioritize urgent tasks first",
+          "prioritize urgent tasks"
+        ],
+        "hint": "Cần có động từ prioritize."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_37",
+    "order": 37,
+    "title": "Giải quyết vấn đề",
+    "emoji": "🛠️",
+    "min_level": "B2",
+    "prompt_key": "problem_solving_framework",
+    "role_description": "You train structured problem-solving language with root cause analysis.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Issue",
+      "Root cause",
+      "Troubleshoot",
+      "Solution",
+      "Impact",
+      "Alternative",
+      "Escalate",
+      "Prevent"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ học cách mô tả vấn đề và đề xuất giải pháp có cấu trúc."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Root cause",
+        "ipa": "/ruːt kɔːz/",
+        "meaning": "Nguyên nhân gốc",
+        "instruction": "Đọc theo: We need to find the root cause.",
+        "hint": "Nói rõ cụm root cause."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Troubleshoot",
+        "ipa": "/ˈtrʌblʃuːt/",
+        "meaning": "Khắc phục sự cố",
+        "instruction": "Đọc theo: The team is troubleshooting the error.",
+        "hint": "Nhấn âm đầu /trʌb/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Solution",
+        "ipa": "/səˈluːʃən/",
+        "meaning": "Giải pháp",
+        "instruction": "Đọc theo: This solution is scalable.",
+        "hint": "Nhấn âm /luː/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi cần tìm nguyên nhân gốc của lỗi, bạn nói sao?",
+        "expected_keyword": "root cause",
+        "accepted_answers": [
+          "we need to find the root cause",
+          "find the root cause"
+        ],
+        "hint": "Cụm từ cần dùng: root cause."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_38",
+    "order": 38,
+    "title": "Công nghệ công sở",
+    "emoji": "💻",
+    "min_level": "B2",
+    "prompt_key": "workplace_technology",
+    "role_description": "You guide the learner in discussing software tools and process integration.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Software",
+      "Automation",
+      "Integration",
+      "Platform",
+      "Dashboard",
+      "Workflow",
+      "Update",
+      "System"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài học giúp bạn giao tiếp về công cụ công nghệ trong môi trường làm việc."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Software",
+        "ipa": "/ˈsɔːftwer/",
+        "meaning": "Phần mềm",
+        "instruction": "Đọc theo: Our software needs an update.",
+        "hint": "Âm /sɔːft/ rõ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Automation",
+        "ipa": "/ˌɔːtəˈmeɪʃən/",
+        "meaning": "Tự động hóa",
+        "instruction": "Đọc theo: Automation saves time.",
+        "hint": "Nhấn âm /meɪ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Integration",
+        "ipa": "/ˌɪntɪˈɡreɪʃən/",
+        "meaning": "Tích hợp",
+        "instruction": "Đọc theo: Integration with CRM is complete.",
+        "hint": "Nhấn âm /greɪ/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu tự động hóa giúp tiết kiệm thời gian, bạn nói gì?",
+        "expected_keyword": "automation",
+        "accepted_answers": [
+          "automation saves time",
+          "automation"
+        ],
+        "hint": "Nhớ dùng từ automation."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_39",
+    "order": 39,
+    "title": "An toàn thông tin",
+    "emoji": "🔐",
+    "min_level": "B2",
+    "prompt_key": "information_security",
+    "role_description": "You train cybersecurity vocabulary for daily workplace awareness.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Password",
+      "Encrypt",
+      "Phishing",
+      "Security",
+      "Access",
+      "Breach",
+      "Verify",
+      "Policy"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ học từ vựng cần thiết để giao tiếp về bảo mật thông tin."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Password",
+        "ipa": "/ˈpæswɜːrd/",
+        "meaning": "Mật khẩu",
+        "instruction": "Đọc theo: Create a strong password.",
+        "hint": "Âm /pæs/ ngắn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Encrypt",
+        "ipa": "/ɪnˈkrɪpt/",
+        "meaning": "Mã hóa",
+        "instruction": "Đọc theo: We encrypt sensitive data.",
+        "hint": "Nhấn âm /krɪpt/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Phishing",
+        "ipa": "/ˈfɪʃɪŋ/",
+        "meaning": "Lừa đảo qua email",
+        "instruction": "Đọc theo: Watch out for phishing emails.",
+        "hint": "Âm /fɪ/ ngắn gọn."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu cảnh báo đồng nghiệp về email lừa đảo, bạn nói sao?",
+        "expected_keyword": "phishing",
+        "accepted_answers": [
+          "watch out for phishing emails",
+          "phishing emails"
+        ],
+        "hint": "Dùng từ phishing."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_40",
+    "order": 40,
+    "title": "Mạng xã hội chuyên nghiệp",
+    "emoji": "🌐",
+    "min_level": "B2",
+    "prompt_key": "professional_social_media",
+    "role_description": "You coach clear language for building a professional social media presence.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Post",
+      "Engagement",
+      "Hashtag",
+      "Professional brand",
+      "Audience",
+      "Content",
+      "Consistency",
+      "Reach"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài học giúp bạn tạo nội dung chuyên nghiệp trên mạng xã hội."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Post",
+        "ipa": "/poʊst/",
+        "meaning": "Bài đăng",
+        "instruction": "Đọc theo: I scheduled a post for tomorrow.",
+        "hint": "Âm /poʊst/ rõ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Engagement",
+        "ipa": "/ɪnˈɡeɪdʒmənt/",
+        "meaning": "Tương tác",
+        "instruction": "Đọc theo: This post has high engagement.",
+        "hint": "Nhấn âm /ɡeɪdʒ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Hashtag",
+        "ipa": "/ˈhæʃtæɡ/",
+        "meaning": "Thẻ chủ đề",
+        "instruction": "Đọc theo: Use relevant hashtags.",
+        "hint": "Âm /hæʃ/ ngắn."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu một bài đăng có tương tác cao, bạn sẽ nói gì?",
+        "expected_keyword": "engagement",
+        "accepted_answers": [
+          "this post has high engagement",
+          "high engagement"
+        ],
+        "hint": "Từ khóa là engagement."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_41",
+    "order": 41,
+    "title": "Hội thảo & Kết nối",
+    "emoji": "🏛️",
+    "min_level": "B2",
+    "prompt_key": "conference_and_networking",
+    "role_description": "You simulate conference conversations and professional networking exchanges.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Keynote",
+      "Booth",
+      "Networking",
+      "Speaker",
+      "Session",
+      "Contact",
+      "Follow-up",
+      "Industry"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ luyện giao tiếp tại hội thảo để mở rộng mối quan hệ nghề nghiệp."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Keynote",
+        "ipa": "/ˈkiːnoʊt/",
+        "meaning": "Bài phát biểu chính",
+        "instruction": "Đọc theo: The keynote starts at nine.",
+        "hint": "Âm /kiː/ dài."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Booth",
+        "ipa": "/buːθ/",
+        "meaning": "Gian hàng",
+        "instruction": "Đọc theo: Visit our booth for a demo.",
+        "hint": "Âm /buːθ/ rõ."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Networking",
+        "ipa": "/ˈnetwɜːrkɪŋ/",
+        "meaning": "Kết nối nghề nghiệp",
+        "instruction": "Đọc theo: Networking is essential at conferences.",
+        "hint": "Nhấn âm /net/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn muốn mời người khác ghé gian hàng của mình, bạn nói sao?",
+        "expected_keyword": "booth",
+        "accepted_answers": [
+          "visit our booth for a demo",
+          "visit our booth"
+        ],
+        "hint": "Từ khóa cần nhớ: booth."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_42",
+    "order": 42,
+    "title": "Làm việc từ xa",
+    "emoji": "🏡",
+    "min_level": "B2",
+    "prompt_key": "remote_work_practices",
+    "role_description": "You coach communication for remote teams, async updates, and accountability.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Remote",
+      "Async",
+      "Flexible",
+      "Check-in",
+      "Status update",
+      "Availability",
+      "Timezone",
+      "Deliverable"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài này giúp bạn giao tiếp hiệu quả khi làm việc từ xa."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Remote",
+        "ipa": "/rɪˈmoʊt/",
+        "meaning": "Từ xa",
+        "instruction": "Đọc theo: I work remotely three days a week.",
+        "hint": "Nhấn âm /moʊt/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Async",
+        "ipa": "/ˈeɪsɪŋk/",
+        "meaning": "Không đồng bộ",
+        "instruction": "Đọc theo: We prefer async updates.",
+        "hint": "Âm đầu /eɪ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Flexible",
+        "ipa": "/ˈfleksəbəl/",
+        "meaning": "Linh hoạt",
+        "instruction": "Đọc theo: Our schedule is flexible.",
+        "hint": "Nhấn âm đầu /fleks/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi nhóm ưu tiên cập nhật không đồng bộ, bạn nói gì?",
+        "expected_keyword": "async",
+        "accepted_answers": [
+          "we prefer async updates",
+          "async updates"
+        ],
+        "hint": "Từ khóa là async."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_43",
+    "order": 43,
+    "title": "Khởi nghiệp cơ bản",
+    "emoji": "🚀",
+    "min_level": "B2",
+    "prompt_key": "startup_essentials",
+    "role_description": "You guide startup pitch language about product value and investor interest.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Startup",
+      "Investor",
+      "Pitch deck",
+      "Market",
+      "Revenue",
+      "Scalable",
+      "MVP",
+      "Growth"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ luyện từ vựng dùng trong bối cảnh khởi nghiệp và gọi vốn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Startup",
+        "ipa": "/ˈstɑːrtʌp/",
+        "meaning": "Công ty khởi nghiệp",
+        "instruction": "Đọc theo: Our startup solves a real problem.",
+        "hint": "Nhấn âm đầu /stɑːrt/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Investor",
+        "ipa": "/ɪnˈvestər/",
+        "meaning": "Nhà đầu tư",
+        "instruction": "Đọc theo: We are meeting an investor tomorrow.",
+        "hint": "Nhấn âm /ves/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Pitch deck",
+        "ipa": "/pɪtʃ dek/",
+        "meaning": "Bộ slide gọi vốn",
+        "instruction": "Đọc theo: I finished the pitch deck.",
+        "hint": "Nói gọn cụm pitch deck."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn hoàn thành bộ slide gọi vốn, bạn nói thế nào?",
+        "expected_keyword": "pitch deck",
+        "accepted_answers": [
+          "i finished the pitch deck",
+          "pitch deck"
+        ],
+        "hint": "Cụm chính: pitch deck."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_44",
+    "order": 44,
+    "title": "Luật lệ công cộng",
+    "emoji": "⚖️",
+    "min_level": "B2",
+    "prompt_key": "public_rules_and_regulations",
+    "role_description": "You explain public rules and help the learner discuss compliance clearly.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Regulation",
+      "Compliance",
+      "Policy",
+      "Permit",
+      "Legal",
+      "Authority",
+      "Violation",
+      "Penalty"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài học giúp bạn hiểu và diễn đạt các quy định công cộng."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Regulation",
+        "ipa": "/ˌreɡjəˈleɪʃən/",
+        "meaning": "Quy định",
+        "instruction": "Đọc theo: You must follow the regulation.",
+        "hint": "Nhấn âm /leɪ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Compliance",
+        "ipa": "/kəmˈplaɪəns/",
+        "meaning": "Sự tuân thủ",
+        "instruction": "Đọc theo: Compliance is mandatory.",
+        "hint": "Nhấn âm /plaɪ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Policy",
+        "ipa": "/ˈpɑːləsi/",
+        "meaning": "Chính sách",
+        "instruction": "Đọc theo: Please read our policy.",
+        "hint": "Nhấn âm đầu /pɑː/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu một quy định bắt buộc phải tuân thủ, bạn nói gì?",
+        "expected_keyword": "compliance",
+        "accepted_answers": [
+          "compliance is mandatory",
+          "mandatory compliance"
+        ],
+        "hint": "Cần có từ compliance."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_45",
+    "order": 45,
+    "title": "Môi trường bền vững",
+    "emoji": "🌱",
+    "min_level": "B2",
+    "prompt_key": "sustainability_discussion",
+    "role_description": "You help the learner discuss sustainability actions in daily life and business.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Recycle",
+      "Emission",
+      "Carbon footprint",
+      "Sustainable",
+      "Energy",
+      "Waste",
+      "Green",
+      "Impact"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ luyện cách nói về các hành động sống xanh và bền vững."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Recycle",
+        "ipa": "/ˌriːˈsaɪkəl/",
+        "meaning": "Tái chế",
+        "instruction": "Đọc theo: We recycle paper and plastic.",
+        "hint": "Nhấn âm /saɪ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Emission",
+        "ipa": "/ɪˈmɪʃən/",
+        "meaning": "Phát thải",
+        "instruction": "Đọc theo: We need to reduce emissions.",
+        "hint": "Nhấn âm /mɪ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Carbon footprint",
+        "ipa": "/ˈkɑːrbən ˈfʊtprɪnt/",
+        "meaning": "Lượng phát thải carbon",
+        "instruction": "Đọc theo: This plan lowers our carbon footprint.",
+        "hint": "Nói rõ cụm footprint."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu một kế hoạch giúp giảm lượng phát thải carbon, bạn nói sao?",
+        "expected_keyword": "carbon footprint",
+        "accepted_answers": [
+          "this plan lowers our carbon footprint",
+          "lower carbon footprint"
+        ],
+        "hint": "Cụm cần dùng: carbon footprint."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_46",
+    "order": 46,
+    "title": "Học trực tuyến hiệu quả",
+    "emoji": "🧠",
+    "min_level": "B2",
+    "prompt_key": "effective_online_learning",
+    "role_description": "You coach learning strategies for online courses and self-assessment.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Webinar",
+      "Module",
+      "Assessment",
+      "Deadline",
+      "Certificate",
+      "Practice",
+      "Review",
+      "Progress"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài học giúp bạn diễn đạt cách học online có mục tiêu và hiệu quả."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Webinar",
+        "ipa": "/ˈwebɪnɑːr/",
+        "meaning": "Hội thảo trực tuyến",
+        "instruction": "Đọc theo: I joined a marketing webinar.",
+        "hint": "Nhấn âm đầu /web/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Module",
+        "ipa": "/ˈmɑːdʒuːl/",
+        "meaning": "Học phần",
+        "instruction": "Đọc theo: This module is challenging.",
+        "hint": "Âm /dʒuːl/ dài."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Assessment",
+        "ipa": "/əˈsesmənt/",
+        "meaning": "Đánh giá",
+        "instruction": "Đọc theo: The final assessment is next week.",
+        "hint": "Nhấn âm /ses/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bài đánh giá cuối khóa vào tuần tới, bạn nói sao?",
+        "expected_keyword": "assessment",
+        "accepted_answers": [
+          "the final assessment is next week",
+          "final assessment"
+        ],
+        "hint": "Từ khóa: assessment."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_47",
+    "order": 47,
+    "title": "Nói trước đám đông",
+    "emoji": "🗣️",
+    "min_level": "B2",
+    "prompt_key": "public_speaking_skills",
+    "role_description": "You train delivery techniques for public speaking with clear pacing and pauses.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Pause",
+      "Pacing",
+      "Eye contact",
+      "Confidence",
+      "Voice",
+      "Message",
+      "Audience",
+      "Practice"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn sẽ luyện các kỹ thuật nói để thông điệp rõ ràng và thuyết phục hơn."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Pause",
+        "ipa": "/pɔːz/",
+        "meaning": "Dừng nghỉ",
+        "instruction": "Đọc theo: Use a short pause after key points.",
+        "hint": "Âm /pɔːz/ dài."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Pacing",
+        "ipa": "/ˈpeɪsɪŋ/",
+        "meaning": "Tốc độ nói",
+        "instruction": "Đọc theo: Your pacing should be steady.",
+        "hint": "Nhấn âm đầu /peɪ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Eye contact",
+        "ipa": "/aɪ ˈkɑːntækt/",
+        "meaning": "Giao tiếp bằng mắt",
+        "instruction": "Đọc theo: Keep eye contact with the audience.",
+        "hint": "Nói rõ eye + contact."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi nói, để giữ sự kết nối với khán giả bạn cần gì?",
+        "expected_keyword": "eye contact",
+        "accepted_answers": [
+          "keep eye contact with the audience",
+          "eye contact"
+        ],
+        "hint": "Cụm cần dùng: eye contact."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_48",
+    "order": 48,
+    "title": "Kể chuyện thuyết phục",
+    "emoji": "📖",
+    "min_level": "B2",
+    "prompt_key": "persuasive_storytelling",
+    "role_description": "You coach storytelling structure for impactful business communication.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Hook",
+      "Narrative",
+      "Takeaway",
+      "Structure",
+      "Emotion",
+      "Evidence",
+      "Audience",
+      "Impact"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bài học giúp bạn xây dựng câu chuyện có mở đầu hấp dẫn và kết thúc rõ thông điệp."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Hook",
+        "ipa": "/hʊk/",
+        "meaning": "Điểm mở đầu thu hút",
+        "instruction": "Đọc theo: Start with a strong hook.",
+        "hint": "Từ ngắn, đọc dứt khoát."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Narrative",
+        "ipa": "/ˈnærətɪv/",
+        "meaning": "Mạch kể chuyện",
+        "instruction": "Đọc theo: Keep the narrative simple.",
+        "hint": "Nhấn âm đầu /næ/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Takeaway",
+        "ipa": "/ˈteɪkəweɪ/",
+        "meaning": "Thông điệp chính",
+        "instruction": "Đọc theo: The takeaway is clear.",
+        "hint": "Nhấn âm /teɪ/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi kết thúc bài nói, bạn muốn nhấn mạnh thông điệp chính. Từ nào phù hợp?",
+        "expected_keyword": "takeaway",
+        "accepted_answers": [
+          "the takeaway is clear",
+          "key takeaway"
+        ],
+        "hint": "Từ khóa: takeaway."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_49",
+    "order": 49,
+    "title": "Tổng ôn hành trình",
+    "emoji": "🎯",
+    "min_level": "B2",
+    "prompt_key": "journey_review_mastery",
+    "role_description": "You review the full learning journey and reinforce confident usage across contexts.",
+    "min_exchanges": 7,
+    "keywords": [
+      "Progress",
+      "Consistent",
+      "Confident",
+      "Improve",
+      "Practice",
+      "Review",
+      "Goal",
+      "Achievement"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Đây là bài tổng ôn để kết nối từ vựng đã học và ứng dụng trong tình huống thực tế."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Progress",
+        "ipa": "/ˈprɑːɡres/",
+        "meaning": "Tiến bộ",
+        "instruction": "Đọc theo: Your progress is impressive.",
+        "hint": "Nhấn âm đầu /prɑː/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Consistent",
+        "ipa": "/kənˈsɪstənt/",
+        "meaning": "Đều đặn",
+        "instruction": "Đọc theo: Be consistent every day.",
+        "hint": "Nhấn âm /sɪs/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Confident",
+        "ipa": "/ˈkɑːnfɪdənt/",
+        "meaning": "Tự tin",
+        "instruction": "Đọc theo: You sound confident now.",
+        "hint": "Nhấn âm đầu con."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Nếu bạn muốn khen ai đó đã tiến bộ rõ rệt, bạn nói sao?",
+        "expected_keyword": "progress",
+        "accepted_answers": [
+          "your progress is impressive",
+          "great progress"
+        ],
+        "hint": "Sử dụng từ progress."
+      }
+    ]
+  },
+  {
+    "lesson_id": "lesson_50",
+    "order": 50,
+    "title": "Hẹn gặp lại",
+    "emoji": "👋",
+    "min_level": "A1",
+    "prompt_key": "farewell_finale",
+    "role_description": "You wrap up the full program warmly and encourage continued English practice.",
+    "min_exchanges": 5,
+    "keywords": [
+      "Goodbye",
+      "Farewell",
+      "Next time",
+      "Keep practicing",
+      "Proud",
+      "Journey",
+      "See you",
+      "Continue"
+    ],
+    "status": "available",
+    "flow_steps": [
+      {
+        "type": "intro",
+        "content": "Bạn đã hoàn thành toàn bộ hành trình. Bây giờ chúng ta kết thúc bằng một lời tạm biệt tích cực."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Farewell",
+        "ipa": "/ˌferˈwel/",
+        "meaning": "Lời tạm biệt",
+        "instruction": "Đọc theo: This is not goodbye, just a farewell for now.",
+        "hint": "Nhấn âm /wel/."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Next time",
+        "ipa": "/nekst taɪm/",
+        "meaning": "Lần tới",
+        "instruction": "Đọc theo: See you next time.",
+        "hint": "Nối liền next + time."
+      },
+      {
+        "type": "vocabulary",
+        "word": "Keep practicing",
+        "ipa": "/kiːp ˈpræktɪsɪŋ/",
+        "meaning": "Tiếp tục luyện tập",
+        "instruction": "Đọc theo: Keep practicing every day.",
+        "hint": "Nhấn âm /præk/."
+      },
+      {
+        "type": "situational_quiz",
+        "question": "Khi kết thúc buổi học và động viên người học tiếp tục, bạn nói gì?",
+        "expected_keyword": "keep practicing",
+        "accepted_answers": [
+          "see you next time keep practicing",
+          "keep practicing every day"
+        ],
+        "hint": "Kết hợp see you next time + keep practicing."
       }
     ]
   }

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <layer-list>
+            <item android:top="4dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="24dp" />
+                    <solid android:color="#6620222B" />
+                </shape>
+            </item>
+            <item android:bottom="2dp" android:top="2dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="24dp" />
+                    <solid android:color="#7A2D3B42" />
+                </shape>
+            </item>
+            <item android:bottom="5dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="24dp" />
+                    <stroke android:width="1.5dp" android:color="@color/ef_outline_light" />
+                    <gradient
+                        android:angle="270"
+                        android:endColor="@color/ef_surface_variant"
+                        android:startColor="@color/ef_surface_elevated"
+                        android:type="linear" />
+                </shape>
+            </item>
+            <item android:bottom="7dp" android:top="1dp" android:left="3dp" android:right="3dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="22dp" />
+                    <gradient
+                        android:angle="90"
+                        android:endColor="#15FFFFFF"
+                        android:startColor="@android:color/transparent"
+                        android:type="linear" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item>
+        <ripple android:color="#22FFFFFF">
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="24dp" />
+                    <solid android:color="@android:color/transparent" />
+                </shape>
+            </item>
+        </ripple>
+    </item>
+</selector>

@@ -88,10 +88,12 @@ public class JourneyLessonRepository {
                     List<MapNodeItem> parsed = parseSnapshot(snapshot != null
                             ? snapshot.getDocuments()
                             : Collections.emptyList());
+                    
+                    // Even if we have cache, we trigger a server fetch to get the 50 lessons
+                    // if the cache only has the old 10 lessons.
                     if (!parsed.isEmpty()) {
                         setCachedLessons(parsed);
                         finishRefresh(parsed);
-                        return;
                     }
                     fetchFromFirestoreServer();
                 }))
@@ -106,6 +108,8 @@ public class JourneyLessonRepository {
                             ? snapshot.getDocuments()
                             : Collections.emptyList());
 
+                    // If server returns data (the 50 lessons), we use it.
+                    // Otherwise, only then we fallback to the static 10 lessons.
                     if (parsed.isEmpty()) {
                         parsed = resolveFallbackLessons();
                     }

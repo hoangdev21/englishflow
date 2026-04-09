@@ -76,7 +76,7 @@
                     android:layout_gravity="bottom"
                     android:scaleType="fitXY"
                     android:src="@drawable/bg_wave_bottom"
-                    app:tint="@color/ef_background" />
+                    app:tint="@color/ef_wave_color" />
             </FrameLayout>
 
             <com.google.android.material.card.MaterialCardView
@@ -281,9 +281,9 @@
                 android:id="@+id/cardLearnQuickActions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/ef_surface"
+                app:cardBackgroundColor="@android:color/transparent"
                 app:cardCornerRadius="24dp"
-                app:cardElevation="3dp"
+                app:cardElevation="0dp"
                 app:strokeColor="@color/ef_outline_light"
                 app:strokeWidth="1dp">
 
@@ -291,6 +291,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
+                    android:background="@drawable/bg_learn_quick_actions_card"
                     android:padding="16dp">
 
                     <TextView
@@ -323,7 +324,7 @@
                             android:layout_height="108dp"
                             android:layout_marginEnd="10dp"
                             android:layout_weight="1"
-                            android:background="@drawable/bg_learn_quick_action_tile"
+                            android:background="@drawable/bg_learn_quick_action_tile_ripple"
                             android:clickable="true"
                             android:focusable="true"
                             android:gravity="center_horizontal"
@@ -360,7 +361,7 @@
                             android:layout_width="0dp"
                             android:layout_height="108dp"
                             android:layout_weight="1"
-                            android:background="@drawable/bg_learn_quick_action_tile"
+                            android:background="@drawable/bg_learn_quick_action_tile_ripple"
                             android:clickable="true"
                             android:focusable="true"
                             android:gravity="center_horizontal"
@@ -405,7 +406,7 @@
                             android:layout_height="108dp"
                             android:layout_marginEnd="10dp"
                             android:layout_weight="1"
-                            android:background="@drawable/bg_learn_quick_action_tile"
+                            android:background="@drawable/bg_learn_quick_action_tile_ripple"
                             android:clickable="true"
                             android:focusable="true"
                             android:gravity="center_horizontal"
@@ -442,7 +443,7 @@
                             android:layout_width="0dp"
                             android:layout_height="108dp"
                             android:layout_weight="1"
-                            android:background="@drawable/bg_learn_quick_action_tile"
+                            android:background="@drawable/bg_learn_quick_action_tile_ripple"
                             android:clickable="true"
                             android:focusable="true"
                             android:gravity="center_horizontal"
@@ -480,7 +481,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="52dp"
                         android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_learn_quick_action_tile"
+                        android:background="@drawable/bg_learn_quick_action_tile_ripple"
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center_vertical"

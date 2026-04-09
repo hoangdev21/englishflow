@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.example.englishflow.R;
 
@@ -25,6 +26,7 @@ public class AppSettingsStore {
     private static final String KEY_ADMIN_NOTIFICATIONS_ENABLED = "admin_notifications_enabled";
     private static final String KEY_ADMIN_NOTIFICATIONS_LAST_READ_AT = "admin_notifications_last_read_at";
     private static final String KEY_ADMIN_NOTIFICATIONS_LAST_ALERTED_AT = "admin_notifications_last_alerted_at";
+    private static final String KEY_THEME_MODE = "theme_mode";
 
     public static final int DAILY_GOAL_RELAX = 5;
     public static final int DAILY_GOAL_FOCUSED = 15;
@@ -32,6 +34,9 @@ public class AppSettingsStore {
 
     public static final String VOICE_MODE_NORMAL = "normal";
     public static final String VOICE_MODE_SLOW = "slow";
+
+    public static final String THEME_MODE_LIGHT = "light";
+    public static final String THEME_MODE_DARK = "dark";
 
     public static final String AVATAR_DEFAULT = "default";
     public static final String AVATAR_DOLPHIN = "dolphin";
@@ -315,5 +320,24 @@ public class AppSettingsStore {
 
     public long getLastAdminNotificationAlertedAt() {
         return Math.max(0L, preferences.getLong(KEY_ADMIN_NOTIFICATIONS_LAST_ALERTED_AT, 0L));
+    }
+
+    public void setThemeMode(@NonNull String mode) {
+        String safeMode = THEME_MODE_LIGHT;
+        if (THEME_MODE_DARK.equals(mode) || THEME_MODE_LIGHT.equals(mode)) {
+            safeMode = mode;
+        }
+        preferences.edit().putString(KEY_THEME_MODE, safeMode).apply();
+    }
+
+    @NonNull
+    public String getThemeMode() {
+        return preferences.getString(KEY_THEME_MODE, THEME_MODE_LIGHT);
+    }
+
+    public int getNightModeValue() {
+        return THEME_MODE_DARK.equals(getThemeMode())
+                ? AppCompatDelegate.MODE_NIGHT_YES
+                : AppCompatDelegate.MODE_NIGHT_NO;
     }
 }

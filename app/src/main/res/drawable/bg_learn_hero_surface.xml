@@ -2,9 +2,9 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
     <gradient
         android:angle="135"
-        android:startColor="#0C8C73"
-        android:centerColor="#109D80"
-        android:endColor="#1CB496" />
+        android:startColor="@color/ef_hero_grad_start"
+        android:centerColor="@color/ef_hero_grad_mid"
+        android:endColor="@color/ef_hero_grad_end" />
     <corners
         android:bottomLeftRadius="42dp"
         android:bottomRightRadius="42dp" />

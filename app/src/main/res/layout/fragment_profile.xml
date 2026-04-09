@@ -144,7 +144,8 @@
                 android:layout_height="40dp"
                 android:layout_marginTop="-40dp"
                 android:scaleType="fitXY"
-                android:src="@drawable/bg_wave_bottom" />
+                android:src="@drawable/bg_wave_bottom"
+                app:tint="@color/ef_wave_color" />
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -196,7 +197,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textColor="#0D9488"
+                        android:textColor="@color/ef_stat_vocab"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -205,7 +206,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:text="Từ vựng"
-                        android:textColor="#64748B"
+                        android:textColor="@color/ef_text_tertiary"
                         android:textSize="10sp"
                         android:textStyle="bold"
                         android:alpha="0.8" />
@@ -236,7 +237,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textColor="#EA580C"
+                        android:textColor="@color/ef_stat_streak"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -245,7 +246,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:text="Chuỗi"
-                        android:textColor="#64748B"
+                        android:textColor="@color/ef_text_tertiary"
                         android:textSize="10sp"
                         android:textStyle="bold"
                         android:alpha="0.8" />
@@ -275,7 +276,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
-                        android:textColor="#CA8A04"
+                        android:textColor="@color/ef_stat_xp"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -284,7 +285,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:text="@string/profile_xp_current"
-                        android:textColor="#64748B"
+                        android:textColor="@color/ef_text_tertiary"
                         android:textSize="10sp"
                         android:textStyle="bold"
                         android:alpha="0.8" />
@@ -305,7 +306,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="THỐNG KÊ CHI TIẾT"
-                    android:textColor="@color/ef_primary_dark"
+                    android:textColor="@color/ef_section_header"
                     android:textSize="13sp"
                     android:textStyle="bold"
                     android:fontFamily="@font/nunito"
@@ -511,7 +512,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="7 NGÀY GẦN NHẤT (Phút)"
-                    android:textColor="@color/ef_primary_dark"
+                    android:textColor="@color/ef_section_header"
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.08"
@@ -535,7 +536,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="28dp"
                 android:text="Thành tựu đạt được"
-                android:textColor="@color/ef_primary_dark"
+                android:textColor="@color/ef_primary"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 

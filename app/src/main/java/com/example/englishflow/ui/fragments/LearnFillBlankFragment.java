@@ -53,6 +53,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class LearnFillBlankFragment extends Fragment {
 
@@ -446,8 +448,22 @@ public class LearnFillBlankFragment extends Fragment {
         if (sentenceText != null) {
             sentenceText.setText(question.maskedSentence);
         }
+        
+        // Mask the Vietnamese meaning and English word in the translation to avoid revealing the answer
+        String sentenceVi = question.sentenceVi != null ? question.sentenceVi : "";
+        String meaningVi = question.meaningVi != null ? question.meaningVi : "";
+        String expected = question.expectedAnswer != null ? question.expectedAnswer : "";
+        String mask = "____";
+
+        if (!meaningVi.isEmpty()) {
+            sentenceVi = sentenceVi.replaceAll("(?i)" + Pattern.quote(meaningVi), mask);
+        }
+        if (!expected.isEmpty()) {
+            sentenceVi = sentenceVi.replaceAll("(?i)" + Pattern.quote(expected), mask);
+        }
+
         if (sentenceViText != null) {
-            sentenceViText.setText(getString(R.string.fill_blank_translation_format, question.sentenceVi));
+            sentenceViText.setText(getString(R.string.fill_blank_translation_format, sentenceVi));
         }
         if (meaningText != null) {
             meaningText.setText(getString(R.string.fill_blank_meaning_format, question.meaningVi));
@@ -558,6 +574,12 @@ public class LearnFillBlankFragment extends Fragment {
         if (hintText != null) {
             hintText.setText(getString(R.string.fill_blank_feedback_correct, question.expectedAnswer));
         }
+        
+        // Reveal the full translation once answered correctly
+        if (sentenceViText != null) {
+            sentenceViText.setText(getString(R.string.fill_blank_translation_format, question.sentenceVi));
+        }
+
         if (checkButton != null) {
             checkButton.setEnabled(false);
         }

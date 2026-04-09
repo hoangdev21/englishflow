@@ -32,6 +32,9 @@ public class VoiceFlowEngine {
     private static final String UTTERANCE_ID_SUFFIX = "_flowflow";
     private static final int SPEAK_READY_RETRY_DELAY_MS = 180;
     private static final int SPEAK_READY_RETRY_MAX = 12;
+    private static final float VOICE_RATE_BASE = 0.85f; // Standard learning multiplier
+    private static final int CHUNK_GAP_MS = 200; // Natural pause between sentences
+
 
     public enum State { IDLE, LISTENING, PROCESSING, SPEAKING }
     private State currentState = State.IDLE;
@@ -158,12 +161,23 @@ public class VoiceFlowEngine {
             } else {
                 tts.setLanguage(localeVi);
             }
+            
+            // Re-apply rate and pitch to ensure engine doesn't reset on language switch
+            float rate = resolveSpeechRate();
+            tts.setSpeechRate(rate);
+            tts.setPitch(1.0f);
 
             Bundle params = new Bundle();
             params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC);
             // High priority audio stream for emulator stability
             tts.speak(chunk, TextToSpeech.QUEUE_ADD, params, uId);
+
+            // Add a natural gap between chunks unless it's the last one
+            if (!isLast) {
+                tts.playSilentUtterance(CHUNK_GAP_MS, TextToSpeech.QUEUE_ADD, null);
+            }
         }
+
     }
 
     private static final String VI_CHARS = "àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ";
@@ -258,11 +272,18 @@ public class VoiceFlowEngine {
     }
 
     private float resolveSpeechRate() {
+        float rawRate = 1.0f;
         if (speechRateOverride > 0f) {
-            return speechRateOverride;
+            rawRate = speechRateOverride;
+        } else if (settingsStore != null) {
+            rawRate = settingsStore.getVoiceSpeechRate();
         }
-        return settingsStore.getVoiceSpeechRate();
+        
+        float finalRate = rawRate * VOICE_RATE_BASE;
+        Log.d(TAG, "Speech rate resolved: raw=" + rawRate + ", final=" + finalRate);
+        return finalRate;
     }
+
     public State getState() { return currentState; }
     public void shutdown() {
         isShutdown = true;

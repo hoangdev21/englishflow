@@ -62,8 +62,8 @@ public class MainActivity extends AppCompatActivity {
 
             MainPagerAdapter pagerAdapter = new MainPagerAdapter(this);
             viewPager.setAdapter(pagerAdapter);
-            // Keep only adjacent pages warm to reduce startup memory and first-render jank.
-            viewPager.setOffscreenPageLimit(1);
+            // Keep one extra page on each side warm to reduce recreation stutter when switching tabs.
+            viewPager.setOffscreenPageLimit(2);
 
             // ════ Custom 3D Nav Setup ════
             android.view.View btnHome = findViewById(R.id.nav_home_btn);
@@ -186,42 +186,22 @@ public class MainActivity extends AppCompatActivity {
             boolean isActive = (i == position);
             buttons[i].setSelected(isActive);
             buttons[i].animate().cancel();
+            buttons[i].setTranslationY(isActive ? -3f * density : 0f);
+            buttons[i].setCardElevation(isActive ? 4f * density : 0f);
             if (icons[i] != null) {
                 icons[i].animate().cancel();
-            }
-
-            if (isActive) {
-                // Pop up animation
-                buttons[i].animate()
-                        .translationY(-4 * density)
-                        .setDuration(250)
-                        .start();
-                buttons[i].setCardElevation(6 * density);
-                if (icons[i] != null) {
-                    icons[i].animate().scaleX(1.25f).scaleY(1.25f).setDuration(250).start();
-                }
-            } else {
-                // Back to normal
-                buttons[i].animate()
-                        .translationY(0)
-                        .setDuration(200)
-                        .start();
-                buttons[i].setCardElevation(0);
-                if (icons[i] != null) {
-                    icons[i].animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start();
-                }
+                icons[i].setScaleX(isActive ? 1.12f : 1.0f);
+                icons[i].setScaleY(isActive ? 1.12f : 1.0f);
             }
         }
         
-        // Handle FAB state if needed (always glossy)
         android.view.View fab = findViewById(R.id.fabScan);
         if (fab != null) {
+            boolean scanSelected = position == 2;
             fab.animate().cancel();
-            fab.animate()
-                .scaleX(position == 2 ? 1.2f : 1.0f)
-                .scaleY(position == 2 ? 1.2f : 1.0f)
-                .translationY(position == 2 ? -6 * density : 0)
-                .setDuration(300).start();
+            fab.setScaleX(scanSelected ? 1.12f : 1.0f);
+            fab.setScaleY(scanSelected ? 1.12f : 1.0f);
+            fab.setTranslationY(scanSelected ? -4f * density : 0f);
         }
     }
 }

@@ -4,7 +4,7 @@
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="32dp" />
-            <solid android:color="#7094A3B8" />
+            <solid android:color="@color/ef_silver_shadow" />
         </shape>
     </item>
 
@@ -12,7 +12,7 @@
     <item android:bottom="2dp">
         <shape android:shape="rectangle">
             <corners android:radius="32dp" />
-            <solid android:color="#9094A3B8" />
+            <solid android:color="@color/ef_silver_shadow" />
         </shape>
     </item>
 
@@ -20,12 +20,12 @@
     <item android:bottom="6dp">
         <shape android:shape="rectangle">
             <corners android:radius="32dp" />
-            <stroke android:width="2dp" android:color="#94A3B8" />
+            <stroke android:width="2dp" android:color="@color/ef_silver_border" />
             <gradient
                 android:angle="270"
                 android:centerY="0.2"
-                android:endColor="#F1F5F9"
-                android:startColor="#FFFFFF"
+                android:endColor="@color/ef_white_silver"
+                android:startColor="@color/ef_surface_elevated"
                 android:type="linear" />
         </shape>
     </item>

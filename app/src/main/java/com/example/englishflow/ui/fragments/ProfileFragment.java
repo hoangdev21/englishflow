@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.example.englishflow.MainActivity;
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.AppSettingsStore;
@@ -318,10 +319,15 @@ public class ProfileFragment extends Fragment {
     }
 
     private void navigateToTab(int tabIndex) {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).setCurrentTab(tabIndex);
+            return;
+        }
         if (getActivity() != null) {
             ViewPager2 viewPager = getActivity().findViewById(R.id.viewPager);
             if (viewPager != null) {
-                viewPager.setCurrentItem(tabIndex, true);
+                int current = viewPager.getCurrentItem();
+                viewPager.setCurrentItem(tabIndex, Math.abs(tabIndex - current) <= 1);
             }
         }
     }

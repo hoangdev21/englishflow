@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,6 +28,7 @@ import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.JourneyLessonRepository;
 import com.example.englishflow.data.MapNodeItem;
 import com.example.englishflow.ui.MapConversationActivity;
+import com.example.englishflow.ui.views.AiAvatar3dController;
 import com.example.englishflow.ui.views.MapPathView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -50,10 +52,11 @@ public class LearnMapFragment extends Fragment {
     private JourneyLessonRepository journeyLessonRepository;
     private TextView mapStreakChip;
     private MaterialButton mapSpeakQuickButton;
-    private ImageView mapHeroAvatar;
+    private View mapHeroAvatar;
     private View mapHeroGlowBase;
     private View mapHeroPulseRingOuter;
     private View mapHeroPulseRingInner;
+    private AiAvatar3dController mapHeroAvatarController;
     private MapNodeItem heroSpeakTarget;
     private long lastJourneyLoadedAt = 0L;
 
@@ -75,6 +78,19 @@ public class LearnMapFragment extends Fragment {
         mapHeroGlowBase = view.findViewById(R.id.mapHeroGlowBase);
         mapHeroPulseRingOuter = view.findViewById(R.id.mapHeroPulseRingOuter);
         mapHeroPulseRingInner = view.findViewById(R.id.mapHeroPulseRingInner);
+        WebView mapHeroAvatarScene = view.findViewById(R.id.mapHeroAvatarScene);
+        View mapHeroAvatarFallback = view.findViewById(R.id.mapHeroAvatarFallback);
+        if (mapHeroAvatarScene != null) {
+            mapHeroAvatarController = new AiAvatar3dController(
+                mapHeroAvatarScene,
+                mapHeroAvatarFallback,
+                1.25f,
+                0.45f,
+                -0.01f,
+                0f
+            );
+            mapHeroAvatarController.loadModel();
+        }
         journeyLessonRepository = new JourneyLessonRepository();
 
         if (mapSpeakQuickButton != null) {
@@ -97,7 +113,11 @@ public class LearnMapFragment extends Fragment {
         // Apply Insets for Status Bar (Edge-to-Edge compatibility)
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
             androidx.core.graphics.Insets systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars());
-            v.setPadding(0, systemBars.top, 0, 0);
+            View heroSection = v.findViewById(R.id.mapHeroSection);
+            if (heroSection != null) {
+                // Apply padding to the hero section instead of root so that background spills up
+                heroSection.setPadding(0, systemBars.top, 0, 0);
+            }
             return insets;
         });
     }
@@ -105,6 +125,9 @@ public class LearnMapFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        if (mapHeroAvatarController != null) {
+            mapHeroAvatarController.onResume();
+        }
         if (mapNodesContainer != null) {
             if (currentJourneyNodes.isEmpty() || shouldReloadJourney()) {
                 loadJourneyNodes();
@@ -113,6 +136,14 @@ public class LearnMapFragment extends Fragment {
             }
         }
         refreshHeroSummary();
+    }
+
+    @Override
+    public void onPause() {
+        if (mapHeroAvatarController != null) {
+            mapHeroAvatarController.onPause();
+        }
+        super.onPause();
     }
 
     private boolean shouldReloadJourney() {
@@ -460,26 +491,111 @@ public class LearnMapFragment extends Fragment {
     }
 
     private int iconByOrder(int order) {
-        switch (order) {
+        if (order <= 0) {
+            return 0;
+        }
+
+        int normalizedOrder = ((order - 1) % 10) + 1;
+        switch (normalizedOrder) {
             case 1:
                 return R.drawable.hello;
             case 2:
                 return R.drawable.happy;
             case 3:
-                return R.drawable.family;
+                return R.drawable.earth;
             case 4:
-                return R.drawable.coffee;
+                return R.drawable.family;
             case 5:
-                return R.drawable.work;
+                return R.drawable.schedule;
             case 6:
-                return R.drawable.fashion;
+                return R.drawable.color;
             case 7:
-                return R.drawable.weather;
-            case 8:
                 return R.drawable.house;
+            case 8:
+                return R.drawable.street_food;
             case 9:
-                return R.drawable.hobby;
+                return R.drawable.drink;
             case 10:
+                return R.drawable.shopping;
+            case 11:
+                return R.drawable.school;
+            case 12:
+                return R.drawable.job;
+            case 13:
+                return R.drawable.office;
+            case 14:
+                return R.drawable.email;
+            case 15:
+                return R.drawable.team;
+            case 16:
+                return R.drawable.presentation;
+            case 17:
+                return R.drawable.manage;
+            case 18:
+                return R.drawable.care;
+            case 19:
+                return R.drawable.sell;
+            case 20:
+                return R.drawable.marketing;
+            case 21:
+                return R.drawable.finance;
+            case 22:
+                return R.drawable.bank;
+            case 23:
+                return R.drawable.heath;
+            case 24:
+                return R.drawable.power;
+            case 25:
+                return R.drawable.training;
+            case 26:
+                return R.drawable.ask;
+            case 27:
+                return R.drawable.schedule;
+            case 28:
+                return R.drawable.color;
+            case 29:
+                return R.drawable.house;
+            case 30:
+                return R.drawable.street_food;
+            case 31:
+                return R.drawable.drink;
+            case 32:
+                return R.drawable.shopping;
+            case 33:
+                return R.drawable.work;
+            case 34:
+                return R.drawable.hello;
+            case 35:
+                return R.drawable.happy;
+            case 36:
+                return R.drawable.earth;
+            case 37:
+                return R.drawable.family;
+            case 38:
+                return R.drawable.schedule;
+            case 39:
+                return R.drawable.color;
+            case 40:
+                return R.drawable.house;
+            case 41:
+                return R.drawable.street_food;
+            case 42:
+                return R.drawable.rocket;
+            case 43:
+                return R.drawable.rule;
+            case 44:
+                return R.drawable.work;
+            case 45:
+                return R.drawable.environment;
+            case 46:
+                return R.drawable.webinar;
+            case 47:
+                return R.drawable.crowd;
+            case 48:
+                return R.drawable.storytelling;
+            case 49:
+                return R.drawable.bad;
+            case 50:
                 return R.drawable.goodbye;
             default:
                 return 0;
@@ -590,6 +706,10 @@ public class LearnMapFragment extends Fragment {
         mapPathView = null;
         mapStreakChip = null;
         mapSpeakQuickButton = null;
+        if (mapHeroAvatarController != null) {
+            mapHeroAvatarController.onDestroy();
+            mapHeroAvatarController = null;
+        }
         mapHeroAvatar = null;
         mapHeroGlowBase = null;
         mapHeroPulseRingOuter = null;

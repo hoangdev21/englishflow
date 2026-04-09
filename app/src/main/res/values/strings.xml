@@ -237,8 +237,8 @@
 
     <string name="scan_title">Scan vật thể bằng AI</string>
     <string name="scan_preview_desc">Hình ảnh xem trước để quét</string>
-    <string name="scan_magic_lens_toggle_on">Bật Magic Lens</string>
-    <string name="scan_magic_lens_toggle_off">Tắt Magic Lens</string>
+    <string name="scan_magic_lens_toggle_on">Bật Magic</string>
+    <string name="scan_magic_lens_toggle_off">Tắt Magic</string>
     <string name="scan_magic_lens_status_off">Magic Lens: OFF</string>
     <string name="scan_magic_lens_status_searching">Magic Lens: Đang khóa trang...</string>
     <string name="scan_magic_lens_status_tracking">Magic Lens: %1$d từ khó</string>
@@ -252,6 +252,11 @@
     <string name="chat_title">Chat luyện nói AI</string>
     <string name="profile_title">Hồ sơ học tập</string>
     <string name="profile_xp_current">XP hiện có</string>
+
+    <string name="settings_appearance_title">Giao diện</string>
+    <string name="settings_appearance_subtitle">Chọn chế độ hiển thị phù hợp với mắt của bạn.</string>
+    <string name="settings_theme_light">Sáng</string>
+    <string name="settings_theme_dark">Tối</string>
 
     <string name="avatar_picker_balance_loading">Đang tải XP...</string>
     <string name="avatar_picker_balance_format">XP hiện có: %1$d</string>

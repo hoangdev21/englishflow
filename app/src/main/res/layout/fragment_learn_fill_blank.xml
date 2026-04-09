@@ -279,7 +279,7 @@
                                 android:layout_marginTop="6dp"
                                 android:clickable="true"
                                 android:focusable="true"
-                                app:cardBackgroundColor="@android:color/white"
+                                app:cardBackgroundColor="@color/ef_surface"
                                 app:cardCornerRadius="14dp"
                                 app:cardElevation="2dp"
                                 app:strokeColor="@color/ef_primary_light"

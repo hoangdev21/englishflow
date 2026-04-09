@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- Premium Emerald Palette -->
+    <color name="ef_primary">#1DB493</color>
+    <color name="ef_primary_dark">#0E8A72</color>
+    <color name="ef_primary_light">#43D6B6</color>
+    <color name="ef_on_primary">#062A21</color>
+    <color name="ef_primary_container">#123B31</color>
+    <color name="ef_on_primary_container">#C8F6E8</color>
+
+    <!-- Secondary (Warm Slate) -->
+    <color name="ef_secondary">#8CA7B5</color>
+    <color name="ef_secondary_container">#243842</color>
+    <color name="ef_on_secondary_container">#D8E7EE</color>
+
+    <!-- Tertiary (Warm Amber Accent) -->
+    <color name="ef_tertiary">#D2AE63</color>
+    <color name="ef_tertiary_container">#3C3118</color>
+    <color name="ef_on_tertiary_container">#FDE8BC</color>
+
+    <!-- Surfaces -->
+    <color name="ef_background">#101716</color>
+    <color name="ef_surface">#15201E</color>
+    <color name="ef_surface_variant">#1C2A27</color>
+    <color name="ef_surface_elevated">#1E2D29</color>
+    <color name="ef_outline">#38514A</color>
+    <color name="ef_outline_light">#2B3F39</color>
+    <color name="ef_background_top">#0F1716</color>
+    <color name="ef_background_bottom">#131C1A</color>
+
+    <!-- Semantic -->
+    <color name="ef_success">#31C88A</color>
+    <color name="ef_info">#65A6FF</color>
+    <color name="ef_warning_bg">#342B16</color>
+    <color name="ef_warning_text">#F8D27A</color>
+    <color name="ef_error">#FF6B78</color>
+
+    <!-- Text -->
+    <color name="ef_text_primary">#E5F1EC</color>
+    <color name="ef_text_secondary">#AAC2B9</color>
+    <color name="ef_text_tertiary">#7D9890</color>
+    <color name="ef_text_on_dark">#FFFFFF</color>
+    <color name="ef_text_on_dark_secondary">#CBE1D8</color>
+
+    <!-- Navigation -->
+    <color name="nav_item_checked">#3AD1AF</color>
+    <color name="nav_item_unchecked">#78918A</color>
+    <color name="ef_nav_item_tint">@color/ef_primary</color>
+    <color name="ef_stats_bg">@color/ef_surface_variant</color>
+
+    <!-- Auth Screen Glassmorphism -->
+    <color name="ef_glass_bg">#24FFFFFF</color>
+    <color name="ef_glass_stroke">#36FFFFFF</color>
+
+    <!-- Gradient Colors -->
+    <color name="ef_gradient_start">#0F7F67</color>
+    <color name="ef_gradient_mid">#149978</color>
+    <color name="ef_gradient_end">#1DB493</color>
+
+    <!-- Card Accent Colors -->
+    <color name="ef_card_blue">#1E2D40</color>
+    <color name="ef_card_blue_text">#9CC4FF</color>
+    <color name="ef_card_purple">#2D2840</color>
+    <color name="ef_card_purple_text">#C8B2FF</color>
+    <color name="ef_card_amber">#3A2F1A</color>
+    <color name="ef_card_amber_text">#F3C56E</color>
+    <color name="ef_card_rose">#3A242B</color>
+    <color name="ef_card_rose_text">#FF9AB1</color>
+
+    <!-- Home Redesign -->
+    <color name="ef_hero_grad_start">#155F59</color>
+    <color name="ef_hero_grad_mid">#124C48</color>
+    <color name="ef_hero_grad_end">#103E3C</color>
+    <color name="ef_white_silver">#1C2B29</color>
+    <color name="ef_silver_border">#2C403C</color>
+    <color name="ef_silver_shadow">#0D1211</color>
+    <color name="ef_hero_text_white">#ECF6F3</color>
+    <color name="ef_wave_color">@color/ef_background</color>
+    <color name="ef_hero_text_secondary">#78918A</color>
+
+    <color name="ef_card_indigo">#1E243A</color>
+    <color name="ef_card_indigo_text">#A8B0FF</color>
+    <color name="ef_section_header">#A0BCB2</color>
+    <color name="ef_divider">#1D2B28</color>
+    <color name="ef_badge_success">#162E23</color>
+    <color name="ef_badge_success_text">#76CFA3</color>
+    <color name="ef_xp_track">#243330</color>
+    <color name="ef_dict_ipa">#8A9AAB</color>
+    <color name="ef_dict_example_bg">#141C1B</color>
+
+    <!-- Learn Domains Redesign -->
+    <color name="ef_domains_bg_top">#0F1716</color>
+    <color name="ef_domains_bg_bottom">#131C1A</color>
+    <color name="ef_domains_hero_start">#0C5D55</color>
+    <color name="ef_domains_hero_mid">#0A4E57</color>
+    <color name="ef_domains_hero_end">#0A3D4A</color>
+    <color name="ef_domains_hero_stroke">#4A79D5C5</color>
+    <color name="ef_domains_card_stroke">#334844</color>
+    <color name="ef_domains_progress_track">#2C3E3A</color>
+    <color name="ef_domains_chip_text">#A6E3D5</color>
+    <color name="ef_domains_chip_bg">#1D453B</color>
+
+    <!-- Learning Map Palette -->
+    <color name="ef_map_hero_start">#1E2B54</color>
+    <color name="ef_map_hero_end">#24528E</color>
+    <color name="ef_map_route">#324059</color>
+    <color name="ef_map_route_glow">#29354B</color>
+    <color name="ef_map_card_bg">#1A2233</color>
+    <color name="ef_map_node_locked">#4C5D79</color>
+    <color name="ef_map_node_available_start">#23B8A8</color>
+    <color name="ef_map_node_available_end">#0D8978</color>
+    <color name="ef_map_node_progress_start">#53A8F5</color>
+    <color name="ef_map_node_progress_end">#2A6CC3</color>
+    <color name="ef_map_node_completed_start">#FF846C</color>
+    <color name="ef_map_node_completed_end">#E85A43</color>
+
+    <!-- Profile Gamification Accent Palette -->
+    <color name="ef_stat_vocab">#29BA88</color>
+    <color name="ef_stat_streak">#FF9A52</color>
+    <color name="ef_stat_xp">#E8B246</color>
+    <color name="ef_stat_chat">#6EB6FF</color>
+    <color name="ef_stat_best_streak">#E19359</color>
+
+    <!-- Fill Blank Redesign Palette -->
+    <color name="ef_deep_sea_blue">#1A2F72</color>
+    <color name="ef_deep_sea_blue_dark">#101E4D</color>
+    <color name="ef_deep_sea_blue_light">#2A4C9E</color>
+    <color name="ef_hint_border">#FFB74A</color>
+    <color name="ef_hint_bg">#3A2E1C</color>
+    <color name="ef_orange_primary">#FFA62F</color>
+    <color name="ef_orange_dark">#D57A16</color>
+    <color name="ef_orange_light">#4B3520</color>
+
+    <!-- Learn Quick Actions (Pastel 3D Gradient) -->
+    <color name="ef_learn_tile_pink">#2B1A24</color>
+    <color name="ef_learn_tile_blue">#151F2E</color>
+    <color name="ef_learn_tile_green">#142722</color>
+    <color name="ef_learn_tile_stroke">#22FFFFFF</color>
+    <color name="ef_learn_tile_shadow">#4D000000</color>
+    <color name="ef_learn_tile_inner_shadow">#66000000</color>
+    <color name="ef_learn_tile_gloss">#10FFFFFF</color>
+    <color name="ef_learn_card_pink">#151A22</color>
+    <color name="ef_learn_card_blue">#131D2A</color>
+    <color name="ef_learn_card_green">#121F1C</color>
+</resources>

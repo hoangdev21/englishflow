@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Base.Theme.EnglishFlow" parent="Theme.MaterialComponents.NoActionBar">
+    <style name="Base.Theme.EnglishFlow" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/ef_primary</item>
         <item name="colorPrimaryDark">@color/ef_primary_dark</item>
         <item name="colorAccent">@color/ef_secondary</item>
@@ -8,7 +8,8 @@
         <item name="android:fontFamily">@font/nunito</item>
         <item name="fontFamily">@font/nunito</item>
         <item name="android:statusBarColor">@color/ef_background</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 
     <style name="Theme.EnglishFlow" parent="Base.Theme.EnglishFlow" />

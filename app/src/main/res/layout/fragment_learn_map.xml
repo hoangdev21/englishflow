@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="@color/ef_background">
 
     <!-- Hero Section (Fixed) -->
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -103,17 +103,29 @@
         </LinearLayout>
 
         <!-- AI Bot Hero View -->
-        <ImageView
+        <FrameLayout
             android:id="@+id/mapHeroAvatar"
             android:layout_width="228dp"
             android:layout_height="228dp"
             android:layout_marginBottom="-12dp"
-            android:contentDescription="AI Avatar"
-            android:scaleType="fitCenter"
-            android:src="@drawable/chat_bot_avatar"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent">
+
+            <WebView
+                android:id="@+id/mapHeroAvatarScene"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent" />
+
+            <ImageView
+                android:id="@+id/mapHeroAvatarFallback"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="AI Avatar"
+                android:scaleType="fitCenter"
+                android:src="@drawable/chat_bot_avatar" />
+        </FrameLayout>
 
         <!-- Floating Speak Button -->
         <com.google.android.material.button.MaterialButton
@@ -157,11 +169,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
                 android:layout_marginTop="16dp" 
-                app:cardBackgroundColor="@android:color/white"
+                app:cardBackgroundColor="@color/ef_surface"
                 app:cardCornerRadius="32dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@android:color/black"
-                app:strokeWidth="2dp">
+                app:strokeColor="@color/ef_outline"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"

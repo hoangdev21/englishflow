@@ -3,7 +3,7 @@
     <style name="Widget" parent="android:Widget" />
 
     <!-- Base Style for EnglishFlow Theme -->
-    <style name="Base.Theme.EnglishFlow" parent="Theme.MaterialComponents.NoActionBar">
+    <style name="Base.Theme.EnglishFlow" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/ef_primary</item>
         <item name="colorPrimaryDark">@color/ef_primary_dark</item>
         <item name="colorAccent">@color/ef_secondary</item>
@@ -13,6 +13,7 @@
         <item name="fontFamily">@font/nunito</item>
         <item name="android:statusBarColor">@color/ef_background</item>
         <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 
     <style name="Theme.EnglishFlow" parent="Base.Theme.EnglishFlow" />
@@ -98,7 +99,7 @@
     </style>
 
     <style name="Widget.Material3.Button.TonalButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
-        <item name="android:textColor">@color/ef_primary</item>
+        <item name="android:textColor">@color/ef_on_primary_container</item>
         <item name="strokeColor">@android:color/transparent</item>
         <item name="strokeWidth">0dp</item>
         <item name="android:backgroundTint">@color/ef_primary_container</item>
@@ -126,7 +127,7 @@
     </style>
 
     <!-- Custom Bottom Sheet Dialog Style -->
-    <style name="CustomBottomSheetDialogTheme" parent="Theme.Design.Light.BottomSheetDialog">
+    <style name="CustomBottomSheetDialogTheme" parent="Theme.MaterialComponents.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/CustomBottomSheetStyle</item>
     </style>
 
@@ -144,7 +145,7 @@
         <item name="cornerSize">50%</item>
     </style>
 
-    <style name="TransparentDialogTheme" parent="Theme.MaterialComponents.Light.Dialog.Alert">
+    <style name="TransparentDialogTheme" parent="Theme.MaterialComponents.Dialog.Alert">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowContentOverlay">@null</item>
@@ -173,7 +174,7 @@
         <item name="android:fontFamily">@font/nunito</item>
     </style>
 
-    <style name="ef_dialog_rounded" parent="Theme.MaterialComponents.Light.Dialog.Alert">
+    <style name="ef_dialog_rounded" parent="Theme.MaterialComponents.Dialog.Alert">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowContentOverlay">@null</item>

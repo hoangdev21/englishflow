@@ -1,11 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <gradient
-        android:angle="145"
-        android:startColor="#F6FCFA"
-        android:endColor="#EAF6F2" />
-    <corners android:radius="18dp" />
-    <stroke
-        android:width="1dp"
-        android:color="@color/ef_outline_light" />
-</shape>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Soft outer shadow (fake 3D lift) -->
+    <item android:left="1dp" android:top="2dp" android:right="1dp" android:bottom="0dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <solid android:color="@color/ef_learn_tile_shadow" />
+        </shape>
+    </item>
+
+    <!-- Base pastel gradient (pink -> blue) -->
+    <item android:left="0dp" android:top="0dp" android:right="0dp" android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <gradient
+                android:angle="135"
+                android:startColor="@color/ef_learn_tile_pink"
+                android:centerColor="@color/ef_learn_tile_blue"
+                android:endColor="@color/ef_learn_tile_blue" />
+        </shape>
+    </item>
+
+    <!-- Green glow wash (radial) for "loang" effect -->
+    <item android:left="0dp" android:top="0dp" android:right="0dp" android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <gradient
+                android:type="radial"
+                android:gradientRadius="260dp"
+                android:centerX="0.92"
+                android:centerY="0.10"
+                android:startColor="@color/ef_learn_tile_green"
+                android:endColor="@android:color/transparent" />
+        </shape>
+    </item>
+
+    <!-- Top gloss highlight -->
+    <item android:left="0dp" android:top="0dp" android:right="0dp" android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <gradient
+                android:angle="90"
+                android:startColor="@color/ef_learn_tile_gloss"
+                android:endColor="@android:color/transparent" />
+        </shape>
+    </item>
+
+    <!-- Inner shadow bottom to enhance depth -->
+    <item android:left="0dp" android:top="0dp" android:right="0dp" android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <gradient
+                android:angle="270"
+                android:startColor="@color/ef_learn_tile_inner_shadow"
+                android:endColor="@android:color/transparent" />
+        </shape>
+    </item>
+
+    <!-- Stroke -->
+    <item android:left="0dp" android:top="0dp" android:right="0dp" android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <stroke android:width="1dp" android:color="@color/ef_learn_tile_stroke" />
+        </shape>
+    </item>
+
+</layer-list>

@@ -6,14 +6,14 @@
             <item android:top="2dp">
                 <shape android:shape="rectangle">
                     <corners android:radius="26dp" />
-                    <solid android:color="#E2E8F0" />
+                    <solid android:color="@color/ef_surface_variant" />
                 </shape>
             </item>
             <item android:top="2dp">
                 <shape android:shape="rectangle">
                     <corners android:radius="26dp" />
-                    <solid android:color="@color/white" />
-                    <stroke android:width="1dp" android:color="#CBD5E1" />
+                    <solid android:color="@color/ef_surface_elevated" />
+                    <stroke android:width="1dp" android:color="@color/ef_outline" />
                 </shape>
             </item>
         </layer-list>
@@ -33,12 +33,12 @@
             <item android:bottom="3dp" android:right="1dp" android:left="1dp">
                 <shape android:shape="rectangle">
                     <corners android:radius="28dp" />
-                    <solid android:color="@color/white" />
-                    <stroke android:width="1dp" android:color="#F1F5F9" />
+                    <solid android:color="@color/ef_surface_elevated" />
+                    <stroke android:width="1dp" android:color="@color/ef_outline_light" />
                     <gradient
                         android:angle="270"
-                        android:endColor="#FFFFFF"
-                        android:startColor="#FDFDFF"
+                        android:endColor="@color/ef_surface_elevated"
+                        android:startColor="@color/ef_surface"
                         android:type="linear" />
                 </shape>
             </item>

@@ -15,6 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.webkit.WebView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -30,6 +31,7 @@ import com.example.englishflow.data.GroqChatService;
 import com.example.englishflow.data.LessonVocabulary;
 import com.example.englishflow.data.MapLessonFlowStep;
 import com.example.englishflow.util.VoiceFlowEngine;
+import com.example.englishflow.ui.views.AiAvatar3dController;
 import com.example.englishflow.ui.views.VoiceWaveformView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
@@ -47,7 +49,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MapConversationActivity extends AppCompatActivity {
 
     private static final double FREE_INPUT_VOCAB_MATCH_THRESHOLD = 0.88d;
-    private static final float[] VOICE_SPEED_OPTIONS = new float[]{1.0f, 1.25f, 1.5f, 1.75f, 2.0f};
+    private static final float[] VOICE_SPEED_OPTIONS = new float[]{0.75f, 0.9f, 1.0f, 1.25f, 1.5f, 2.0f};
     private static final AtomicLong MESSAGE_ID_GENERATOR = new AtomicLong(1L);
 
     private enum LessonStage {
@@ -85,6 +87,7 @@ public class MapConversationActivity extends AppCompatActivity {
     private TextView stageLectureText;
     private TextView stagePracticeText;
     private VoiceWaveformView heroWaveform;
+    private AiAvatar3dController avatar3dController;
 
     private RecyclerView chatRecyclerView;
     private ChatAdapter chatAdapter;
@@ -158,6 +161,20 @@ public class MapConversationActivity extends AppCompatActivity {
         stagePracticeText = findViewById(R.id.stagePracticeText);
         heroWaveform = findViewById(R.id.heroWaveform);
         chatRecyclerView = findViewById(R.id.mapChatHistory);
+
+        WebView robotMascotScene = findViewById(R.id.robotMascotScene);
+        View robotMascotFallback = findViewById(R.id.robotMascotFallback);
+        if (robotMascotScene != null) {
+            avatar3dController = new AiAvatar3dController(
+                robotMascotScene,
+                robotMascotFallback,
+                1.45f,
+                0.35f,
+                -0.03f,
+                0f
+            );
+            avatar3dController.loadModel();
+        }
 
         chatMessages = new ArrayList<>();
         chatAdapter = new ChatAdapter(chatMessages);
@@ -282,6 +299,22 @@ public class MapConversationActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (avatar3dController != null) {
+            avatar3dController.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (avatar3dController != null) {
+            avatar3dController.onPause();
+        }
+        super.onPause();
+    }
+
+    @Override
     protected void onStop() {
         super.onStop();
         stopVoiceImmediately();
@@ -292,6 +325,10 @@ public class MapConversationActivity extends AppCompatActivity {
         isLessonClosed = true;
         stopVoiceImmediately();
         uiHandler.removeCallbacksAndMessages(null);
+        if (avatar3dController != null) {
+            avatar3dController.onDestroy();
+            avatar3dController = null;
+        }
         if (voiceFlowEngine != null) {
             voiceFlowEngine.shutdown();
             voiceFlowEngine = null;
@@ -346,7 +383,7 @@ public class MapConversationActivity extends AppCompatActivity {
             speedPanel.setOnClickListener(v -> cycleVoiceSpeed());
         }
 
-        voiceSpeedIndex = 0;
+        voiceSpeedIndex = 2; // 1.0x is now at index 2
         applySelectedVoiceSpeed(false);
         setLessonStage(LessonStage.LECTURE);
     }

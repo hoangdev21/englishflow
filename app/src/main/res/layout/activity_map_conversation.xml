@@ -93,16 +93,29 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Robot Mascot Display -->
-    <ImageView
+    <FrameLayout
         android:id="@+id/robotMascot"
         android:layout_width="140dp"
         android:layout_height="140dp"
         android:layout_marginTop="8dp"
-        android:scaleType="centerCrop"
-        android:src="@drawable/chat_bot_avatar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/topBar" />
+        app:layout_constraintTop_toBottomOf="@id/topBar">
+
+        <WebView
+            android:id="@+id/robotMascotScene"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent" />
+
+        <ImageView
+            android:id="@+id/robotMascotFallback"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="AI Avatar"
+            android:scaleType="centerCrop"
+            android:src="@drawable/chat_bot_avatar" />
+    </FrameLayout>
 
     <!-- Progress Indicator Stack (Left) -->
     <LinearLayout

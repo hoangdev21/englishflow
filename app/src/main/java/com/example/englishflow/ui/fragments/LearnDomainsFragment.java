@@ -1,6 +1,7 @@
 package com.example.englishflow.ui.fragments;
 
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -31,10 +32,13 @@ import java.util.List;
 
 public class LearnDomainsFragment extends Fragment {
 
+    private static final long DOMAINS_REFRESH_MIN_INTERVAL_MS = 10000L;
+
     private AppRepository repository;
     private DomainAdapter adapter;
     private RecyclerView recyclerView;
     private boolean isAscending = true;
+    private long lastLoadedAt = 0L;
 
     @Nullable
     @Override
@@ -50,6 +54,7 @@ public class LearnDomainsFragment extends Fragment {
         recyclerView = view.findViewById(R.id.domainRecycler);
         recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 2));
         recyclerView.setHasFixedSize(true);
+        recyclerView.setItemAnimator(null);
 
         adapter = new DomainAdapter(new java.util.ArrayList<>(), domainItem -> {
             Fragment parent = getParentFragment();
@@ -58,7 +63,7 @@ public class LearnDomainsFragment extends Fragment {
             }
         });
         recyclerView.setAdapter(adapter);
-        loadDomainsAsync();
+        loadDomainsAsync(true);
 
         // Search logic
         EditText searchInput = view.findViewById(R.id.domainSearchInput);
@@ -175,11 +180,16 @@ public class LearnDomainsFragment extends Fragment {
         if (!isAdded() || adapter == null || repository == null) {
             return;
         }
-        loadDomainsAsync();
+        loadDomainsAsync(false);
     }
 
-    private void loadDomainsAsync() {
+    private void loadDomainsAsync(boolean forceRefresh) {
         if (!isAdded() || repository == null || adapter == null) {
+            return;
+        }
+
+        long now = SystemClock.elapsedRealtime();
+        if (!forceRefresh && now - lastLoadedAt < DOMAINS_REFRESH_MIN_INTERVAL_MS) {
             return;
         }
 
@@ -187,6 +197,7 @@ public class LearnDomainsFragment extends Fragment {
             if (!isAdded() || adapter == null) {
                 return;
             }
+            lastLoadedAt = SystemClock.elapsedRealtime();
             adapter.submitDomains(domains);
         });
     }

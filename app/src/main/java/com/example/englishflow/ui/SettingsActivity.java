@@ -26,6 +26,7 @@ import com.bumptech.glide.request.RequestOptions;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -37,12 +38,16 @@ import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.FirebaseUserStore;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.imageview.ShapeableImageView;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import androidx.core.content.ContextCompat;
+import android.util.Log;
+import android.widget.FrameLayout;
+
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
@@ -61,6 +66,8 @@ public class SettingsActivity extends AppCompatActivity {
     private EditText inputDisplayName;
     private EditText inputProfileEmail;
     private SwitchMaterial switchAdminNotifications;
+    private SwitchMaterial switchDarkMode;
+    private boolean isBindingThemeMode;
 
     private String selectedAvatarKey = AppSettingsStore.AVATAR_DEFAULT;
 
@@ -85,6 +92,7 @@ public class SettingsActivity extends AppCompatActivity {
         inputDisplayName = findViewById(R.id.inputDisplayName);
         inputProfileEmail = findViewById(R.id.inputProfileEmail);
         switchAdminNotifications = findViewById(R.id.switchAdminNotifications);
+        switchDarkMode = findViewById(R.id.switchDarkMode);
     }
 
     private void setupInsets() {
@@ -159,6 +167,8 @@ public class SettingsActivity extends AppCompatActivity {
         if (switchAdminNotifications != null) {
             switchAdminNotifications.setChecked(settingsStore.isAdminNotificationsEnabled());
         }
+
+        bindThemeModeSelection(settingsStore.getThemeMode());
     }
 
     private void setupActions() {
@@ -229,6 +239,18 @@ public class SettingsActivity extends AppCompatActivity {
             });
         }
 
+        if (switchDarkMode != null) {
+            switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isBindingThemeMode) {
+                    return;
+                }
+                String selectedMode = isChecked
+                        ? AppSettingsStore.THEME_MODE_DARK
+                        : AppSettingsStore.THEME_MODE_LIGHT;
+                applyThemeModeSelection(selectedMode);
+            });
+        }
+
         View feedbackButton = findViewById(R.id.btnFeedback);
         View rateButton = findViewById(R.id.btnRateApp);
         View termsButton = findViewById(R.id.btnTerms);
@@ -240,14 +262,40 @@ public class SettingsActivity extends AppCompatActivity {
         if (privacyButton != null) privacyButton.setOnClickListener(v -> openUrl(PRIVACY_URL));
     }
 
+    private void bindThemeModeSelection(@NonNull String themeMode) {
+        boolean isDark = AppSettingsStore.THEME_MODE_DARK.equals(themeMode);
+        if (switchDarkMode != null) {
+            isBindingThemeMode = true;
+            switchDarkMode.setChecked(isDark);
+            isBindingThemeMode = false;
+        }
+    }
+
+    private void applyThemeModeSelection(@NonNull String mode) {
+        if (mode.equals(settingsStore.getThemeMode())) {
+            return;
+        }
+        settingsStore.setThemeMode(mode);
+        AppCompatDelegate.setDefaultNightMode(settingsStore.getNightModeValue());
+        overridePendingTransition(0, 0);
+    }
+
     private void showAvatarPicker() {
-        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        Log.d("SettingsActivity", "Attempting to show avatar picker");
+        final BottomSheetDialog dialog = new BottomSheetDialog(this, R.style.CustomBottomSheetDialogTheme);
         View v = getLayoutInflater().inflate(R.layout.dialog_avatar_picker, null);
+        
+        if (v == null) {
+            Log.e("SettingsActivity", "Failed to inflate dialog_avatar_picker");
+            return;
+        }
+
         RecyclerView rv = v.findViewById(R.id.rvAvatarGrid);
         TextView xpBalanceText = v.findViewById(R.id.tvAvatarXpBalance);
 
         if (rv == null) {
-            Toast.makeText(this, "Không thể mở danh sách ảnh đại diện", Toast.LENGTH_SHORT).show();
+            Log.e("SettingsActivity", "RecyclerView rvAvatarGrid not found in layout");
+            Toast.makeText(this, "Lỗi: Không tìm thấy danh sách ảnh", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -385,7 +433,20 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         dialog.setContentView(v);
+        
+        // Force fully expanded state for better visibility
+        dialog.setOnShowListener(dialogInterface -> {
+            BottomSheetDialog d = (BottomSheetDialog) dialogInterface;
+            FrameLayout bottomSheet = d.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (bottomSheet != null) {
+                BottomSheetBehavior<FrameLayout> behavior = BottomSheetBehavior.from(bottomSheet);
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                behavior.setSkipCollapsed(true);
+            }
+        });
+
         dialog.show();
+        Log.d("SettingsActivity", "Avatar picker dialog.show() called");
     }
 
     private void updateAvatarXpBalanceText(TextView xpBalanceText, int xp) {
