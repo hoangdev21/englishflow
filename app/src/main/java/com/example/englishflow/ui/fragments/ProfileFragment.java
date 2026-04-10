@@ -1,5 +1,8 @@
 package com.example.englishflow.ui.fragments;
 
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.speech.tts.TextToSpeech;
@@ -8,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,12 +28,15 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
+import android.view.animation.AccelerateDecelerateInterpolator;
 
 import com.example.englishflow.MainActivity;
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.AppSettingsStore;
+import com.example.englishflow.data.EcoCompanionStore;
 import com.example.englishflow.data.WordEntry;
+import com.example.englishflow.ui.EcoSanctuaryActivity;
 import com.example.englishflow.ui.SettingsActivity;
 import com.example.englishflow.ui.adapters.AchievementAdapter;
 import com.example.englishflow.ui.adapters.DictionaryAdapter;
@@ -37,6 +44,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 
 import java.util.List;
 import java.util.Locale;
@@ -50,6 +58,7 @@ public class ProfileFragment extends Fragment {
 
     private AppRepository repository;
     private AppSettingsStore settingsStore;
+    private EcoCompanionStore ecoStore;
     private TextToSpeech textToSpeech;
 
     private TextView nameText;
@@ -60,8 +69,16 @@ public class ProfileFragment extends Fragment {
     private ShapeableImageView profileAvatar;
     private LinearLayout chartContainer;
     private View weeklyEmptyState;
+    private View ecoBubbleCard;
+    private TextView ecoStageText;
+    private TextView ecoMoodText;
+    private TextView ecoMissionText;
+    private CircularProgressIndicator ecoRingProgress;
+    private ImageView ecoMascotView;
     private AchievementAdapter achievementAdapter;
     private long lastRenderedAt = 0L;
+    private ObjectAnimator ecoFloatingAnimator;
+    private ObjectAnimator ecoBreathingAnimator;
 
     @Nullable
     @Override
@@ -75,6 +92,7 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         repository = AppRepository.getInstance(requireContext());
         settingsStore = new AppSettingsStore(requireContext());
+        ecoStore = new EcoCompanionStore(requireContext());
 
         nameText = view.findViewById(R.id.profileName);
         levelText = view.findViewById(R.id.profileLevel);
@@ -91,12 +109,32 @@ public class ProfileFragment extends Fragment {
         tvXpCount = view.findViewById(R.id.tvXpCount);
         chartContainer = view.findViewById(R.id.chartContainer);
         weeklyEmptyState = view.findViewById(R.id.profileWeeklyEmptyState);
+        ecoBubbleCard = view.findViewById(R.id.profileEcoBubbleCard);
+        ecoStageText = view.findViewById(R.id.profileEcoStage);
+        ecoMoodText = view.findViewById(R.id.profileEcoMood);
+        ecoMissionText = view.findViewById(R.id.profileEcoMissionText);
+        ecoRingProgress = view.findViewById(R.id.profileEcoRing);
+        ecoMascotView = view.findViewById(R.id.profileEcoMascot);
 
         View btnOpenSettings = view.findViewById(R.id.btnOpenSettings);
         MaterialButton btnReset = view.findViewById(R.id.btnResetProgress);
         MaterialButton btnLogout = view.findViewById(R.id.btnLogout);
         MaterialButton btnViewDictionary = view.findViewById(R.id.btnViewSavedDictionary);
         MaterialButton btnStartLearningWeek = view.findViewById(R.id.btnStartLearningWeek);
+        View btnOpenEcoSanctuary = view.findViewById(R.id.btnOpenEcoSanctuary);
+
+        View.OnClickListener openEcoListener = v -> {
+            if (!isAdded()) {
+                return;
+            }
+            startActivity(new Intent(requireContext(), EcoSanctuaryActivity.class));
+        };
+        if (ecoBubbleCard != null) {
+            ecoBubbleCard.setOnClickListener(openEcoListener);
+        }
+        if (btnOpenEcoSanctuary != null) {
+            btnOpenEcoSanctuary.setOnClickListener(openEcoListener);
+        }
 
         textToSpeech = new TextToSpeech(requireContext(), status -> {
             if (status == TextToSpeech.SUCCESS) {
@@ -181,6 +219,8 @@ public class ProfileFragment extends Fragment {
             });
             ViewCompat.requestApplyInsets(scrollView);
         }
+
+        startEcoBubbleAnimation();
     }
 
     @Override
@@ -189,6 +229,7 @@ public class ProfileFragment extends Fragment {
             textToSpeech.stop();
             textToSpeech.shutdown();
         }
+        stopEcoBubbleAnimation();
         super.onDestroyView();
     }
 
@@ -250,7 +291,82 @@ public class ProfileFragment extends Fragment {
             }
 
             renderWeeklyChart(snapshot.weeklyStudyMinutes);
+            renderEcoBubble(snapshot);
         });
+    }
+
+    private void renderEcoBubble(AppRepository.DashboardSnapshot snapshot) {
+        if (snapshot == null || ecoStore == null || ecoStageText == null || ecoMoodText == null || ecoMissionText == null) {
+            return;
+        }
+
+        List<EcoCompanionStore.EcoMission> missions = ecoStore.getTodayMissions(snapshot);
+        int claimedCount = 0;
+        for (EcoCompanionStore.EcoMission mission : missions) {
+            if (mission.claimed) {
+                claimedCount++;
+            }
+        }
+
+        int progressPercent = missions.isEmpty() ? 0 : Math.round((claimedCount * 100f) / missions.size());
+        EcoCompanionStore.EcoSkin selectedSkin = ecoStore.getSelectedSkin();
+
+        ecoStageText.setText(String.format(Locale.getDefault(), "Eco • %s Lv.%d", ecoStore.getEvolutionStageLabel(), ecoStore.getLevel()));
+        ecoMoodText.setText(ecoStore.resolveMoodLabel(snapshot));
+        ecoMissionText.setText(String.format(
+                Locale.getDefault(),
+                "Nhiệm vụ hôm nay: %d/%d • Seeds %d",
+                claimedCount,
+                missions.size(),
+                ecoStore.getSeeds()
+        ));
+
+        if (ecoRingProgress != null) {
+            ecoRingProgress.setProgressCompat(progressPercent, true);
+        }
+        if (ecoMascotView != null) {
+            ecoMascotView.setImageResource(selectedSkin.drawableRes);
+        }
+    }
+
+    private void startEcoBubbleAnimation() {
+        if (ecoMascotView == null) {
+            return;
+        }
+
+        if (ecoFloatingAnimator == null) {
+            ecoFloatingAnimator = ObjectAnimator.ofFloat(ecoMascotView, View.TRANSLATION_Y, 0f, -6f, 0f);
+            ecoFloatingAnimator.setDuration(1900L);
+            ecoFloatingAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+            ecoFloatingAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        }
+
+        if (ecoBreathingAnimator == null) {
+            PropertyValuesHolder scaleX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.05f, 1f);
+            PropertyValuesHolder scaleY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.05f, 1f);
+            ecoBreathingAnimator = ObjectAnimator.ofPropertyValuesHolder(ecoMascotView, scaleX, scaleY);
+            ecoBreathingAnimator.setDuration(2200L);
+            ecoBreathingAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+            ecoBreathingAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        }
+
+        if (!ecoFloatingAnimator.isStarted()) {
+            ecoFloatingAnimator.start();
+        }
+        if (!ecoBreathingAnimator.isStarted()) {
+            ecoBreathingAnimator.start();
+        }
+    }
+
+    private void stopEcoBubbleAnimation() {
+        if (ecoFloatingAnimator != null) {
+            ecoFloatingAnimator.cancel();
+            ecoFloatingAnimator = null;
+        }
+        if (ecoBreathingAnimator != null) {
+            ecoBreathingAnimator.cancel();
+            ecoBreathingAnimator = null;
+        }
     }
 
     private void renderWeeklyChart(List<Integer> values) {
