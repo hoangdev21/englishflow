@@ -959,7 +959,7 @@ public class HomeFragment extends Fragment {
                 "",
                 "",
                 "Từ điển",
-                "Lưu từ trang chủ"
+                "dictionary|Luu tu trang chu"
         ));
         Toast.makeText(requireContext(), "Đã lưu từ: " + word, Toast.LENGTH_SHORT).show();
     }

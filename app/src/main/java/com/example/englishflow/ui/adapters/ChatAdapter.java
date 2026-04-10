@@ -17,13 +17,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 
 import com.example.englishflow.R;
+import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.ChatItem;
-import com.example.englishflow.database.EnglishFlowDatabase;
-import com.example.englishflow.database.entity.CustomVocabularyEntity;
+import com.example.englishflow.data.WordEntry;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -223,41 +224,41 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         String word = item.getVocabWord();
         if (word == null || word.isEmpty()) return;
 
-        IO_EXECUTOR.execute(() -> {
-            EnglishFlowDatabase db = EnglishFlowDatabase.getInstance(context.getApplicationContext());
+        String normalizedWord = word.trim().toLowerCase(Locale.US);
+        AppRepository repository = AppRepository.getInstance(context.getApplicationContext());
 
-            // Check if already saved
-            CustomVocabularyEntity existing = db.customVocabularyDao().findByWord(word);
-            if (existing != null) {
-                new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
-                        Toast.makeText(context, "\"" + word + "\" đã có trong từ điển!", Toast.LENGTH_SHORT).show());
-                return;
+        IO_EXECUTOR.execute(() -> {
+            List<WordEntry> existingWords = repository.getSavedWords();
+            for (WordEntry existing : existingWords) {
+                String existingWord = existing == null ? "" : existing.getWord();
+                if (normalizedWord.equals(existingWord == null ? "" : existingWord.trim().toLowerCase(Locale.US))) {
+                    new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
+                            Toast.makeText(context, "\"" + word + "\" da co trong so tay!", Toast.LENGTH_SHORT).show());
+                    return;
+                }
             }
 
-            // Build entity from vocab data
-            CustomVocabularyEntity entity = new CustomVocabularyEntity(
+            repository.saveWord(new WordEntry(
                     word,
-                    item.getVocabMeaning(),
                     item.getVocabIpa(),
+                    item.getVocabMeaning(),
+                    "noun",
                     item.getVocabExample(),
                     item.getVocabExampleVi(),
-                    null   // usage note — not parsed separately, stays null
-            );
-            entity.source = "chat";
-            entity.domain = "general";
-            entity.updatedAt = System.currentTimeMillis();
-
-            db.customVocabularyDao().upsert(entity);
+                    "",
+                    "Chat Flow",
+                    "Saved from chat flow"
+            ));
 
             new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
                 // Visual feedback: turn button green-checked
                 saveBtn.setBackgroundResource(R.drawable.bg_icon_circle_emerald);
                 saveBtn.setIconResource(R.drawable.ic_bookmark);
                 Toast.makeText(context,
-                        "Đã lưu \"" + word + "\" vào từ điển!",
+                        "Da luu \"" + word + "\" vao so tay!",
                         Toast.LENGTH_SHORT).show();
             });
-            });
+        });
     }
 
     @Override

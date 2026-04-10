@@ -6,6 +6,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
@@ -14,8 +16,10 @@ import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
-public class CustomVocabularyManageAdapter extends RecyclerView.Adapter<CustomVocabularyManageAdapter.ViewHolder> {
+public class CustomVocabularyManageAdapter extends ListAdapter<CustomVocabularyEntity, CustomVocabularyManageAdapter.ViewHolder> {
 
     public interface ActionListener {
         void onEdit(CustomVocabularyEntity item);
@@ -25,17 +29,50 @@ public class CustomVocabularyManageAdapter extends RecyclerView.Adapter<CustomVo
         void onToggleLock(CustomVocabularyEntity item);
     }
 
-    private final List<CustomVocabularyEntity> items = new ArrayList<>();
+    private static final DiffUtil.ItemCallback<CustomVocabularyEntity> DIFF_CALLBACK =
+            new DiffUtil.ItemCallback<CustomVocabularyEntity>() {
+                @Override
+                public boolean areItemsTheSame(@NonNull CustomVocabularyEntity oldItem,
+                                               @NonNull CustomVocabularyEntity newItem) {
+                    return normalizeWord(oldItem.word).equals(normalizeWord(newItem.word));
+                }
+
+                @Override
+                public boolean areContentsTheSame(@NonNull CustomVocabularyEntity oldItem,
+                                                  @NonNull CustomVocabularyEntity newItem) {
+                    return Objects.equals(oldItem.meaning, newItem.meaning)
+                            && Objects.equals(oldItem.ipa, newItem.ipa)
+                            && Objects.equals(oldItem.example, newItem.example)
+                            && Objects.equals(oldItem.exampleVi, newItem.exampleVi)
+                            && Objects.equals(oldItem.usage, newItem.usage)
+                            && Objects.equals(oldItem.source, newItem.source)
+                            && Objects.equals(oldItem.domain, newItem.domain)
+                            && oldItem.isLocked == newItem.isLocked
+                            && oldItem.updatedAt == newItem.updatedAt;
+                }
+
+                private String normalizeWord(String value) {
+                    return value == null ? "" : value.trim().toLowerCase(Locale.US);
+                }
+            };
+
     private final ActionListener actionListener;
 
     public CustomVocabularyManageAdapter(@NonNull ActionListener actionListener) {
+        super(DIFF_CALLBACK);
         this.actionListener = actionListener;
+        setHasStableIds(true);
     }
 
     public void submitList(@NonNull List<CustomVocabularyEntity> list) {
-        items.clear();
-        items.addAll(list);
-        notifyDataSetChanged();
+        super.submitList(new ArrayList<>(list));
+    }
+
+    @Override
+    public long getItemId(int position) {
+        CustomVocabularyEntity item = getItem(position);
+        String key = item == null || item.word == null ? "" : item.word.trim().toLowerCase(Locale.US);
+        return key.hashCode();
     }
 
     @NonNull
@@ -47,13 +84,18 @@ public class CustomVocabularyManageAdapter extends RecyclerView.Adapter<CustomVo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        CustomVocabularyEntity item = items.get(position);
+        CustomVocabularyEntity item = getItem(position);
         holder.wordText.setText(item.word);
-        holder.meaningText.setText(item.meaning + "  •  " + item.source + " / " + item.domain);
-        
-        // Update lock icon based on state
-        holder.lockButton.setIconResource(item.isLocked ? R.drawable.ic_lock_closed : R.drawable.ic_lock_open);
-        holder.lockButton.setIconTintResource(item.isLocked ? R.color.ef_card_rose_text : R.color.ef_primary);
+
+        String source = item.source == null || item.source.trim().isEmpty()
+                ? "saved"
+                : item.source.trim().toLowerCase(Locale.US);
+        String domain = item.domain == null || item.domain.trim().isEmpty() ? "general" : item.domain.trim();
+        String meaning = item.meaning == null ? "" : item.meaning;
+        holder.meaningText.setText(meaning + "  •  " + source + " / " + domain);
+
+        holder.lockButton.setIconResource(resolveSourceIcon(source));
+        holder.lockButton.setIconTintResource(R.color.ef_primary);
 
         holder.editButton.setOnClickListener(v -> actionListener.onEdit(item));
         holder.deleteButton.setOnClickListener(v -> actionListener.onDelete(item));
@@ -62,7 +104,23 @@ public class CustomVocabularyManageAdapter extends RecyclerView.Adapter<CustomVo
 
     @Override
     public int getItemCount() {
-        return items.size();
+        return super.getItemCount();
+    }
+
+    private int resolveSourceIcon(String source) {
+        if ("chat".equals(source)) {
+            return R.drawable.ic_nav_chat;
+        }
+        if ("scan".equals(source)) {
+            return R.drawable.ic_search;
+        }
+        if ("journey".equals(source)) {
+            return R.drawable.ic_nav_learn;
+        }
+        if ("dictionary".equals(source)) {
+            return R.drawable.ic_bookmark;
+        }
+        return R.drawable.ic_sort;
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

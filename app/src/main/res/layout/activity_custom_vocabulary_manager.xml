@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootCustomVocabulary"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_learn_gradient_premium">
@@ -17,12 +18,13 @@
             android:orientation="vertical">
 
             <LinearLayout
+                android:id="@+id/heroHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_hero_home_premium"
                 android:orientation="vertical"
                 android:paddingStart="24dp"
-                android:paddingTop="54dp"
+                android:paddingTop="14dp"
                 android:paddingEnd="24dp"
                 android:paddingBottom="55dp">
 
@@ -100,6 +102,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/contentScroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
@@ -147,7 +150,19 @@
                 android:id="@+id/recyclerCustomVocabulary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
                 android:overScrollMode="never" />
+
+            <TextView
+                android:id="@+id/txtNotebookEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:text="Chua co tu da luu tu chat, hanh trinh hoac scan"
+                android:textColor="@color/ef_text_secondary"
+                android:textSize="13sp"
+                android:visibility="gone" />
 
             <!-- Section: Failed Identifications -->
             <LinearLayout
@@ -199,6 +214,7 @@
                         android:id="@+id/recyclerFailedLabels"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
+                        android:nestedScrollingEnabled="false"
                         android:padding="8dp"
                         android:clipToPadding="false"
                         android:overScrollMode="never" />

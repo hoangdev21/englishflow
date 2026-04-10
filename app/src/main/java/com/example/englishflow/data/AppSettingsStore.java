@@ -23,6 +23,7 @@ public class AppSettingsStore {
     private static final String KEY_AVATAR_ECONOMY_MIGRATED = "avatar_economy_migrated";
     private static final String KEY_DAILY_GOAL_MINUTES = "daily_goal_minutes";
     private static final String KEY_VOICE_SPEED_MODE = "voice_speed_mode";
+    private static final String KEY_VOICE_SPEECH_RATE = "voice_speech_rate";
     private static final String KEY_ADMIN_NOTIFICATIONS_ENABLED = "admin_notifications_enabled";
     private static final String KEY_ADMIN_NOTIFICATIONS_LAST_READ_AT = "admin_notifications_last_read_at";
     private static final String KEY_ADMIN_NOTIFICATIONS_LAST_ALERTED_AT = "admin_notifications_last_alerted_at";
@@ -31,9 +32,16 @@ public class AppSettingsStore {
     public static final int DAILY_GOAL_RELAX = 5;
     public static final int DAILY_GOAL_FOCUSED = 15;
     public static final int DAILY_GOAL_TRY_HARD = 30;
+    public static final int DAILY_GOAL_MIN = 5;
+    public static final int DAILY_GOAL_MAX = 60;
+    public static final int DAILY_GOAL_STEP = 5;
 
     public static final String VOICE_MODE_NORMAL = "normal";
     public static final String VOICE_MODE_SLOW = "slow";
+    public static final String VOICE_MODE_FAST = "fast";
+    public static final float VOICE_RATE_SLOW = 0.8f;
+    public static final float VOICE_RATE_NORMAL = 1.0f;
+    public static final float VOICE_RATE_FAST = 1.2f;
 
     public static final String THEME_MODE_LIGHT = "light";
     public static final String THEME_MODE_DARK = "dark";
@@ -264,32 +272,77 @@ public class AppSettingsStore {
     }
 
     public void setDailyGoalMinutes(int minutes) {
-        int safeValue = minutes;
-        if (minutes != DAILY_GOAL_RELAX && minutes != DAILY_GOAL_FOCUSED && minutes != DAILY_GOAL_TRY_HARD) {
-            safeValue = DAILY_GOAL_FOCUSED;
-        }
+        int clamped = Math.max(DAILY_GOAL_MIN, Math.min(DAILY_GOAL_MAX, minutes));
+        int snapped = Math.round((float) clamped / (float) DAILY_GOAL_STEP) * DAILY_GOAL_STEP;
+        int safeValue = Math.max(DAILY_GOAL_MIN, Math.min(DAILY_GOAL_MAX, snapped));
         preferences.edit().putInt(KEY_DAILY_GOAL_MINUTES, safeValue).apply();
     }
 
     public int getDailyGoalMinutes() {
-        return preferences.getInt(KEY_DAILY_GOAL_MINUTES, DAILY_GOAL_FOCUSED);
+        int stored = preferences.getInt(KEY_DAILY_GOAL_MINUTES, DAILY_GOAL_FOCUSED);
+        int clamped = Math.max(DAILY_GOAL_MIN, Math.min(DAILY_GOAL_MAX, stored));
+        int snapped = Math.round((float) clamped / (float) DAILY_GOAL_STEP) * DAILY_GOAL_STEP;
+        return Math.max(DAILY_GOAL_MIN, Math.min(DAILY_GOAL_MAX, snapped));
     }
 
     public void setVoiceSpeedMode(@NonNull String mode) {
         String safeMode = VOICE_MODE_NORMAL;
-        if (VOICE_MODE_SLOW.equals(mode) || VOICE_MODE_NORMAL.equals(mode)) {
+        if (VOICE_MODE_SLOW.equals(mode) || VOICE_MODE_NORMAL.equals(mode) || VOICE_MODE_FAST.equals(mode)) {
             safeMode = mode;
         }
-        preferences.edit().putString(KEY_VOICE_SPEED_MODE, safeMode).apply();
+        preferences.edit()
+                .putString(KEY_VOICE_SPEED_MODE, safeMode)
+                .putFloat(KEY_VOICE_SPEECH_RATE, speechRateForMode(safeMode))
+                .apply();
     }
 
     @NonNull
     public String getVoiceSpeedMode() {
-        return preferences.getString(KEY_VOICE_SPEED_MODE, VOICE_MODE_NORMAL);
+        String stored = preferences.getString(KEY_VOICE_SPEED_MODE, "");
+        if (VOICE_MODE_SLOW.equals(stored) || VOICE_MODE_NORMAL.equals(stored) || VOICE_MODE_FAST.equals(stored)) {
+            return stored;
+        }
+        return modeForSpeechRate(getVoiceSpeechRate());
+    }
+
+    public void setVoiceSpeechRate(float rate) {
+        float safeRate = Math.max(VOICE_RATE_SLOW, Math.min(VOICE_RATE_FAST, rate));
+        String mode = modeForSpeechRate(safeRate);
+        preferences.edit()
+                .putFloat(KEY_VOICE_SPEECH_RATE, safeRate)
+                .putString(KEY_VOICE_SPEED_MODE, mode)
+                .apply();
     }
 
     public float getVoiceSpeechRate() {
-        return VOICE_MODE_SLOW.equals(getVoiceSpeedMode()) ? 0.8f : 1.0f;
+        if (preferences.contains(KEY_VOICE_SPEECH_RATE)) {
+            float storedRate = preferences.getFloat(KEY_VOICE_SPEECH_RATE, VOICE_RATE_NORMAL);
+            return Math.max(VOICE_RATE_SLOW, Math.min(VOICE_RATE_FAST, storedRate));
+        }
+
+        String mode = preferences.getString(KEY_VOICE_SPEED_MODE, VOICE_MODE_NORMAL);
+        return speechRateForMode(mode == null ? VOICE_MODE_NORMAL : mode);
+    }
+
+    private static float speechRateForMode(@NonNull String mode) {
+        if (VOICE_MODE_SLOW.equals(mode)) {
+            return VOICE_RATE_SLOW;
+        }
+        if (VOICE_MODE_FAST.equals(mode)) {
+            return VOICE_RATE_FAST;
+        }
+        return VOICE_RATE_NORMAL;
+    }
+
+    @NonNull
+    private static String modeForSpeechRate(float rate) {
+        if (rate <= 0.9f) {
+            return VOICE_MODE_SLOW;
+        }
+        if (rate >= 1.1f) {
+            return VOICE_MODE_FAST;
+        }
+        return VOICE_MODE_NORMAL;
     }
 
     public void setAdminNotificationsEnabled(boolean enabled) {

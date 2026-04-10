@@ -134,7 +134,6 @@ public class LearnOverviewFragment extends Fragment {
         streakText = view.findViewById(R.id.learnProgressStreak);
         progressXpText = view.findViewById(R.id.learnProgressXp);
         progressStateText = view.findViewById(R.id.learnProgressState);
-        progressStateText = view.findViewById(R.id.learnProgressState);
         needToGoChipText = view.findViewById(R.id.learnChipNeedToGo);
         domainCountText = view.findViewById(R.id.learnDomainsCount);
         journeyProgress = view.findViewById(R.id.learnJourneyProgress);
@@ -213,6 +212,15 @@ public class LearnOverviewFragment extends Fragment {
 
         if (actionChatPractice != null) {
             actionChatPractice.setOnClickListener(v -> switchToMainTab(3));
+        }
+
+        View btnBack = view.findViewById(R.id.btnBack);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                if (getActivity() != null) {
+                    getActivity().onBackPressed();
+                }
+            });
         }
     }
 

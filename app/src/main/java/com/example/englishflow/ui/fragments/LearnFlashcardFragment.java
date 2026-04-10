@@ -317,7 +317,7 @@ public class LearnFlashcardFragment extends Fragment {
                     card.getExampleVi(),
                     card.getUsage(),
                     currentDomain,
-                    currentTopic
+                    "journey|" + currentTopic
             ));
         }
 

@@ -875,7 +875,7 @@ public class ScanFragment extends Fragment {
                 "Tôi gặp từ này khi dùng Magic Lens.",
                 "",
                 "Magic Lens",
-                "Saved from realtime overlay"
+                "scan|Saved from realtime overlay"
         ));
 
         learnedWordSet.add(safeWord);
@@ -1178,7 +1178,7 @@ public class ScanFragment extends Fragment {
                 currentResult.getExampleVi(),
                 "",
                 currentResult.getCategory(),
-                currentResult.getFunFact()
+                "scan|" + (currentResult.getFunFact() == null ? "" : currentResult.getFunFact())
         ));
         Toast.makeText(requireContext(), "Word saved", Toast.LENGTH_SHORT).show();
     }

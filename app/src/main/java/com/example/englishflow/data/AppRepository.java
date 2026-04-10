@@ -139,6 +139,7 @@ public class AppRepository {
     private boolean realtimeCustomReady = false;
 
     private final MutableLiveData<List<CustomVocabularyEntity>> customVocabularyLiveData = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<List<CustomVocabularyEntity>> userNotebookVocabularyLiveData = new MutableLiveData<>(new ArrayList<>());
 
     private DashboardSnapshot cachedDashboardSnapshot;
     private String cachedDashboardEmail = "";
@@ -460,6 +461,7 @@ public class AppRepository {
             boundRealtimeUid = currentUid;
 
             if (currentUid.isEmpty()) {
+                userNotebookVocabularyLiveData.postValue(new ArrayList<>());
                 invalidateDashboardCache();
                 return;
             }
@@ -492,7 +494,8 @@ public class AppRepository {
                                     safeString(doc.get("exampleVi")),
                                     safeString(doc.get("usage")),
                                     nonEmpty(safeString(doc.get("domain")), "general"),
-                                    safeString(doc.get("note"))
+                                    safeString(doc.get("note")),
+                                    safeLong(doc.get("learnedAt"))
                             ));
                         }
 
@@ -503,6 +506,7 @@ public class AppRepository {
                         }
 
                         invalidateDashboardCache();
+                        refreshUserNotebookVocabularyLiveDataAsync();
                     });
 
             studySessionsRegistration = firestore.collection(COLLECTION_USERS)
@@ -572,8 +576,9 @@ public class AppRepository {
                             UserStatsEntity stats = getOrCreateUserStats();
                             if (stats != null) {
                                 boolean changed = false;
-                                if (cloudTotalXp > stats.totalXpEarned) {
-                                    stats.totalXpEarned = cloudTotalXp;
+                                int normalizedCloudTotalXp = Math.max(0, cloudTotalXp);
+                                if (normalizedCloudTotalXp != stats.totalXpEarned) {
+                                    stats.totalXpEarned = normalizedCloudTotalXp;
                                     changed = true;
                                 }
                                 if (normalizedCloudXpToday != stats.xpTodayEarned) {
@@ -2256,7 +2261,8 @@ public class AppRepository {
                         entity.exampleVi != null ? entity.exampleVi : "",
                         entity.usage != null ? entity.usage : "",
                         entity.domain,
-                        entity.note != null ? entity.note : ""
+                        entity.note != null ? entity.note : "",
+                        entity.learnedAt
                     ));
                 }
             }
@@ -2272,6 +2278,7 @@ public class AppRepository {
                 String email = getCurrentEmail();
                 String uid = getCurrentUid();
                 String normalizedWord = normalizeWord(wordEntry.getWord());
+                long now = System.currentTimeMillis();
 
                 List<WordEntry> cloudWords = getRealtimeLearnedWordsCopyIfReady();
                 if (cloudWords != null) {
@@ -2294,8 +2301,8 @@ public class AppRepository {
                     payload.put("note", safeString(wordEntry.getNote()));
                     payload.put("domain", nonEmpty(wordEntry.getCategory(), "general"));
                     payload.put("topic", "");
-                    payload.put("learnedAt", System.currentTimeMillis());
-                    payload.put("updatedAt", System.currentTimeMillis());
+                    payload.put("learnedAt", now);
+                    payload.put("updatedAt", now);
 
                     firestore.collection(COLLECTION_USERS)
                             .document(uid)
@@ -2305,7 +2312,7 @@ public class AppRepository {
                 }
 
                 // Check if word already exists in local fallback storage.
-                LearnedWordEntity existing = database.learnedWordDao().getWordByName(email, wordEntry.getWord());
+                LearnedWordEntity existing = database.learnedWordDao().getWordByNameNormalized(email, normalizedWord);
                 if (existing != null) {
                     return;
                 }
@@ -2323,6 +2330,7 @@ public class AppRepository {
                     ""
                 );
                 entity.userEmail = email;
+                entity.learnedAt = now;
                 database.learnedWordDao().insert(entity);
                 
                 // Update stats
@@ -2330,6 +2338,7 @@ public class AppRepository {
                 database.userStatsDao().incrementWordsLearned(email, 1);
                 invalidateDashboardCache();
                 syncCurrentUserProgressToCloud();
+                refreshUserNotebookVocabularyLiveDataAsync();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -3187,12 +3196,221 @@ public class AppRepository {
         return customVocabularyLiveData;
     }
 
+    public LiveData<List<CustomVocabularyEntity>> getUserNotebookVocabularyLive() {
+        ensureRealtimeListenersBound();
+        refreshUserNotebookVocabularyLiveDataAsync();
+        return userNotebookVocabularyLiveData;
+    }
+
+    private void refreshUserNotebookVocabularyLiveDataAsync() {
+        executorService.execute(() -> {
+            List<CustomVocabularyEntity> notebookItems = buildUserNotebookVocabularySnapshot();
+            userNotebookVocabularyLiveData.postValue(notebookItems);
+        });
+    }
+
+    private List<CustomVocabularyEntity> buildUserNotebookVocabularySnapshot() {
+        List<CustomVocabularyEntity> mapped = new ArrayList<>();
+        List<WordEntry> cloudWords = getRealtimeLearnedWordsCopyIfReady();
+        if (cloudWords != null) {
+            for (WordEntry item : cloudWords) {
+                CustomVocabularyEntity mappedItem = toNotebookEntity(item);
+                if (mappedItem != null) {
+                    mapped.add(mappedItem);
+                }
+            }
+        } else {
+            List<LearnedWordEntity> localWords = database.learnedWordDao().getAllWords(getCurrentEmail());
+            for (LearnedWordEntity item : localWords) {
+                CustomVocabularyEntity mappedItem = toNotebookEntity(item);
+                if (mappedItem != null) {
+                    mapped.add(mappedItem);
+                }
+            }
+        }
+
+        Collections.sort(mapped, (a, b) -> Long.compare(b.updatedAt, a.updatedAt));
+        LinkedHashMap<String, CustomVocabularyEntity> uniqueByWord = new LinkedHashMap<>();
+        for (CustomVocabularyEntity item : mapped) {
+            String key = normalizeWord(item.word);
+            if (key.isEmpty() || uniqueByWord.containsKey(key)) {
+                continue;
+            }
+            uniqueByWord.put(key, item);
+        }
+
+        return new ArrayList<>(uniqueByWord.values());
+    }
+
+    private CustomVocabularyEntity toNotebookEntity(WordEntry source) {
+        if (source == null) {
+            return null;
+        }
+
+        String word = nonEmpty(source.getWord(), "").trim();
+        if (word.isEmpty()) {
+            return null;
+        }
+
+        CustomVocabularyEntity entity = new CustomVocabularyEntity(
+                word,
+                nonEmpty(source.getMeaning(), ""),
+                nonEmpty(source.getIpa(), "-"),
+                nonEmpty(source.getExample(), ""),
+                nonEmpty(source.getExampleVi(), ""),
+                nonEmpty(source.getUsage(), "")
+        );
+        entity.source = inferNotebookSource(source.getCategory(), source.getNote(), "");
+        entity.domain = nonEmpty(source.getCategory(), "general");
+        entity.isLocked = false;
+        entity.updatedAt = source.getLearnedAt() > 0L ? source.getLearnedAt() : System.currentTimeMillis();
+        return entity;
+    }
+
+    private CustomVocabularyEntity toNotebookEntity(LearnedWordEntity source) {
+        if (source == null) {
+            return null;
+        }
+
+        String word = nonEmpty(source.word, "").trim();
+        if (word.isEmpty()) {
+            return null;
+        }
+
+        CustomVocabularyEntity entity = new CustomVocabularyEntity(
+                word,
+                nonEmpty(source.meaning, ""),
+                nonEmpty(source.ipa, "-"),
+                nonEmpty(source.example, ""),
+                nonEmpty(source.exampleVi, ""),
+                nonEmpty(source.usage, "")
+        );
+        entity.source = inferNotebookSource(source.domain, source.note, source.topic);
+        entity.domain = nonEmpty(source.domain, "general");
+        entity.isLocked = false;
+        entity.updatedAt = source.learnedAt > 0L ? source.learnedAt : System.currentTimeMillis();
+        return entity;
+    }
+
+    private String inferNotebookSource(String domain, String note, String topic) {
+        String merged = (safeString(domain) + " " + safeString(note) + " " + safeString(topic)).toLowerCase(Locale.US);
+        if (merged.contains("chat")) {
+            return "chat";
+        }
+        if (merged.contains("journey|")) {
+            return "journey";
+        }
+        if (merged.contains("scan|")) {
+            return "scan";
+        }
+        if (merged.contains("magic lens") || merged.contains("scan") || merged.contains("realtime")) {
+            return "scan";
+        }
+        if (merged.contains("dictionary") || merged.contains("tu dien") || merged.contains("trang chu")) {
+            return "dictionary";
+        }
+        if (!safeString(topic).isEmpty()) {
+            return "journey";
+        }
+        return "saved";
+    }
+
     public androidx.lifecycle.LiveData<List<FailedLabelLogEntity>> getTopFailedLabelsLive(int limit) {
         return database.failedLabelLogDao().getTopFailedLive(limit);
     }
 
+    public void updateLearnedWordMeaningAsync(String word, String meaning, DataCallback<Boolean> callback) {
+        executorService.execute(() -> {
+            boolean updated = false;
+            try {
+                if (word != null && !word.trim().isEmpty() && meaning != null && !meaning.trim().isEmpty()) {
+                    String email = getCurrentEmail();
+                    String uid = getCurrentUid();
+                    String normalizedWord = normalizeWord(word);
+                    long now = System.currentTimeMillis();
+
+                    int affected = database.learnedWordDao().updateMeaningByNormalizedWord(
+                            email,
+                            normalizedWord,
+                            meaning.trim(),
+                            now
+                    );
+                    updated = affected > 0;
+
+                    if (updated && !uid.isEmpty() && !normalizedWord.isEmpty()) {
+                        Map<String, Object> payload = new HashMap<>();
+                        payload.put("meaning", meaning.trim());
+                        payload.put("updatedAt", now);
+                        firestore.collection(COLLECTION_USERS)
+                                .document(uid)
+                                .collection(COLLECTION_LEARNED_WORDS)
+                                .document(normalizedWord)
+                                .set(payload, com.google.firebase.firestore.SetOptions.merge());
+                    }
+
+                    if (updated) {
+                        invalidateDashboardCache();
+                        refreshUserNotebookVocabularyLiveDataAsync();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if (callback != null) {
+                boolean result = updated;
+                mainHandler.post(() -> callback.onResult(result));
+            }
+        });
+    }
+
+    public void deleteLearnedWordAsync(String word, DataCallback<Boolean> callback) {
+        executorService.execute(() -> {
+            boolean deleted = false;
+            try {
+                if (word != null && !word.trim().isEmpty()) {
+                    String email = getCurrentEmail();
+                    String uid = getCurrentUid();
+                    String normalizedWord = normalizeWord(word);
+                    int affected = database.learnedWordDao().deleteByNormalizedWord(email, normalizedWord);
+                    deleted = affected > 0;
+
+                    if (deleted) {
+                        UserStatsEntity stats = getOrCreateUserStats();
+                        if (stats != null) {
+                            stats.totalWordsLearned = Math.max(0, stats.totalWordsLearned - affected);
+                            database.userStatsDao().update(stats);
+                        }
+
+                        if (!uid.isEmpty() && !normalizedWord.isEmpty()) {
+                            firestore.collection(COLLECTION_USERS)
+                                    .document(uid)
+                                    .collection(COLLECTION_LEARNED_WORDS)
+                                    .document(normalizedWord)
+                                    .delete();
+                        }
+
+                        invalidateDashboardCache();
+                        syncCurrentUserProgressToCloud();
+                        refreshUserNotebookVocabularyLiveDataAsync();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if (callback != null) {
+                boolean result = deleted;
+                mainHandler.post(() -> callback.onResult(result));
+            }
+        });
+    }
+
     public void removeWord(WordEntry wordEntry) {
-        // Note: You might want to add a delete method to the DAO if needed
+        if (wordEntry == null || wordEntry.getWord() == null || wordEntry.getWord().trim().isEmpty()) {
+            return;
+        }
+        deleteLearnedWordAsync(wordEntry.getWord(), null);
     }
 
     public void increaseScanCount() {
@@ -3266,7 +3484,7 @@ public class AppRepository {
                         result = new SpendXpResult(false, remainingXp, "Không thể trừ XP, vui lòng thử lại");
                     } else {
                         invalidateDashboardCache();
-                        syncCurrentUserProgressToCloud();
+                        syncCurrentUserProgressToCloud(true, true);
                         result = new SpendXpResult(true, remainingXp, "");
                     }
                 }
@@ -3530,23 +3748,35 @@ public class AppRepository {
     }
 
     public void syncCurrentUserProgressToCloud() {
+        syncCurrentUserProgressToCloud(false, false);
+    }
+
+    private void syncCurrentUserProgressToCloud(boolean forceSync, boolean allowTotalXpDecrease) {
         String uid = getCurrentUid();
         if (uid.isEmpty()) {
             return;
         }
 
+        boolean releaseSyncSlot;
         synchronized (cloudSyncLock) {
             long now = System.currentTimeMillis();
-            if (cloudSyncRunning) {
+            if (!forceSync && cloudSyncRunning) {
                 return;
             }
-            if (now - lastCloudSyncAt < CLOUD_SYNC_MIN_INTERVAL_MS) {
+            if (!forceSync && now - lastCloudSyncAt < CLOUD_SYNC_MIN_INTERVAL_MS) {
                 return;
             }
-            cloudSyncRunning = true;
+            if (!cloudSyncRunning) {
+                cloudSyncRunning = true;
+                releaseSyncSlot = true;
+            } else {
+                // A forced sync can run in parallel with an ongoing sync to avoid missing XP-spend updates.
+                releaseSyncSlot = false;
+            }
             lastCloudSyncAt = now;
         }
 
+        final boolean shouldReleaseSyncSlot = releaseSyncSlot;
         executorService.execute(() -> {
             try {
                 String email = getCurrentEmail();
@@ -3589,12 +3819,15 @@ public class AppRepository {
                         bestStreak,
                         totalWordsScanned,
                         totalStudyMinutes,
-                        localLastStudyAtMs
+                        localLastStudyAtMs,
+                        allowTotalXpDecrease
                 );
             } catch (Exception ignored) {
             } finally {
-                synchronized (cloudSyncLock) {
-                    cloudSyncRunning = false;
+                if (shouldReleaseSyncSlot) {
+                    synchronized (cloudSyncLock) {
+                        cloudSyncRunning = false;
+                    }
                 }
             }
         });
@@ -3870,6 +4103,7 @@ public class AppRepository {
                                 ""
                         );
                         entity.userEmail = email;
+                        entity.learnedAt = word.getLearnedAt();
                         entities.add(entity);
                     }
                 } else {

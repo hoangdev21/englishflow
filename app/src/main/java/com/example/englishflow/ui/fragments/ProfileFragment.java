@@ -111,6 +111,12 @@ public class ProfileFragment extends Fragment {
         achievementAdapter = new AchievementAdapter(new ArrayList<>());
         achievementRecycler.setAdapter(achievementAdapter);
 
+        repository.getLiveUserStats().observe(getViewLifecycleOwner(), stats -> {
+            if (isAdded()) {
+                renderProfile(true);
+            }
+        });
+
         renderProfile(true);
         
         btnViewDictionary.setOnClickListener(v -> {
@@ -190,7 +196,7 @@ public class ProfileFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if (isAdded()) {
-            renderProfile(false);
+            renderProfile(true);
         }
     }
 

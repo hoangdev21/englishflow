@@ -72,14 +72,14 @@ public class LearnedWordsActivity extends AppCompatActivity {
 
             @Override
             public void onDelete(LearnedWordEntity wordEntry) {
-                repository.removeWord(new com.example.englishflow.data.WordEntry(
-                        wordEntry.word, wordEntry.ipa, wordEntry.meaning, wordEntry.wordType,
-                        wordEntry.example, wordEntry.exampleVi,
-                        wordEntry.usage != null ? wordEntry.usage : "",
-                        wordEntry.domain, wordEntry.note
-                ));
-                loadData();
-                Toast.makeText(LearnedWordsActivity.this, "Đã xóa từ: " + wordEntry.word, Toast.LENGTH_SHORT).show();
+                repository.deleteLearnedWordAsync(wordEntry.word, deleted -> {
+                    if (deleted) {
+                        loadData();
+                        Toast.makeText(LearnedWordsActivity.this, "Đã xóa từ: " + wordEntry.word, Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(LearnedWordsActivity.this, "Không xóa được từ", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
         rvLearnedWords.setAdapter(adapter);

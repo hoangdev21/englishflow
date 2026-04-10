@@ -222,7 +222,8 @@ public class FirebaseUserStore {
             int bestStreak,
             int totalWordsScanned,
             int totalStudyMinutes,
-            long localLastStudyAtMs
+            long localLastStudyAtMs,
+            boolean allowTotalXpDecrease
     ) {
         firestore.runTransaction(transaction -> {
             DocumentSnapshot snapshot = transaction.get(firestore.collection(COLLECTION_USERS).document(uid));
@@ -271,9 +272,12 @@ public class FirebaseUserStore {
             Map<String, Object> updates = new HashMap<>();
             updates.put("displayName", displayName);
             
-            // Only update totalXp if client value is higher (prevents overwriting admin grants)
-            if (totalXp > serverTotalXp) {
-                updates.put("totalXp", totalXp);
+            int safeTotalXp = Math.max(0, totalXp);
+            if (allowTotalXpDecrease) {
+                // Used by XP spending flows where local state intentionally decreases.
+                updates.put("totalXp", safeTotalXp);
+            } else if (safeTotalXp > serverTotalXp) {
+                updates.put("totalXp", safeTotalXp);
             }
 
             updates.put("xpToday", mergedXpToday);

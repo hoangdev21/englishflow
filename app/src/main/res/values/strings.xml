@@ -59,7 +59,6 @@
     <string name="learn_progress_need_to_go_placeholder">Cần thêm 25 từ để đủ mục tiêu</string>
     <string name="learn_progress_need_to_go_done">Đã đạt mục tiêu hôm nay</string>
     <string name="learn_progress_action">Bắt đầu học flashcard</string>
-    <string name="learn_hero_goal_chip">Mục tiêu hôm nay</string>
 
     <string name="learn_quick_actions_title">Lối tắt học nhanh</string>
     <string name="learn_quick_actions_subtitle">Chạm một lần để mở đúng tính năng bạn cần</string>

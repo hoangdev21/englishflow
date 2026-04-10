@@ -29,6 +29,15 @@ public interface LearnedWordDao {
     
     @Query("SELECT * FROM learned_words WHERE userEmail = :userEmail AND word = :word LIMIT 1")
     LearnedWordEntity getWordByName(String userEmail, String word);
+
+    @Query("SELECT * FROM learned_words WHERE userEmail = :userEmail AND LOWER(word) = :normalizedWord LIMIT 1")
+    LearnedWordEntity getWordByNameNormalized(String userEmail, String normalizedWord);
+
+    @Query("UPDATE learned_words SET meaning = :meaning, learnedAt = :updatedAt WHERE userEmail = :userEmail AND LOWER(word) = :normalizedWord")
+    int updateMeaningByNormalizedWord(String userEmail, String normalizedWord, String meaning, long updatedAt);
+
+    @Query("DELETE FROM learned_words WHERE userEmail = :userEmail AND LOWER(word) = :normalizedWord")
+    int deleteByNormalizedWord(String userEmail, String normalizedWord);
     
     @Query("DELETE FROM learned_words WHERE userEmail = :userEmail")
     void deleteAllWords(String userEmail);

@@ -43,6 +43,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.slider.Slider;
 import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.widget.FrameLayout;
@@ -51,6 +52,8 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+
+import java.util.Locale;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -65,6 +68,10 @@ public class SettingsActivity extends AppCompatActivity {
     private ImageView avatarPreview;
     private EditText inputDisplayName;
     private EditText inputProfileEmail;
+    private Slider sliderDailyGoal;
+    private Slider sliderVoiceSpeed;
+    private TextView textDailyGoalValue;
+    private TextView textVoiceSpeedValue;
     private SwitchMaterial switchAdminNotifications;
     private SwitchMaterial switchDarkMode;
     private boolean isBindingThemeMode;
@@ -91,6 +98,10 @@ public class SettingsActivity extends AppCompatActivity {
         avatarPreview = findViewById(R.id.settingsAvatarPreview);
         inputDisplayName = findViewById(R.id.inputDisplayName);
         inputProfileEmail = findViewById(R.id.inputProfileEmail);
+        sliderDailyGoal = findViewById(R.id.sliderDailyGoal);
+        sliderVoiceSpeed = findViewById(R.id.sliderVoiceSpeed);
+        textDailyGoalValue = findViewById(R.id.tvDailyGoalValue);
+        textVoiceSpeedValue = findViewById(R.id.tvVoiceSpeedValue);
         switchAdminNotifications = findViewById(R.id.switchAdminNotifications);
         switchDarkMode = findViewById(R.id.switchDarkMode);
     }
@@ -142,27 +153,17 @@ public class SettingsActivity extends AppCompatActivity {
                  .into(avatarPreview);
         }
 
-        // Daily Goal
         int goal = settingsStore.getDailyGoalMinutes();
-        MaterialButton btnRelax = findViewById(R.id.btnGoalRelax);
-        MaterialButton btnFocused = findViewById(R.id.btnGoalFocused);
-        MaterialButton btnTryHard = findViewById(R.id.btnGoalTryHard);
-
-        if (btnRelax != null && btnFocused != null && btnTryHard != null) {
-            btnRelax.setChecked(goal == AppSettingsStore.DAILY_GOAL_RELAX);
-            btnFocused.setChecked(goal == AppSettingsStore.DAILY_GOAL_FOCUSED);
-            btnTryHard.setChecked(goal == AppSettingsStore.DAILY_GOAL_TRY_HARD);
+        if (sliderDailyGoal != null) {
+            sliderDailyGoal.setValue(goal);
         }
+        updateDailyGoalPreview(goal);
 
-        // Voice Speed
-        String voiceSpeed = settingsStore.getVoiceSpeedMode();
-        MaterialButton btnSlow = findViewById(R.id.btnVoiceSlow);
-        MaterialButton btnNormal = findViewById(R.id.btnVoiceNormal);
-
-        if (btnSlow != null && btnNormal != null) {
-            btnSlow.setChecked(AppSettingsStore.VOICE_MODE_SLOW.equals(voiceSpeed));
-            btnNormal.setChecked(AppSettingsStore.VOICE_MODE_NORMAL.equals(voiceSpeed));
+        float voiceRate = settingsStore.getVoiceSpeechRate();
+        if (sliderVoiceSpeed != null) {
+            sliderVoiceSpeed.setValue(voiceRate);
         }
+        updateVoiceSpeedPreview(voiceRate);
 
         if (switchAdminNotifications != null) {
             switchAdminNotifications.setChecked(settingsStore.isAdminNotificationsEnabled());
@@ -187,48 +188,25 @@ public class SettingsActivity extends AppCompatActivity {
         }
         if (saveProfileButton != null) saveProfileButton.setOnClickListener(v -> saveProfileInfo());
 
-        // Goal selection
-        MaterialButton btnRelax = findViewById(R.id.btnGoalRelax);
-        MaterialButton btnFocused = findViewById(R.id.btnGoalFocused);
-        MaterialButton btnTryHard = findViewById(R.id.btnGoalTryHard);
+        if (sliderDailyGoal != null) {
+            sliderDailyGoal.addOnChangeListener((slider, value, fromUser) -> {
+                if (!fromUser) {
+                    return;
+                }
+                settingsStore.setDailyGoalMinutes(Math.round(value));
+                updateDailyGoalPreview(settingsStore.getDailyGoalMinutes());
+            });
+        }
 
-        View.OnClickListener goalListener = v -> {
-            int id = v.getId();
-            if (btnRelax != null) btnRelax.setChecked(id == R.id.btnGoalRelax);
-            if (btnFocused != null) btnFocused.setChecked(id == R.id.btnGoalFocused);
-            if (btnTryHard != null) btnTryHard.setChecked(id == R.id.btnGoalTryHard);
-
-            if (id == R.id.btnGoalRelax) {
-                settingsStore.setDailyGoalMinutes(AppSettingsStore.DAILY_GOAL_RELAX);
-            } else if (id == R.id.btnGoalTryHard) {
-                settingsStore.setDailyGoalMinutes(AppSettingsStore.DAILY_GOAL_TRY_HARD);
-            } else {
-                settingsStore.setDailyGoalMinutes(AppSettingsStore.DAILY_GOAL_FOCUSED);
-            }
-        };
-
-        if (btnRelax != null) btnRelax.setOnClickListener(goalListener);
-        if (btnFocused != null) btnFocused.setOnClickListener(goalListener);
-        if (btnTryHard != null) btnTryHard.setOnClickListener(goalListener);
-
-        // Voice speed selection
-        MaterialButton btnVoiceSlow = findViewById(R.id.btnVoiceSlow);
-        MaterialButton btnVoiceNormal = findViewById(R.id.btnVoiceNormal);
-
-        View.OnClickListener voiceListener = v -> {
-            int id = v.getId();
-            if (btnVoiceSlow != null) btnVoiceSlow.setChecked(id == R.id.btnVoiceSlow);
-            if (btnVoiceNormal != null) btnVoiceNormal.setChecked(id == R.id.btnVoiceNormal);
-
-            if (id == R.id.btnVoiceSlow) {
-                settingsStore.setVoiceSpeedMode(AppSettingsStore.VOICE_MODE_SLOW);
-            } else {
-                settingsStore.setVoiceSpeedMode(AppSettingsStore.VOICE_MODE_NORMAL);
-            }
-        };
-
-        if (btnVoiceSlow != null) btnVoiceSlow.setOnClickListener(voiceListener);
-        if (btnVoiceNormal != null) btnVoiceNormal.setOnClickListener(voiceListener);
+        if (sliderVoiceSpeed != null) {
+            sliderVoiceSpeed.addOnChangeListener((slider, value, fromUser) -> {
+                if (!fromUser) {
+                    return;
+                }
+                settingsStore.setVoiceSpeechRate(value);
+                updateVoiceSpeedPreview(settingsStore.getVoiceSpeechRate());
+            });
+        }
 
         if (switchAdminNotifications != null) {
             switchAdminNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -260,6 +238,30 @@ public class SettingsActivity extends AppCompatActivity {
         if (rateButton != null) rateButton.setOnClickListener(v -> openAppRating());
         if (termsButton != null) termsButton.setOnClickListener(v -> openUrl(TERMS_URL));
         if (privacyButton != null) privacyButton.setOnClickListener(v -> openUrl(PRIVACY_URL));
+    }
+
+    private void updateDailyGoalPreview(int minutes) {
+        if (textDailyGoalValue != null) {
+            textDailyGoalValue.setText(minutes + " phút/ngày");
+        }
+    }
+
+    private void updateVoiceSpeedPreview(float rate) {
+        if (textVoiceSpeedValue == null) {
+            return;
+        }
+
+        String modeLabel;
+        if (rate <= 0.9f) {
+            modeLabel = "Chậm";
+        } else if (rate >= 1.1f) {
+            modeLabel = "Nhanh";
+        } else {
+            modeLabel = "Bình thường";
+        }
+
+        String detail = String.format(Locale.US, "%.1fx - %s", rate, modeLabel);
+        textVoiceSpeedValue.setText(detail);
     }
 
     private void bindThemeModeSelection(@NonNull String themeMode) {

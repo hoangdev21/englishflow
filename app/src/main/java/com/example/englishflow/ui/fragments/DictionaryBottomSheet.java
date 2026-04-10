@@ -148,7 +148,7 @@ public class DictionaryBottomSheet extends BottomSheetDialogFragment {
                     "",
                     "",
                     category,
-                    ""
+                    "dictionary|saved from bottom sheet"
             );
             appRepository.saveWord(entry);
             Toast.makeText(requireContext(), "Da luu " + safe(currentResult.getWord()), Toast.LENGTH_SHORT).show();
