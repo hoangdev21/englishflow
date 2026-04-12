@@ -256,6 +256,10 @@
     <string name="settings_appearance_subtitle">Chọn chế độ hiển thị phù hợp với mắt của bạn.</string>
     <string name="settings_theme_light">Sáng</string>
     <string name="settings_theme_dark">Tối</string>
+    <string name="settings_voice_timeout_title">Thời gian dừng nghe khi im lặng</string>
+    <string name="settings_voice_timeout_desc">Điều chỉnh ngưỡng im lặng từ 0.5s đến 3.0s để kết thúc ghi âm nhanh hoặc chậm hơn.</string>
+    <string name="settings_voice_timeout_applies">Áp dụng cho Chat và hội thoại bản đồ dùng VoiceFlowEngine.</string>
+    <string name="settings_voice_timeout_value_format">%1$.1fs</string>
 
     <string name="avatar_picker_balance_loading">Đang tải XP...</string>
     <string name="avatar_picker_balance_format">XP hiện có: %1$d</string>

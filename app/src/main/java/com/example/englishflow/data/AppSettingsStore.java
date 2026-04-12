@@ -24,6 +24,8 @@ public class AppSettingsStore {
     private static final String KEY_DAILY_GOAL_MINUTES = "daily_goal_minutes";
     private static final String KEY_VOICE_SPEED_MODE = "voice_speed_mode";
     private static final String KEY_VOICE_SPEECH_RATE = "voice_speech_rate";
+    private static final String KEY_VOICE_SILENCE_TIMEOUT_PROFILE = "voice_silence_timeout_profile";
+    private static final String KEY_VOICE_SILENCE_TIMEOUT_MS = "voice_silence_timeout_ms";
     private static final String KEY_ADMIN_NOTIFICATIONS_ENABLED = "admin_notifications_enabled";
     private static final String KEY_ADMIN_NOTIFICATIONS_LAST_READ_AT = "admin_notifications_last_read_at";
     private static final String KEY_ADMIN_NOTIFICATIONS_LAST_ALERTED_AT = "admin_notifications_last_alerted_at";
@@ -42,6 +44,16 @@ public class AppSettingsStore {
     public static final float VOICE_RATE_SLOW = 0.8f;
     public static final float VOICE_RATE_NORMAL = 1.0f;
     public static final float VOICE_RATE_FAST = 1.2f;
+
+    public static final String VOICE_SILENCE_TIMEOUT_SHORT = "short_1500";
+    public static final String VOICE_SILENCE_TIMEOUT_NORMAL = "normal_2000";
+    public static final String VOICE_SILENCE_TIMEOUT_LONG = "long_2500";
+    public static final long VOICE_SILENCE_TIMEOUT_SHORT_MS = 1500L;
+    public static final long VOICE_SILENCE_TIMEOUT_NORMAL_MS = 2000L;
+    public static final long VOICE_SILENCE_TIMEOUT_LONG_MS = 2500L;
+    public static final long VOICE_SILENCE_TIMEOUT_MIN_MS = 500L;
+    public static final long VOICE_SILENCE_TIMEOUT_MAX_MS = 3000L;
+    public static final long VOICE_SILENCE_TIMEOUT_DEFAULT_MS = VOICE_SILENCE_TIMEOUT_NORMAL_MS;
 
     public static final String THEME_MODE_LIGHT = "light";
     public static final String THEME_MODE_DARK = "dark";
@@ -322,6 +334,84 @@ public class AppSettingsStore {
 
         String mode = preferences.getString(KEY_VOICE_SPEED_MODE, VOICE_MODE_NORMAL);
         return speechRateForMode(mode == null ? VOICE_MODE_NORMAL : mode);
+    }
+
+    public void setVoiceSilenceTimeoutProfile(@NonNull String profile) {
+        String safeProfile = VOICE_SILENCE_TIMEOUT_NORMAL;
+        if (VOICE_SILENCE_TIMEOUT_SHORT.equals(profile)
+                || VOICE_SILENCE_TIMEOUT_NORMAL.equals(profile)
+                || VOICE_SILENCE_TIMEOUT_LONG.equals(profile)) {
+            safeProfile = profile;
+        }
+        long timeoutMs = mapProfileToTimeoutMs(safeProfile);
+        preferences.edit()
+                .putString(KEY_VOICE_SILENCE_TIMEOUT_PROFILE, safeProfile)
+                .putLong(KEY_VOICE_SILENCE_TIMEOUT_MS, timeoutMs)
+                .apply();
+    }
+
+    @NonNull
+    public String getVoiceSilenceTimeoutProfile() {
+        String stored = preferences.getString(
+                KEY_VOICE_SILENCE_TIMEOUT_PROFILE,
+                ""
+        );
+        if (VOICE_SILENCE_TIMEOUT_SHORT.equals(stored)
+                || VOICE_SILENCE_TIMEOUT_NORMAL.equals(stored)
+                || VOICE_SILENCE_TIMEOUT_LONG.equals(stored)) {
+            return stored;
+        }
+
+        long timeoutMs = getVoiceSilenceTimeoutMs();
+        if (timeoutMs <= 1700L) {
+            return VOICE_SILENCE_TIMEOUT_SHORT;
+        }
+        if (timeoutMs >= 2300L) {
+            return VOICE_SILENCE_TIMEOUT_LONG;
+        }
+        return VOICE_SILENCE_TIMEOUT_NORMAL;
+    }
+
+    public void setVoiceSilenceTimeoutMs(long timeoutMs) {
+        long safeMs = clampSilenceTimeoutMs(timeoutMs);
+        preferences.edit().putLong(KEY_VOICE_SILENCE_TIMEOUT_MS, safeMs).apply();
+    }
+
+    public long getVoiceSilenceTimeoutMs() {
+        if (preferences.contains(KEY_VOICE_SILENCE_TIMEOUT_MS)) {
+            long stored = preferences.getLong(KEY_VOICE_SILENCE_TIMEOUT_MS, VOICE_SILENCE_TIMEOUT_DEFAULT_MS);
+            return clampSilenceTimeoutMs(stored);
+        }
+
+        // Backward compatibility for existing users who only have timeout profile saved.
+        String legacyProfile = preferences.getString(KEY_VOICE_SILENCE_TIMEOUT_PROFILE, VOICE_SILENCE_TIMEOUT_NORMAL);
+        return mapProfileToTimeoutMs(legacyProfile == null ? VOICE_SILENCE_TIMEOUT_NORMAL : legacyProfile);
+    }
+
+    public long getVoicePossiblyCompleteSilenceTimeoutMs() {
+        long base = getVoiceSilenceTimeoutMs();
+        long derived = base - 200L;
+        return Math.max(300L, derived);
+    }
+
+    public long getVoiceEndOfSpeechGraceMs() {
+        long base = getVoiceSilenceTimeoutMs();
+        long derived = Math.round(base * 0.4f);
+        return Math.max(450L, Math.min(1200L, derived));
+    }
+
+    private static long clampSilenceTimeoutMs(long timeoutMs) {
+        return Math.max(VOICE_SILENCE_TIMEOUT_MIN_MS, Math.min(VOICE_SILENCE_TIMEOUT_MAX_MS, timeoutMs));
+    }
+
+    private static long mapProfileToTimeoutMs(@NonNull String profile) {
+        if (VOICE_SILENCE_TIMEOUT_SHORT.equals(profile)) {
+            return VOICE_SILENCE_TIMEOUT_SHORT_MS;
+        }
+        if (VOICE_SILENCE_TIMEOUT_LONG.equals(profile)) {
+            return VOICE_SILENCE_TIMEOUT_LONG_MS;
+        }
+        return VOICE_SILENCE_TIMEOUT_NORMAL_MS;
     }
 
     private static float speechRateForMode(@NonNull String mode) {
