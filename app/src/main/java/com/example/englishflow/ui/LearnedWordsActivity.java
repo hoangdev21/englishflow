@@ -39,6 +39,13 @@ public class LearnedWordsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Edge-to-edge support for Hero background to flow behind status bar
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        );
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+
         setContentView(R.layout.activity_learned_words);
 
         repository = AppRepository.getInstance(this);

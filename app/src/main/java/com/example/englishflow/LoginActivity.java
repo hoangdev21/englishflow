@@ -260,7 +260,7 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.auth_network_error, Toast.LENGTH_SHORT).show();
                 return;
             }
-
+ 
             if (profile.isLocked()) {
                 firebaseAuth.signOut();
                 Toast.makeText(this, R.string.auth_account_locked, Toast.LENGTH_LONG).show();

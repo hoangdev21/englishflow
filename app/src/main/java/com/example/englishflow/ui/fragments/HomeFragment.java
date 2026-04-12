@@ -234,10 +234,6 @@ public class HomeFragment extends Fragment {
             if (quickScanBtn != null) quickScanBtn.setOnClickListener(v -> navigateToTab(2));
             if (quickChatBtn != null) quickChatBtn.setOnClickListener(v -> navigateToTab(3));
 
-            // Continue Learning button
-            MaterialButton continueBtn = view.findViewById(R.id.btnContinue);
-            if (continueBtn != null) continueBtn.setOnClickListener(v -> navigateToTab(1));
-
             // Dictionary buttons
             MaterialButton saveDictionaryWordBtn = view.findViewById(R.id.btnSaveDictionaryWord);
             MaterialButton homeDictSearchBtn = view.findViewById(R.id.btnHomeDictSearch);
@@ -1268,19 +1264,6 @@ public class HomeFragment extends Fragment {
             // Unlearned count
             TextView unlearnedCountText = view.findViewById(R.id.txtUnlearnedCount);
             if (unlearnedCountText != null) unlearnedCountText.setText(unlearnedCount + " từ");
-
-            // Continue Learning
-            TextView continueTitle = view.findViewById(R.id.txtContinueTitle);
-            TextView continueProgress = view.findViewById(R.id.txtContinueProgress);
-            View continueBtn = view.findViewById(R.id.btnContinue);
-            if (continueTitle != null) continueTitle.setText(lastTopicTitle);
-            if (continueProgress != null) continueProgress.setText(lastTopicRemaining + " thẻ còn lại");
-            if (continueBtn != null) {
-                continueBtn.setOnClickListener(v -> {
-                    repository.setPendingTopicRequest(lastTopicDomain, lastTopicTitle);
-                    navigateToTab(1);
-                });
-            }
 
             // Reminder
             renderReminderText();

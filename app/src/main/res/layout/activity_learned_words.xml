@@ -1,128 +1,167 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/ef_background"
-    android:orientation="vertical">
+    android:background="@color/ef_background">
 
-    <!-- Header -->
-    <RelativeLayout
+    <!-- Header Hero Section -->
+    <FrameLayout
+        android:id="@+id/heroHeader"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="140dp"
         android:background="@drawable/bg_hero_home_premium"
-        android:paddingStart="16dp"
-        android:paddingTop="28dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="50dp">
+        app:layout_constraintTop_toTopOf="parent">
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            app:cardElevation="0dp"
-            app:cardCornerRadius="22dp"
-            app:cardBackgroundColor="@android:color/transparent"
-            android:clipToPadding="false">
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnBack"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_3d_badge_silver"
-                app:backgroundTint="@null"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:insetLeft="0dp"
-                android:insetRight="0dp"
-                app:icon="@drawable/ic_back_arrow"
-                app:iconTint="@color/ef_text_primary"
-                app:iconSize="20dp"
-                app:iconGravity="textStart" />
-        </com.google.android.material.card.MaterialCardView>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="16dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:text="Từ Đã Học"
-            android:textColor="@color/white"
-            android:textSize="22sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
+            <!-- Styled Back Button -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btnBackContainer"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                app:cardBackgroundColor="#26FFFFFF"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="0dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="52dp">
 
-    <!-- Stats Summary (Optional) -->
-    <LinearLayout
+                <ImageView
+                    android:id="@+id/btnBack"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_back_arrow"
+                    android:contentDescription="Back"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    app:tint="@color/white" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/txtTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/nunito"
+                android:text="Từ Đã Học"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:letterSpacing="-0.01"
+                app:layout_constraintBottom_toBottomOf="@id/btnBackContainer"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@id/btnBackContainer" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:layout_gravity="bottom"
+            android:scaleType="fitXY"
+            android:src="@drawable/bg_wave_bottom"
+            app:tint="@color/ef_wave_color" />
+    </FrameLayout>
+
+    <!-- Stats Summary Card Overlay -->
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/summaryContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="-25dp"
-        android:layout_marginEnd="20dp"
-        android:background="@drawable/bg_stats_premium_card"
-        android:elevation="6dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:padding="16dp">
+        android:layout_marginHorizontal="20dp"
+        app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="4dp"
+        app:strokeColor="@color/ef_divider"
+        app:strokeWidth="1dp"
+        app:layout_constraintTop_toBottomOf="@id/heroHeader"
+        android:layout_marginTop="-30dp">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/txtTotalWords"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textColor="@color/ef_primary"
-                android:textSize="24sp"
-                android:textStyle="bold" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Từ vựng"
-                android:textColor="@color/ef_text_secondary"
-                android:textSize="12sp" />
-        </LinearLayout>
+            android:orientation="horizontal"
+            android:paddingVertical="14dp"
+            android:background="@drawable/bg_progress_card_gradient">
 
-        <View
-            android:layout_width="1dp"
-            android:layout_height="30dp"
-            android:layout_marginStart="24dp"
-            android:layout_marginEnd="24dp"
-            android:background="@color/ef_divider" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/txtTotalWords"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/nunito"
+                    android:text="0"
+                    android:textColor="@color/ef_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    tools:text="103" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/nunito"
+                    android:text="Từ vựng"
+                    android:textColor="@color/ef_text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/txtTotalDomains"
-                android:layout_width="wrap_content"
+            <View
+                android:layout_width="1dp"
+                android:layout_height="24dp"
+                android:background="@color/ef_divider" />
+
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="0"
-                android:textColor="@color/ef_primary"
-                android:textSize="24sp"
-                android:textStyle="bold" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Lĩnh vực"
-                android:textColor="@color/ef_text_secondary"
-                android:textSize="12sp" />
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/txtTotalDomains"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/nunito"
+                    android:text="0"
+                    android:textColor="@color/ef_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    tools:text="9" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/nunito"
+                    android:text="Lĩnh vực"
+                    android:textColor="@color/ef_text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- Word List -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvLearnedWords"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="12dp"
-        android:paddingHorizontal="20dp"
+        android:layout_height="0dp"
         android:clipToPadding="false"
         android:overScrollMode="never"
-        android:paddingBottom="32dp" />
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/summaryContainer" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
