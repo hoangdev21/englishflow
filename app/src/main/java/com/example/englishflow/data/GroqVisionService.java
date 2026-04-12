@@ -22,10 +22,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GeminiVisionService {
+public class GroqVisionService {
     private static final String DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-    private static final String SECONDARY_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"; // same model
-    private static final String TERTIARY_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"; // same model
+    private static final String SECONDARY_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"; 
+    private static final String TERTIARY_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"; 
     private static final String API_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
     private static final Pattern ENGLISH_WORD_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z\\-]{1,}");
     private static final int MAX_CACHE_SIZE = 128;
@@ -84,20 +84,20 @@ public class GeminiVisionService {
         }
     }
 
-    public GeminiVisionService() {
+    public GroqVisionService() {
         this.apiKey = BuildConfig.GROQ_API_KEY;
         this.modelName = (BuildConfig.GROQ_MODEL == null || BuildConfig.GROQ_MODEL.trim().isEmpty())
                 ? DEFAULT_MODEL
                 : BuildConfig.GROQ_MODEL.trim();
-        android.util.Log.d("GeminiVisionService", "Constructor called");
-        android.util.Log.d("GeminiVisionService", "apiKey from BuildConfig: " + (apiKey != null ? (apiKey.isEmpty() ? "EMPTY" : apiKey.substring(0, Math.min(10, apiKey.length())) + "...") : "NULL"));
-        android.util.Log.d("GeminiVisionService", "model from BuildConfig: " + modelName);
+        android.util.Log.d("GroqVisionService", "Constructor called");
+        android.util.Log.d("GroqVisionService", "apiKey from BuildConfig: " + (apiKey != null ? (apiKey.isEmpty() ? "EMPTY" : apiKey.substring(0, Math.min(10, apiKey.length())) + "...") : "NULL"));
+        android.util.Log.d("GroqVisionService", "model from BuildConfig: " + modelName);
         
         if (apiKey == null || apiKey.isEmpty()) {
-            android.util.Log.e("GeminiVisionService", "API key not configured!");
+            android.util.Log.e("GroqVisionService", "API key not configured!");
             throw new IllegalStateException("GROQ_API_KEY not configured. Add it to local.properties");
         }
-        android.util.Log.d("GeminiVisionService", "API key validated successfully");
+        android.util.Log.d("GroqVisionService", "API key validated successfully");
     }
 
     public static class VisionData {
@@ -136,7 +136,6 @@ public class GeminiVisionService {
         VisionResult result = analyzeVision(bitmap, prompt, false, "full_scan");
         String json = result.getRawResponse();
         
-        // Clean up common AI commentary if any
         if (json.contains("{") && json.contains("}")) {
             json = json.substring(json.indexOf("{"), json.lastIndexOf("}") + 1);
         }
@@ -155,8 +154,7 @@ public class GeminiVisionService {
                     data.related != null ? data.related : java.util.Arrays.asList("thing", "item")
             );
         } catch (Exception e) {
-            android.util.Log.e("GeminiVisionService", "JSON Parse error: " + e.getMessage());
-            // Fallback
+            android.util.Log.e("GroqVisionService", "JSON Parse error: " + e.getMessage());
             return new ScanResult(result.getPrimaryLabel(), "-", "vật thể", "noun", 
                 "No example", "VD trống", "General", "JSON error", java.util.Arrays.asList("object"));
         }
@@ -215,10 +213,10 @@ public class GeminiVisionService {
                 lastEx = e;
                 String msg = e.getMessage() != null ? e.getMessage() : "";
                 if (msg.contains("429") || msg.contains("400") || msg.contains("404")) {
-                    android.util.Log.w("GeminiVisionService", "Model " + model + " failed (HTTP error), trying fallback...");
+                    android.util.Log.w("GroqVisionService", "Model " + model + " failed (HTTP error), trying fallback...");
                     continue;
                 }
-                break; // Don't retry for other errors (e.g. 401)
+                break; 
             }
         }
         throw new RuntimeException("Error analyzing image with Groq (exhausted fallbacks): " + 
@@ -262,7 +260,6 @@ public class GeminiVisionService {
             return "object";
         }
 
-        // Prefer the first plausible English token and ignore non-English sentences.
         Matcher matcher = ENGLISH_WORD_PATTERN.matcher(normalized);
         if (!matcher.find()) {
             return "object";
@@ -273,7 +270,6 @@ public class GeminiVisionService {
             return "object";
         }
 
-        // Normalize frequent generic outputs to the fallback bucket.
         if ("image".equals(token) || "picture".equals(token) || "photo".equals(token)) {
             return "object";
         }
@@ -346,9 +342,6 @@ public class GeminiVisionService {
         return Math.max(0.2f, Math.min(0.98f, score));
     }
 
-    /**
-     * Get Vietnamese meaning suggestion for an English word.
-     */
     public String getVietnameseMeaning(String englishWord) throws Exception {
         if (englishWord == null || englishWord.trim().isEmpty()) {
             throw new IllegalArgumentException("English word cannot be empty");
@@ -382,13 +375,10 @@ public class GeminiVisionService {
             }
             return null;
         } catch (Exception e) {
-            return null; // Fallback on error, don't throw
+            return null; 
         }
     }
 
-    /**
-     * Correct grammar in an English sentence.
-     */
     public String correctGrammar(String sentence) throws Exception {
         if (sentence == null || sentence.trim().isEmpty()) {
             throw new IllegalArgumentException("Sentence cannot be empty");
@@ -415,9 +405,6 @@ public class GeminiVisionService {
         throw new RuntimeException("Grammar correction error (exhausted fallbacks): " + (lastEx != null ? lastEx.getMessage() : ""), lastEx);
     }
 
-    /**
-     * Build text-only request for Groq Chat Completions API
-     */
     private JsonObject buildTextRequest(String prompt, String model) {
         JsonObject request = new JsonObject();
         request.addProperty("model", model);
@@ -434,14 +421,11 @@ public class GeminiVisionService {
         return request;
     }
 
-    /**
-     * Build image + text request for Groq Vision API
-     */
     private JsonObject buildVisionRequest(String prompt, String base64Image, String model) {
         JsonObject request = new JsonObject();
         request.addProperty("model", model);
         request.addProperty("temperature", 0.2);
-        request.addProperty("max_tokens", 1024); // Increased for full scan detail
+        request.addProperty("max_tokens", 1024); 
 
         JsonArray messages = new JsonArray();
         JsonObject user = new JsonObject();
@@ -467,17 +451,14 @@ public class GeminiVisionService {
         return request;
     }
 
-    /**
-     * Call Groq API with HTTP request
-     */
     private String callGroqApi(JsonObject requestBody) throws Exception {
-        android.util.Log.d("GeminiVisionService", "API Key status: " + (apiKey != null && apiKey.length() > 10 ? apiKey.substring(0, 10) + "..." : "INVALID"));
+        android.util.Log.d("GroqVisionService", "API Key status: " + (apiKey != null && apiKey.length() > 10 ? apiKey.substring(0, 10) + "..." : "INVALID"));
 
         String requestBodyStr = requestBody.toString();
-        android.util.Log.d("GeminiVisionService", "Request body: " + requestBodyStr.substring(0, Math.min(200, requestBodyStr.length())) + "...");
+        android.util.Log.d("GroqVisionService", "Request body: " + requestBodyStr.substring(0, Math.min(200, requestBodyStr.length())) + "...");
 
         String currentModel = requestBody.has("model") ? requestBody.get("model").getAsString() : modelName;
-        android.util.Log.d("GeminiVisionService", "Using model handle: " + currentModel);
+        android.util.Log.d("GroqVisionService", "Using model handle: " + currentModel);
 
         RequestBody body = RequestBody.create(
                 requestBodyStr,
@@ -492,7 +473,7 @@ public class GeminiVisionService {
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
-            android.util.Log.d("GeminiVisionService", "Single request response code: " + response.code());
+            android.util.Log.d("GroqVisionService", "Single request response code: " + response.code());
 
             if (!response.isSuccessful()) {
                 String errorBody = response.body() != null ? response.body().string() : "";
@@ -501,10 +482,10 @@ public class GeminiVisionService {
 
             String responseBody = response.body() != null ? response.body().string() : "";
             if (responseBody.isEmpty()) {
-                throw new RuntimeException("Empty response from Gemini API");
+                throw new RuntimeException("Empty response from Groq API");
             }
 
-            android.util.Log.d("GeminiVisionService", "Response body: " + responseBody.substring(0, Math.min(300, responseBody.length())) + "...");
+            android.util.Log.d("GroqVisionService", "Response body: " + responseBody.substring(0, Math.min(300, responseBody.length())) + "...");
 
             JsonObject parsedResponse = gson.fromJson(responseBody, JsonObject.class);
             if (parsedResponse == null) {
@@ -520,7 +501,7 @@ public class GeminiVisionService {
                         if (message != null && message.has("content")) {
                             String text = message.get("content").getAsString();
                             if (text != null && !text.isEmpty()) {
-                                android.util.Log.d("GeminiVisionService", "Extracted text: " + text);
+                                android.util.Log.d("GroqVisionService", "Extracted text: " + text);
                                 return text;
                             }
                         }
@@ -532,15 +513,11 @@ public class GeminiVisionService {
         }
     }
 
-    /**
-     * Convert Bitmap to Base64 string (useful for API calls).
-     */
     private String bitmapToBase64(Bitmap bitmap) {
         bitmap = downscaleIfNeeded(bitmap, 1024);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream);
         byte[] imageBytes = outputStream.toByteArray();
-        // Remove newlines from Base64 to avoid API errors
         return Base64.encodeToString(imageBytes, Base64.NO_WRAP);
     }
 
@@ -577,16 +554,10 @@ public class GeminiVisionService {
         }
     }
 
-    /**
-     * Check if API key is configured.
-     */
     public static boolean isApiKeyConfigured() {
         return BuildConfig.GROQ_API_KEY != null && !BuildConfig.GROQ_API_KEY.isEmpty();
     }
 
-    /**
-     * Get configured API key (for debugging/logging).
-     */
     public static String getApiKeyStatus() {
         if (!isApiKeyConfigured()) {
             return "NOT_CONFIGURED";

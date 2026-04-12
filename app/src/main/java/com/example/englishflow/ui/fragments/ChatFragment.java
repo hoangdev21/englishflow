@@ -97,8 +97,9 @@ public class ChatFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        repository  = AppRepository.getInstance(requireContext());
-        chatService = new GroqChatService(requireContext());
+        Context context = view.getContext();
+        repository  = AppRepository.getInstance(context);
+        chatService = new GroqChatService(context);
         dbExecutor = Executors.newSingleThreadExecutor();
 
         // Bind views
@@ -122,19 +123,29 @@ public class ChatFragment extends Fragment {
         }
 
         // RecyclerView
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerView.setLayoutManager(new LinearLayoutManager(context));
         recyclerView.setHasFixedSize(true);
         recyclerView.setItemAnimator(null);
         adapter = new ChatAdapter(chatItems);
         recyclerView.setAdapter(adapter);
 
         // Load mic pulse animation
-        micPulseAnim = AnimationUtils.loadAnimation(requireContext(), R.anim.mic_pulse);
+        micPulseAnim = AnimationUtils.loadAnimation(context, R.anim.mic_pulse);
 
         // Wire voice engine after both are created
-        setupVoiceEngine();
+        try {
+            setupVoiceEngine();
+        } catch (RuntimeException e) {
+            voiceEngine = null;
+            btnMic.setEnabled(false);
+            Toast.makeText(context, "Thiết bị chưa hỗ trợ đầy đủ tính năng giọng nói", Toast.LENGTH_SHORT).show();
+        }
         // Route vocab-word speak button through VoiceFlowEngine
-        adapter.setSpeakCallback(text -> voiceEngine.speakResponse(text));
+        adapter.setSpeakCallback(text -> {
+            if (voiceEngine != null) {
+                voiceEngine.speakResponse(text);
+            }
+        });
         setupSpinner();
         setupInputActions();
         setupIconsAndActions();
@@ -187,12 +198,16 @@ public class ChatFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         mainHandler.removeCallbacksAndMessages(null);
+        isVoiceMode = false;
         if (dbExecutor != null) {
             dbExecutor.shutdownNow();
             dbExecutor = null;
         }
         if (adapter != null) adapter.shutdownTts();
-        if (voiceEngine != null) voiceEngine.shutdown();
+        if (voiceEngine != null) {
+            voiceEngine.shutdown();
+            voiceEngine = null;
+        }
         if (voiceWaveform != null) {
             voiceWaveform.setMode(VoiceWaveformView.Mode.IDLE);
         }
@@ -207,28 +222,42 @@ public class ChatFragment extends Fragment {
 
             @Override
             public void onStateChanged(VoiceFlowEngine.State state) {
+                if (!isAdded()) {
+                    return;
+                }
                 updateVoiceUI(state);
             }
 
             @Override
             public void onTranscript(String text) {
+                if (!isAdded() || messageEdit == null || tvVoiceStatus == null) {
+                    return;
+                }
                 // User finished speaking — fill input field and auto-send
                 messageEdit.setText(text);
                 tvVoiceStatus.setText("\"" + text + "\"");
                 // Small delay for user to see what was transcribed
                 mainHandler.postDelayed(() -> {
-                    sendMessage(true /* fromVoice */);
+                    if (isAdded()) {
+                        sendMessage(true /* fromVoice */);
+                    }
                 }, 400);
             }
 
             @Override
             public void onPartialTranscript(String text) {
+                if (!isAdded() || tvVoiceStatus == null) {
+                    return;
+                }
                 // Show live transcription in the status bar
                 tvVoiceStatus.setText(text);
             }
 
             @Override
             public void onRmsChanged(float rmsDb) {
+                if (!isAdded()) {
+                    return;
+                }
                 if (voiceWaveform != null) {
                     voiceWaveform.setMicLevel(rmsDb);
                 }
@@ -239,7 +268,7 @@ public class ChatFragment extends Fragment {
                 // AI finished speaking — in voice mode, auto-relisten
                 if (isVoiceMode) {
                     mainHandler.postDelayed(() -> {
-                        if (isVoiceMode && isAdded()) {
+                        if (isVoiceMode && isAdded() && voiceEngine != null) {
                             startVoiceListening();
                         }
                     }, 700);
@@ -248,8 +277,9 @@ public class ChatFragment extends Fragment {
 
             @Override
             public void onError(String message) {
-                if (!message.isEmpty()) {
-                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                Context context = getContext();
+                if (context != null && isAdded() && message != null && !message.isEmpty()) {
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -272,6 +302,13 @@ public class ChatFragment extends Fragment {
 
         // Mic button — toggle listen / stop AI speech
         btnMic.setOnClickListener(v -> {
+            if (voiceEngine == null) {
+                Context context = getContext();
+                if (context != null) {
+                    Toast.makeText(context, "Thiết bị chưa hỗ trợ giọng nói", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
             VoiceFlowEngine.State state = voiceEngine.getState();
             if (state == VoiceFlowEngine.State.LISTENING) {
                 // Stop early — send what we heard so far
@@ -296,10 +333,16 @@ public class ChatFragment extends Fragment {
     }
 
     private void startVoiceListening() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
+        Context context = getContext();
+        if (context == null || voiceEngine == null) {
+            return;
+        }
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(requireActivity(),
-                    new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO);
+            if (getActivity() != null) {
+                ActivityCompat.requestPermissions(getActivity(),
+                        new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO);
+            }
             return;
         }
         hideKeyboard();
@@ -316,9 +359,12 @@ public class ChatFragment extends Fragment {
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             startVoiceListening();
         } else {
-            Toast.makeText(requireContext(),
-                    "Cần quyền microphone để dùng tính năng hội thoại giọng nói",
-                    Toast.LENGTH_LONG).show();
+            Context context = getContext();
+            if (context != null) {
+                Toast.makeText(context,
+                        "Cần quyền microphone để dùng tính năng hội thoại giọng nói",
+                        Toast.LENGTH_LONG).show();
+            }
         }
     }
 
@@ -327,6 +373,9 @@ public class ChatFragment extends Fragment {
     // ─────────────────────────────────────────────────────────────────────────
 
     private void updateVoiceUI(VoiceFlowEngine.State state) {
+        if (!isAdded() || btnMic == null || voiceStatusBar == null || tvVoiceStatus == null || voiceDot == null) {
+            return;
+        }
         switch (state) {
             case LISTENING:
                 voiceStatusBar.setVisibility(View.VISIBLE);
@@ -394,6 +443,9 @@ public class ChatFragment extends Fragment {
     // ─────────────────────────────────────────────────────────────────────────
 
     private void sendMessage(boolean fromVoice) {
+        if (messageEdit == null || topicSpinner == null || adapter == null || recyclerView == null || chatService == null) {
+            return;
+        }
         String text = messageEdit.getText() != null ? messageEdit.getText().toString().trim() : "";
         if (TextUtils.isEmpty(text)) return;
 
@@ -419,6 +471,9 @@ public class ChatFragment extends Fragment {
                                   String vocabWord, String vocabIpa, String vocabMeaning,
                                   String vocabExample, String vocabExampleVi) {
             mainHandler.post(() -> {
+                    if (!isAdded() || adapter == null || recyclerView == null) {
+                    return;
+                    }
                     removeTypingIndicator();
                     animateTypewriterResponse(response, correction, explanation,
                             vocabWord, vocabIpa, vocabMeaning, vocabExample, vocabExampleVi,
@@ -430,13 +485,16 @@ public class ChatFragment extends Fragment {
             @Override
             public void onError(String error) {
                 mainHandler.post(() -> {
+                    if (!isAdded() || adapter == null || recyclerView == null) {
+                        return;
+                    }
                     removeTypingIndicator();
                     String displayError = (error != null && !error.isEmpty()) 
                         ? "Lỗi hệ thống: " + error 
                         : "Xin lỗi, tôi gặp sự cố kết nối. Hãy thử lại nhé!";
                     
                     addMessage(new ChatItem(ChatItem.ROLE_AI, displayError, null, null));
-                    if (fromVoice) {
+                    if (fromVoice && voiceEngine != null) {
                         voiceEngine.speakResponse("Tôi gặp sự cố kỹ thuật. Vui lòng kiểm tra lại kết nối.");
                         updateVoiceUI(VoiceFlowEngine.State.SPEAKING);
                     }
@@ -530,8 +588,12 @@ public class ChatFragment extends Fragment {
     // ─────────────────────────────────────────────────────────────────────────
 
     private void setupSpinner() {
+        Context context = getContext();
+        if (context == null || topicSpinner == null) {
+            return;
+        }
         ArrayAdapter<String> topicsAdapter = new ArrayAdapter<>(
-                requireContext(),
+                context,
                 R.layout.item_spinner_topic,
                 Arrays.asList(
                         "Chọn chủ đề học tập",
@@ -577,12 +639,17 @@ public class ChatFragment extends Fragment {
     // ─────────────────────────────────────────────────────────────────────────
 
     private void hideKeyboard() {
-        android.view.View focused = requireActivity().getCurrentFocus();
+        if (!isAdded() || getActivity() == null) {
+            return;
+        }
+        android.view.View focused = getActivity().getCurrentFocus();
         if (focused != null) {
             android.view.inputmethod.InputMethodManager imm =
                     (android.view.inputmethod.InputMethodManager)
-                            requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(focused.getWindowToken(), 0);
+                            getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(focused.getWindowToken(), 0);
+            }
             focused.clearFocus();
         }
     }

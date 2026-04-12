@@ -305,6 +305,13 @@
     <string name="auth_google_sign_in">Tiếp tục với Google</string>
     <string name="auth_google_failed">Đăng nhập Google thất bại</string>
     <string name="auth_google_not_configured">Google Sign-In chưa được cấu hình trên Firebase project</string>
+    <string name="auth_google_cancelled">Bạn đã hủy đăng nhập Google</string>
+    <string name="auth_google_sign_in_required">Vui lòng chọn tài khoản Google để tiếp tục</string>
+    <string name="auth_google_play_services_required">Thiết bị chưa sẵn sàng Google Play Services. Vui lòng cập nhật hoặc dùng bản LDPlayer có Play Store.</string>
+    <string name="auth_google_developer_error">Google Sign-In cấu hình chưa đúng (SHA1/client ID). Vui lòng đồng bộ Firebase config.</string>
+    <string name="auth_google_sign_in_failed">Không thể đăng nhập Google trên thiết bị này. Hãy thử lại hoặc đổi tài khoản Google.</string>
+    <string name="auth_google_provider_not_enabled">Google provider chưa bật trong Firebase Authentication.</string>
+    <string name="auth_google_invalid_credential">Thông tin Google token không hợp lệ. Hãy đăng nhập lại tài khoản Google trên thiết bị.</string>
     <string name="auth_account_locked">Tài khoản của bạn đang bị khóa. Vui lòng liên hệ quản trị viên.</string>
 
     <string name="status_not_started">Chưa học</string>

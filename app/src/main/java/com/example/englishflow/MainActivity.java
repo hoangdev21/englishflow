@@ -62,8 +62,8 @@ public class MainActivity extends AppCompatActivity {
 
             MainPagerAdapter pagerAdapter = new MainPagerAdapter(this);
             viewPager.setAdapter(pagerAdapter);
-            // Keep one extra page on each side warm to reduce recreation stutter when switching tabs.
-            viewPager.setOffscreenPageLimit(2);
+            // Keep only adjacent page warm so Scan tab is not eagerly created on Home.
+            viewPager.setOffscreenPageLimit(1);
 
             // ════ Custom 3D Nav Setup ════
             android.view.View btnHome = findViewById(R.id.nav_home_btn);

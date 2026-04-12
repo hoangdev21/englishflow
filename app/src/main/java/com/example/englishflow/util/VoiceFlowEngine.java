@@ -34,6 +34,8 @@ public class VoiceFlowEngine {
     private static final int SPEAK_READY_RETRY_MAX = 12;
     private static final float VOICE_RATE_BASE = 0.85f; // Standard learning multiplier
     private static final int CHUNK_GAP_MS = 200; // Natural pause between sentences
+    private static final String ERROR_TTS_UNAVAILABLE = "Thiết bị chưa hỗ trợ giọng đọc (TTS).";
+    private static final String ERROR_STT_UNAVAILABLE = "Thiết bị chưa hỗ trợ nhận diện giọng nói.";
 
 
     public enum State { IDLE, LISTENING, PROCESSING, SPEAKING }
@@ -76,33 +78,56 @@ public class VoiceFlowEngine {
     }
 
     private void initTts() {
-        tts = new TextToSpeech(context, status -> {
-            if (isShutdown) {
-                return;
-            }
-            if (status == TextToSpeech.SUCCESS) {
-                ttsReady = true;
-                tts.setLanguage(localeEn);
-                tts.setSpeechRate(resolveSpeechRate());
-                tts.setPitch(1.0f);
-            }
-        });
-
-        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-            @Override public void onStart(String utteranceId) {}
-            @Override public void onDone(String utteranceId) {
-                if (utteranceId != null && utteranceId.endsWith("_LAST")) {
-                    mainHandler.post(() -> {
-                        setState(State.IDLE);
-                        callback.onSpeakingDone();
-                        if (autoRelisten) startListening("vi-VN");
-                    });
+        try {
+            tts = new TextToSpeech(context, status -> {
+                if (isShutdown) {
+                    return;
                 }
-            }
-            @Override public void onError(String utteranceId) {
-                Log.e(TAG, "TTS Error: " + utteranceId);
-            }
-        });
+                if (status == TextToSpeech.SUCCESS && tts != null) {
+                    ttsReady = true;
+                    tts.setLanguage(localeEn);
+                    tts.setSpeechRate(resolveSpeechRate());
+                    tts.setPitch(1.0f);
+                } else {
+                    ttsReady = false;
+                    notifyError(ERROR_TTS_UNAVAILABLE);
+                }
+            });
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Failed to initialize TTS", e);
+            tts = null;
+            ttsReady = false;
+            notifyError(ERROR_TTS_UNAVAILABLE);
+            return;
+        }
+
+        if (tts == null) {
+            ttsReady = false;
+            notifyError(ERROR_TTS_UNAVAILABLE);
+            return;
+        }
+
+        try {
+            tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                @Override public void onStart(String utteranceId) {}
+                @Override public void onDone(String utteranceId) {
+                    if (utteranceId != null && utteranceId.endsWith("_LAST")) {
+                        mainHandler.post(() -> {
+                            setState(State.IDLE);
+                            callback.onSpeakingDone();
+                            if (autoRelisten) startListening("vi-VN");
+                        });
+                    }
+                }
+                @Override public void onError(String utteranceId) {
+                    Log.e(TAG, "TTS Error: " + utteranceId);
+                }
+            });
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Failed to attach TTS progress listener", e);
+            ttsReady = false;
+            notifyError(ERROR_TTS_UNAVAILABLE);
+        }
     }
 
     public void speakResponse(String fullText) {
@@ -205,6 +230,9 @@ public class VoiceFlowEngine {
 
     private void requestAudioFocus() {
         AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        if (am == null) {
+            return;
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             AudioAttributes attrs = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
@@ -218,25 +246,53 @@ public class VoiceFlowEngine {
     }
 
     private void initStt() {
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
+        if (!SpeechRecognizer.isRecognitionAvailable(context)) {
+            speechRecognizer = null;
+            notifyError(ERROR_STT_UNAVAILABLE);
+            return;
+        }
+
+        try {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Failed to initialize SpeechRecognizer", e);
+            speechRecognizer = null;
+            notifyError(ERROR_STT_UNAVAILABLE);
+            return;
+        }
+
+        if (speechRecognizer == null) {
+            notifyError(ERROR_STT_UNAVAILABLE);
+            return;
+        }
+
         speechRecognizer.setRecognitionListener(new RecognitionListener() {
             @Override public void onReadyForSpeech(Bundle params) { setState(State.LISTENING); }
             @Override public void onPartialResults(Bundle partial) {
                 ArrayList<String> matches = partial.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                if (matches != null && !matches.isEmpty()) callback.onPartialTranscript(matches.get(0));
+                if (matches != null && !matches.isEmpty()) {
+                    String partialText = matches.get(0);
+                    mainHandler.post(() -> callback.onPartialTranscript(partialText));
+                }
             }
             @Override public void onResults(Bundle results) {
                 ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (matches != null && !matches.isEmpty()) {
+                    String transcript = matches.get(0);
                     setState(State.PROCESSING);
-                    callback.onTranscript(matches.get(0));
+                    mainHandler.post(() -> callback.onTranscript(transcript));
                 } else {
                     setState(State.IDLE);
                 }
             }
-            @Override public void onError(int error) { setState(State.IDLE); }
+            @Override public void onError(int error) {
+                setState(State.IDLE);
+                notifyError(resolveSpeechError(error));
+            }
             @Override public void onBeginningOfSpeech() {}
-            @Override public void onRmsChanged(float rmsdB) { callback.onRmsChanged(rmsdB); }
+            @Override public void onRmsChanged(float rmsdB) {
+                mainHandler.post(() -> callback.onRmsChanged(rmsdB));
+            }
             @Override public void onBufferReceived(byte[] buffer) {}
             @Override public void onEndOfSpeech() {}
             @Override public void onEvent(int eventType, Bundle params) {}
@@ -245,6 +301,7 @@ public class VoiceFlowEngine {
 
     public void startListening(String lang) {
         if (isShutdown || speechRecognizer == null) {
+            notifyError(ERROR_STT_UNAVAILABLE);
             return;
         }
         if (currentState == State.LISTENING) return;
@@ -253,11 +310,40 @@ public class VoiceFlowEngine {
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, lang);
         intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-        mainHandler.post(() -> speechRecognizer.startListening(intent));
+        mainHandler.post(() -> {
+            if (isShutdown || speechRecognizer == null) {
+                return;
+            }
+            try {
+                speechRecognizer.startListening(intent);
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Failed to start listening", e);
+                setState(State.IDLE);
+                notifyError(ERROR_STT_UNAVAILABLE);
+            }
+        });
     }
 
-    public void stopSpeaking() { if (ttsReady) tts.stop(); if (currentState == State.SPEAKING) setState(State.IDLE); }
-    public void stopListening() { if (speechRecognizer != null) speechRecognizer.stopListening(); }
+    public void stopSpeaking() {
+        if (ttsReady && tts != null) {
+            try {
+                tts.stop();
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Failed to stop TTS", e);
+            }
+        }
+        if (currentState == State.SPEAKING) setState(State.IDLE);
+    }
+
+    public void stopListening() {
+        if (speechRecognizer != null) {
+            try {
+                speechRecognizer.stopListening();
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Failed to stop listening", e);
+            }
+        }
+    }
     public void setAutoRelisten(boolean enabled) { this.autoRelisten = enabled; }
     public void setSpeechRateOverride(float speedRate) {
         if (speedRate >= 0.6f && speedRate <= 2.2f) {
@@ -293,14 +379,57 @@ public class VoiceFlowEngine {
         stopSpeaking();
         ttsReady = false;
         if (tts != null) {
-            tts.shutdown();
+            try {
+                tts.shutdown();
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Failed to shutdown TTS", e);
+            }
             tts = null;
         }
         if (speechRecognizer != null) {
-            speechRecognizer.destroy();
+            try {
+                speechRecognizer.destroy();
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Failed to destroy SpeechRecognizer", e);
+            }
             speechRecognizer = null;
         }
         setState(State.IDLE);
     }
-    private void setState(State s) { if (currentState != s) { currentState = s; callback.onStateChanged(s); } }
+
+    private void notifyError(String message) {
+        if (isShutdown || message == null || message.trim().isEmpty()) {
+            return;
+        }
+        mainHandler.post(() -> callback.onError(message));
+    }
+
+    private String resolveSpeechError(int errorCode) {
+        switch (errorCode) {
+            case SpeechRecognizer.ERROR_AUDIO:
+                return "Không thể ghi âm microphone lúc này.";
+            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
+                return "Thiếu quyền microphone để nhận diện giọng nói.";
+            case SpeechRecognizer.ERROR_NETWORK:
+            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
+                return "Lỗi mạng khi nhận diện giọng nói.";
+            case SpeechRecognizer.ERROR_NO_MATCH:
+                return "Không nghe rõ nội dung, bạn thử nói lại nhé.";
+            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
+                return "Bộ nhận diện giọng nói đang bận.";
+            case SpeechRecognizer.ERROR_SERVER:
+                return "Máy chủ nhận diện giọng nói đang lỗi.";
+            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
+                return "Không phát hiện giọng nói.";
+            default:
+                return ERROR_STT_UNAVAILABLE;
+        }
+    }
+
+    private void setState(State s) {
+        if (currentState != s) {
+            currentState = s;
+            mainHandler.post(() -> callback.onStateChanged(s));
+        }
+    }
 }

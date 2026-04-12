@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,6 +53,7 @@ import java.util.ArrayList;
 
 public class ProfileFragment extends Fragment {
 
+    private static final String TAG = "ProfileFragment";
     private static final float TTS_SPEECH_RATE = 0.9f;
     private static final float TTS_PITCH = 1.0f;
     private static final long UI_REFRESH_MIN_INTERVAL_MS = 1500L;
@@ -90,9 +92,10 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        repository = AppRepository.getInstance(requireContext());
-        settingsStore = new AppSettingsStore(requireContext());
-        ecoStore = new EcoCompanionStore(requireContext());
+        android.content.Context context = view.getContext();
+        repository = AppRepository.getInstance(context);
+        settingsStore = new AppSettingsStore(context);
+        ecoStore = new EcoCompanionStore(context);
 
         nameText = view.findViewById(R.id.profileName);
         levelText = view.findViewById(R.id.profileLevel);
@@ -136,13 +139,18 @@ public class ProfileFragment extends Fragment {
             btnOpenEcoSanctuary.setOnClickListener(openEcoListener);
         }
 
-        textToSpeech = new TextToSpeech(requireContext(), status -> {
-            if (status == TextToSpeech.SUCCESS) {
-                textToSpeech.setLanguage(Locale.US);
-                textToSpeech.setSpeechRate(TTS_SPEECH_RATE);
-                textToSpeech.setPitch(TTS_PITCH);
-            }
-        });
+        try {
+            textToSpeech = new TextToSpeech(context, status -> {
+                if (status == TextToSpeech.SUCCESS && textToSpeech != null) {
+                    textToSpeech.setLanguage(Locale.US);
+                    textToSpeech.setSpeechRate(TTS_SPEECH_RATE);
+                    textToSpeech.setPitch(TTS_PITCH);
+                }
+            });
+        } catch (RuntimeException e) {
+            Log.w(TAG, "TTS is unavailable on this device", e);
+            textToSpeech = null;
+        }
 
         RecyclerView achievementRecycler = view.findViewById(R.id.achievementRecycler);
         achievementRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -157,43 +165,51 @@ public class ProfileFragment extends Fragment {
 
         renderProfile(true);
         
-        btnViewDictionary.setOnClickListener(v -> {
-            if (getActivity() != null) {
-                startActivity(new android.content.Intent(requireContext(), com.example.englishflow.ui.LearnedWordsActivity.class));
-            }
-        });
+        if (btnViewDictionary != null) {
+            btnViewDictionary.setOnClickListener(v -> {
+                if (getActivity() != null) {
+                    startActivity(new android.content.Intent(requireContext(), com.example.englishflow.ui.LearnedWordsActivity.class));
+                }
+            });
+        }
 
         if (btnStartLearningWeek != null) {
             btnStartLearningWeek.setOnClickListener(v -> navigateToTab(1));
         }
 
-        btnOpenSettings.setOnClickListener(v -> {
-            if (isAdded()) {
-                android.content.Intent intent = new android.content.Intent(requireContext(), SettingsActivity.class);
-                try {
-                    if (intent.resolveActivity(requireContext().getPackageManager()) != null) {
-                        startActivity(intent);
-                    } else {
-                        Toast.makeText(requireContext(), "Không tìm thấy màn hình cài đặt", Toast.LENGTH_SHORT).show();
+        if (btnOpenSettings != null) {
+            btnOpenSettings.setOnClickListener(v -> {
+                if (isAdded()) {
+                    android.content.Intent intent = new android.content.Intent(requireContext(), SettingsActivity.class);
+                    try {
+                        if (intent.resolveActivity(requireContext().getPackageManager()) != null) {
+                            startActivity(intent);
+                        } else {
+                            Toast.makeText(requireContext(), "Không tìm thấy màn hình cài đặt", Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Exception e) {
+                        Toast.makeText(requireContext(), "Không thể mở cài đặt lúc này", Toast.LENGTH_SHORT).show();
                     }
-                } catch (Exception e) {
-                    Toast.makeText(requireContext(), "Không thể mở cài đặt lúc này", Toast.LENGTH_SHORT).show();
                 }
-            }
-        });
-        btnReset.setOnClickListener(v -> {
-            repository.resetProgress();
-            renderProfile(true);
-            Toast.makeText(requireContext(), "Đã reset toàn bộ tiến độ", Toast.LENGTH_SHORT).show();
-        });
+            });
+        }
+        if (btnReset != null) {
+            btnReset.setOnClickListener(v -> {
+                repository.resetProgress();
+                renderProfile(true);
+                Toast.makeText(requireContext(), "Đã reset toàn bộ tiến độ", Toast.LENGTH_SHORT).show();
+            });
+        }
 
-        btnLogout.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            if (getActivity() != null) {
-                startActivity(new android.content.Intent(requireContext(), com.example.englishflow.LoginActivity.class));
-                getActivity().finish();
-            }
-        });
+        if (btnLogout != null) {
+            btnLogout.setOnClickListener(v -> {
+                FirebaseAuth.getInstance().signOut();
+                if (getActivity() != null) {
+                    startActivity(new android.content.Intent(requireContext(), com.example.englishflow.LoginActivity.class));
+                    getActivity().finish();
+                }
+            });
+        }
 
         View headerContent = view.findViewById(R.id.profileHeaderContent);
         if (headerContent != null) {
@@ -228,6 +244,7 @@ public class ProfileFragment extends Fragment {
         if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();
+            textToSpeech = null;
         }
         stopEcoBubbleAnimation();
         super.onDestroyView();
@@ -248,13 +265,17 @@ public class ProfileFragment extends Fragment {
         }
 
         repository.getDashboardSnapshotAsync(snapshot -> {
-            if (!isAdded()) {
+            if (!isAdded() || snapshot == null || snapshot.userProgress == null) {
                 return;
             }
             lastRenderedAt = SystemClock.elapsedRealtime();
 
-            nameText.setText(snapshot.userName);
-            levelText.setText(snapshot.userProgress.totalWordsLearned + " từ đã học");
+            if (nameText != null) {
+                nameText.setText(snapshot.userName);
+            }
+            if (levelText != null) {
+                levelText.setText(snapshot.userProgress.totalWordsLearned + " từ đã học");
+            }
             if (levelBadgeText != null) {
                 levelBadgeText.setText(snapshot.userProgress.cefrLevel);
             }
@@ -276,15 +297,29 @@ public class ProfileFragment extends Fragment {
                 }
             }
 
-            tvLearnedCount.setText(String.valueOf(snapshot.userProgress.totalWordsLearned));
-            tvStreakCount.setText(String.valueOf(snapshot.userProgress.currentStreak));
-            tvXpCount.setText(String.valueOf(snapshot.userProgress.totalXpEarned));
+            if (tvLearnedCount != null) {
+                tvLearnedCount.setText(String.valueOf(snapshot.userProgress.totalWordsLearned));
+            }
+            if (tvStreakCount != null) {
+                tvStreakCount.setText(String.valueOf(snapshot.userProgress.currentStreak));
+            }
+            if (tvXpCount != null) {
+                tvXpCount.setText(String.valueOf(snapshot.userProgress.totalXpEarned));
+            }
 
             // Detailed Stats
-            tvDetailLearned.setText(String.valueOf(snapshot.userProgress.totalWordsLearned));
-            tvDetailScanned.setText(String.valueOf(snapshot.userProgress.totalWordsScanned));
-            tvDetailChats.setText(String.valueOf(snapshot.chatSessions));
-            tvDetailBestStreak.setText(String.valueOf(snapshot.userProgress.bestStreak));
+            if (tvDetailLearned != null) {
+                tvDetailLearned.setText(String.valueOf(snapshot.userProgress.totalWordsLearned));
+            }
+            if (tvDetailScanned != null) {
+                tvDetailScanned.setText(String.valueOf(snapshot.userProgress.totalWordsScanned));
+            }
+            if (tvDetailChats != null) {
+                tvDetailChats.setText(String.valueOf(snapshot.chatSessions));
+            }
+            if (tvDetailBestStreak != null) {
+                tvDetailBestStreak.setText(String.valueOf(snapshot.userProgress.bestStreak));
+            }
 
             if (achievementAdapter != null) {
                 achievementAdapter.updateData(snapshot.achievements);
@@ -370,6 +405,9 @@ public class ProfileFragment extends Fragment {
     }
 
     private void renderWeeklyChart(List<Integer> values) {
+        if (chartContainer == null) {
+            return;
+        }
         chartContainer.removeAllViews();
         chartContainer.setVisibility(View.VISIBLE);
         if (weeklyEmptyState != null) weeklyEmptyState.setVisibility(View.GONE);

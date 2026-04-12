@@ -317,10 +317,13 @@
                 android:textColor="@color/white"
                 android:textSize="12sp"
                 android:textStyle="bold"
+                android:elevation="8dp"
+                android:translationZ="4dp"
                 app:backgroundTint="@color/ef_success"
-                app:cornerRadius="12dp"
-                app:strokeColor="@color/black"
-                app:strokeWidth="1.5dp" />
+                app:cornerRadius="16dp"
+                app:pressedTranslationZ="12dp"
+                app:strokeColor="@color/white"
+                app:strokeWidth="2dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAdminToggleStatus"
@@ -333,10 +336,13 @@
                 android:textColor="@color/white"
                 android:textSize="12sp"
                 android:textStyle="bold"
+                android:elevation="8dp"
+                android:translationZ="4dp"
                 app:backgroundTint="@color/ef_error"
-                app:cornerRadius="12dp"
-                app:strokeColor="@color/black"
-                app:strokeWidth="1.5dp" />
+                app:cornerRadius="16dp"
+                app:pressedTranslationZ="12dp"
+                app:strokeColor="@color/white"
+                app:strokeWidth="2dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAdminMore"
@@ -346,14 +352,17 @@
                 android:minHeight="48dp"
                 android:minWidth="48dp"
                 android:text=""
+                android:elevation="8dp"
+                android:translationZ="4dp"
                 app:backgroundTint="@color/ef_surface_variant"
-                app:cornerRadius="12dp"
+                app:cornerRadius="14dp"
                 app:icon="@drawable/ic_settings"
                 app:iconGravity="textStart"
                 app:iconSize="20dp"
                 app:iconTint="@color/black"
-                app:strokeColor="@color/black"
-                app:strokeWidth="1.5dp" />
+                app:pressedTranslationZ="12dp"
+                app:strokeColor="@color/white"
+                app:strokeWidth="2dp" />
         </LinearLayout>
     </LinearLayout>
 

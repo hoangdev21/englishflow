@@ -57,6 +57,7 @@ import com.example.englishflow.ui.LearnedWordsAdapter;
 import com.example.englishflow.ui.NotificationDetailActivity;
 import com.example.englishflow.ui.views.LightningProgressBar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -100,6 +101,9 @@ public class HomeFragment extends Fragment {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final float TTS_SPEECH_RATE = 0.9f;
     private static final float TTS_PITCH = 1.0f;
+    @Nullable
+    private BottomSheetDialog activeNotificationDialog;
+    private boolean notificationDialogOpening = false;
 
     @Nullable
     @Override
@@ -169,6 +173,11 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         stopUserNotificationObserver();
+        if (activeNotificationDialog != null) {
+            activeNotificationDialog.dismiss();
+            activeNotificationDialog = null;
+        }
+        notificationDialogOpening = false;
         if (textToSpeech != null) {
             textToSpeech.stop();
             textToSpeech.shutdown();
@@ -300,8 +309,23 @@ public class HomeFragment extends Fragment {
         notificationButton = view.findViewById(R.id.btnHomeHeroNotification);
         notificationBadgeText = view.findViewById(R.id.txtHomeHeroNotificationBadge);
 
+        android.util.Log.d("HomeFragment", "setupNotificationBell: notificationButton = " + (notificationButton != null ? "FOUND" : "NULL"));
+        android.util.Log.d("HomeFragment", "setupNotificationBell: notificationBadgeText = " + (notificationBadgeText != null ? "FOUND" : "NULL"));
+
         if (notificationButton != null) {
-            notificationButton.setOnClickListener(v -> showNotificationCenterDialog());
+            notificationButton.setOnClickListener(v -> {
+                android.util.Log.d("HomeFragment", "Notification bell clicked!");
+                if (notificationDialogOpening) {
+                    return;
+                }
+                if (activeNotificationDialog != null && activeNotificationDialog.isShowing()) {
+                    activeNotificationDialog.dismiss();
+                    return;
+                }
+                showNotificationCenterDialog();
+            });
+        } else {
+            android.util.Log.e("HomeFragment", "ERROR: notificationButton is NULL - click handler not attached!");
         }
 
         renderNotificationBadge(0);
@@ -337,12 +361,15 @@ public class HomeFragment extends Fragment {
     }
 
     private void startUserNotificationObserver() {
+        android.util.Log.d("HomeFragment", "startUserNotificationObserver called");
         if (!isAdded()) {
+            android.util.Log.d("HomeFragment", "Fragment not added, skipping observer");
             return;
         }
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null || TextUtils.isEmpty(user.getUid())) {
+            android.util.Log.e("HomeFragment", "Firebase user is NULL or has no UID - cannot start observer");
             stopUserNotificationObserver();
             cachedUserNotifications.clear();
             renderNotificationBadge(0);
@@ -350,7 +377,10 @@ public class HomeFragment extends Fragment {
         }
 
         String uid = user.getUid();
+        android.util.Log.d("HomeFragment", "Firebase user found: " + uid);
+        
         if (userNotificationSubscription != null && uid.equals(observedNotificationUid)) {
+            android.util.Log.d("HomeFragment", "Observer already active for this user");
             return;
         }
 
@@ -358,7 +388,9 @@ public class HomeFragment extends Fragment {
         observedNotificationUid = uid;
         notificationSnapshotInitialized = false;
 
+        android.util.Log.d("HomeFragment", "Starting notification observer for user: " + uid);
         userNotificationSubscription = userStore.observeUserNotifications(uid, USER_NOTIFICATION_LIMIT, entries -> {
+            android.util.Log.d("HomeFragment", "Notification entries received: " + (entries != null ? entries.size() : "null"));
             if (!isAdded()) {
                 return;
             }
@@ -375,11 +407,13 @@ public class HomeFragment extends Fragment {
     }
 
     private void consumeUserNotifications(@NonNull List<FirebaseUserStore.AdminNotificationEntry> entries) {
+        android.util.Log.d("HomeFragment", "consumeUserNotifications: received " + entries.size() + " entries");
         cachedUserNotifications.clear();
         cachedUserNotifications.addAll(entries);
 
         long lastReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : 0L;
         int unreadCount = countUnreadNotifications(entries, lastReadAt);
+        android.util.Log.d("HomeFragment", "unreadCount: " + unreadCount);
         renderNotificationBadge(unreadCount);
 
         if (settingsStore == null || !settingsStore.isAdminNotificationsEnabled() || entries.isEmpty()) {
@@ -436,87 +470,161 @@ public class HomeFragment extends Fragment {
     }
 
     private void showNotificationCenterDialog() {
+        android.util.Log.d("HomeFragment", "showNotificationCenterDialog called");
         if (!isAdded()) {
+            android.util.Log.e("HomeFragment", "Fragment not added, cannot show dialog");
             return;
         }
 
-        BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.CustomBottomSheetDialogTheme);
-        View content = LayoutInflater.from(requireContext())
-                .inflate(R.layout.dialog_home_notifications, null, false);
-
-        RecyclerView recyclerView = content.findViewById(R.id.homeNotificationRecycler);
-        TextView emptyText = content.findViewById(R.id.homeNotificationEmpty);
-        TextView subtitleText = content.findViewById(R.id.txtHomeNotificationSubtitle);
-        MaterialButton closeButton = content.findViewById(R.id.btnHomeNotificationClose);
-
-        List<FirebaseUserStore.AdminNotificationEntry> items = new ArrayList<>(cachedUserNotifications);
-        long lastReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : 0L;
-        int unreadCount = countUnreadNotifications(items, lastReadAt);
-
-        HomeNotificationAdapter adapter = new HomeNotificationAdapter();
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        recyclerView.setAdapter(adapter);
-        adapter.submit(items, lastReadAt);
-
-        if (subtitleText != null) {
-            subtitleText.setText("Mới: " + unreadCount);
-        }
-        if (emptyText != null) {
-            emptyText.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
-        }
-        if (closeButton != null) {
-            closeButton.setOnClickListener(v -> dialog.dismiss());
+        if (notificationDialogOpening) {
+            android.util.Log.d("HomeFragment", "Dialog is opening, skipping duplicate request");
+            return;
         }
 
-        dialog.setContentView(content);
-        dialog.show();
+        if (activeNotificationDialog != null && activeNotificationDialog.isShowing()) {
+            android.util.Log.d("HomeFragment", "Dialog already visible");
+            return;
+        }
 
-        if (items.isEmpty()) {
-            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-            if (currentUser != null && !TextUtils.isEmpty(currentUser.getUid())) {
-                String uid = currentUser.getUid();
-                userStore.fetchUserNotifications(uid, USER_NOTIFICATION_LIMIT, fetchedEntries -> {
-                    if (!isAdded()) {
-                        return;
-                    }
-                    requireActivity().runOnUiThread(() -> {
-                        if (!dialog.isShowing()) {
-                            return;
-                        }
+        notificationDialogOpening = true;
 
-                        cachedUserNotifications.clear();
-                        cachedUserNotifications.addAll(fetchedEntries);
+        try {
+            long startTime = System.currentTimeMillis();
+            
+            BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.CustomBottomSheetDialogTheme);
+            activeNotificationDialog = dialog;
+            View content = LayoutInflater.from(requireContext())
+                    .inflate(R.layout.dialog_home_notifications, null, false);
 
-                        items.clear();
-                        items.addAll(fetchedEntries);
+            RecyclerView recyclerView = content.findViewById(R.id.homeNotificationRecycler);
+            TextView emptyText = content.findViewById(R.id.homeNotificationEmpty);
+            TextView subtitleText = content.findViewById(R.id.txtHomeNotificationSubtitle);
+            MaterialButton closeButton = content.findViewById(R.id.btnHomeNotificationClose);
 
-                        long latestReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : 0L;
-                        adapter.submit(items, latestReadAt);
+            HomeNotificationAdapter adapter = new HomeNotificationAdapter(requireContext());
+            LinearLayoutManager layoutManager = new LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false);
+            layoutManager.setInitialPrefetchItemCount(4);
+            recyclerView.setLayoutManager(layoutManager);
+            recyclerView.setAdapter(adapter);
+            recyclerView.setHasFixedSize(true);
+            recyclerView.setItemAnimator(null);
 
-                        if (emptyText != null) {
-                            emptyText.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
-                        }
-                        if (subtitleText != null) {
-                            subtitleText.setText("Mới: " + countUnreadNotifications(items, latestReadAt));
-                        }
-
-                        markNotificationsAsRead(items);
-                        long updatedReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : latestReadAt;
-                        adapter.submit(items, updatedReadAt);
-                        if (subtitleText != null) {
-                            subtitleText.setText("Mới: " + countUnreadNotifications(items, updatedReadAt));
-                        }
-                    });
+            // Setup close button FIRST - critical for user experience
+            if (closeButton != null) {
+                closeButton.setOnClickListener(v -> {
+                    android.util.Log.d("HomeFragment", "Close button clicked!");
+                    dialog.dismiss();
                 });
+                android.util.Log.d("HomeFragment", "Close button listener attached");
+            } else {
+                android.util.Log.e("HomeFragment", "ERROR: Close button is NULL - id not found!");
+                Toast.makeText(requireContext(), "Lỗi: Không tìm thấy nút đóng", Toast.LENGTH_SHORT).show();
+                notificationDialogOpening = false;
+                activeNotificationDialog = null;
+                return;
             }
-        }
 
-        markNotificationsAsRead(items);
+            dialog.setContentView(content);
+            dialog.setCancelable(true);
+            dialog.setCanceledOnTouchOutside(true);
+            dialog.setOnShowListener(dialogInterface -> {
+                BottomSheetDialog shownDialog = (BottomSheetDialog) dialogInterface;
+                android.widget.FrameLayout bottomSheet = shownDialog.findViewById(
+                        com.google.android.material.R.id.design_bottom_sheet
+                );
+                if (bottomSheet != null) {
+                    BottomSheetBehavior<android.widget.FrameLayout> behavior = BottomSheetBehavior.from(bottomSheet);
+                    behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                    behavior.setSkipCollapsed(true);
+                }
+            });
+            dialog.setOnDismissListener(d -> {
+                android.util.Log.d("HomeFragment", "Dialog dismissed");
+                if (activeNotificationDialog == dialog) {
+                    activeNotificationDialog = null;
+                }
+            });
+            
+            dialog.show();
+            notificationDialogOpening = false;
+            long setupTime = System.currentTimeMillis() - startTime;
+            android.util.Log.d("HomeFragment", "Dialog shown in " + setupTime + "ms with " + cachedUserNotifications.size() + " cached items");
 
-        long updatedReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : lastReadAt;
-        adapter.submit(items, updatedReadAt);
-        if (subtitleText != null) {
-            subtitleText.setText("Mới: " + countUnreadNotifications(items, updatedReadAt));
+            recyclerView.post(() -> {
+                if (!dialog.isShowing()) {
+                    return;
+                }
+
+                List<FirebaseUserStore.AdminNotificationEntry> items = new ArrayList<>(cachedUserNotifications);
+                long lastReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : 0L;
+
+                markNotificationsAsRead(items);
+
+                long finalReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : lastReadAt;
+                adapter.submit(items, finalReadAt);
+
+                if (subtitleText != null) {
+                    subtitleText.setText("Mới: " + countUnreadNotifications(items, finalReadAt));
+                }
+                if (emptyText != null) {
+                    emptyText.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                }
+
+                // Load missing notifications ONLY if list is empty
+                if (items.isEmpty()) {
+                    android.util.Log.d("HomeFragment", "List is empty, fetching from Firebase...");
+                    FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                    if (currentUser != null && !TextUtils.isEmpty(currentUser.getUid())) {
+                        String uid = currentUser.getUid();
+                        long fetchStartTime = System.currentTimeMillis();
+                        userStore.fetchUserNotifications(uid, USER_NOTIFICATION_LIMIT, fetchedEntries -> {
+                            long fetchTime = System.currentTimeMillis() - fetchStartTime;
+                            android.util.Log.d("HomeFragment", "Firebase fetch completed in " + fetchTime + "ms with " + (fetchedEntries == null ? 0 : fetchedEntries.size()) + " entries");
+
+                            if (!isAdded()) {
+                                return;
+                            }
+                            requireActivity().runOnUiThread(() -> {
+                                if (!dialog.isShowing()) {
+                                    android.util.Log.d("HomeFragment", "Dialog closed before update");
+                                    return;
+                                }
+
+                                if (fetchedEntries != null && !fetchedEntries.isEmpty()) {
+                                    cachedUserNotifications.clear();
+                                    cachedUserNotifications.addAll(fetchedEntries);
+
+                                    items.clear();
+                                    items.addAll(fetchedEntries);
+
+                                    long fetchReadAt = settingsStore != null ? settingsStore.getLastAdminNotificationReadAt() : 0L;
+                                    adapter.submit(items, fetchReadAt);
+
+                                    if (emptyText != null) {
+                                        emptyText.setVisibility(View.GONE);
+                                    }
+                                    if (subtitleText != null) {
+                                        subtitleText.setText("Mới: " + countUnreadNotifications(items, fetchReadAt));
+                                    }
+
+                                    android.util.Log.d("HomeFragment", "Adapter updated with fetched items");
+                                }
+                            });
+                        });
+                    }
+                }
+            });
+        } catch (Exception e) {
+            notificationDialogOpening = false;
+            if (activeNotificationDialog != null) {
+                activeNotificationDialog.dismiss();
+                activeNotificationDialog = null;
+            }
+            android.util.Log.e("HomeFragment", "Error showing notification dialog: " + e.getMessage(), e);
+            e.printStackTrace();
+            if (isAdded()) {
+                Toast.makeText(requireContext(), "Lỗi hiển thị thông báo: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
         }
     }
 
@@ -594,11 +702,16 @@ public class HomeFragment extends Fragment {
     private class HomeNotificationAdapter extends RecyclerView.Adapter<HomeNotificationAdapter.NotificationViewHolder> {
         private final List<FirebaseUserStore.AdminNotificationEntry> items = new ArrayList<>();
         private long readAt;
+        private final android.content.Context adapterContext;
+
+        HomeNotificationAdapter(android.content.Context context) {
+            this.adapterContext = context;
+        }
 
         void submit(@NonNull List<FirebaseUserStore.AdminNotificationEntry> values, long lastReadAt) {
+            readAt = Math.max(0L, lastReadAt);
             items.clear();
             items.addAll(values);
-            readAt = Math.max(0L, lastReadAt);
             notifyDataSetChanged();
         }
 
@@ -612,6 +725,9 @@ public class HomeFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull NotificationViewHolder holder, int position) {
+            if (position >= items.size()) {
+                return;
+            }
             FirebaseUserStore.AdminNotificationEntry entry = items.get(position);
             holder.title.setText(nonEmptyText(entry.title, "Thông báo từ Admin"));
             holder.message.setText(nonEmptyText(entry.message, "Bạn có thông báo mới."));
@@ -620,11 +736,11 @@ public class HomeFragment extends Fragment {
             boolean unread = entry.createdAt > readAt;
             holder.unreadDot.setVisibility(unread ? View.VISIBLE : View.GONE);
             int strokeColor = ContextCompat.getColor(
-                    requireContext(),
+                    adapterContext,
                     unread ? R.color.ef_primary : R.color.ef_outline
             );
             holder.card.setStrokeColor(strokeColor);
-                holder.card.setOnClickListener(v -> openNotificationDetail(entry));
+            holder.card.setOnClickListener(v -> openNotificationDetail(entry));
         }
 
         @Override

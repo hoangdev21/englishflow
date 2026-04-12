@@ -22,6 +22,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
@@ -33,6 +36,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 public class LoginActivity extends AppCompatActivity {
+
+    private static final int RC_GOOGLE_PLAY_SERVICES = 9001;
 
     private AppRepository repository;
     private FirebaseAuth firebaseAuth;
@@ -158,6 +163,11 @@ public class LoginActivity extends AppCompatActivity {
         googleSignInLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
+                    if (result.getResultCode() != RESULT_OK) {
+                        setLoading(false);
+                        Toast.makeText(this, R.string.auth_google_cancelled, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     if (result.getData() == null) {
                         setLoading(false);
                         Toast.makeText(this, R.string.auth_google_failed, Toast.LENGTH_SHORT).show();
@@ -173,8 +183,24 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.auth_google_not_configured, Toast.LENGTH_LONG).show();
             return;
         }
+
+        int playServicesStatus = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this);
+        if (playServicesStatus != ConnectionResult.SUCCESS) {
+            if (GoogleApiAvailability.getInstance().isUserResolvableError(playServicesStatus)) {
+                android.app.Dialog dialog = GoogleApiAvailability.getInstance()
+                        .getErrorDialog(this, playServicesStatus, RC_GOOGLE_PLAY_SERVICES);
+                if (dialog != null) {
+                    dialog.show();
+                }
+            }
+            Toast.makeText(this, R.string.auth_google_play_services_required, Toast.LENGTH_LONG).show();
+            return;
+        }
+
         setLoading(true);
-        googleSignInLauncher.launch(googleSignInClient.getSignInIntent());
+        googleSignInClient.signOut().addOnCompleteListener(task ->
+                googleSignInLauncher.launch(googleSignInClient.getSignInIntent())
+        );
     }
 
     private void handleGoogleSignInResult(Intent data) {
@@ -192,12 +218,32 @@ public class LoginActivity extends AppCompatActivity {
                     .addOnSuccessListener(result -> routeAuthenticatedUser(result.getUser(), account.getDisplayName(), "google"))
                     .addOnFailureListener(e -> {
                         setLoading(false);
-                        showAuthError(e);
+                        showAuthError(e, true);
                     });
         } catch (ApiException e) {
             setLoading(false);
-            Toast.makeText(this, R.string.auth_google_failed, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, mapGoogleApiErrorToMessage(e), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private int mapGoogleApiErrorToMessage(ApiException e) {
+        int code = e.getStatusCode();
+        if (code == GoogleSignInStatusCodes.SIGN_IN_CANCELLED) {
+            return R.string.auth_google_cancelled;
+        }
+        if (code == GoogleSignInStatusCodes.SIGN_IN_REQUIRED) {
+            return R.string.auth_google_sign_in_required;
+        }
+        if (code == GoogleSignInStatusCodes.NETWORK_ERROR) {
+            return R.string.auth_network_error;
+        }
+        if (code == GoogleSignInStatusCodes.DEVELOPER_ERROR) {
+            return R.string.auth_google_developer_error;
+        }
+        if (code == GoogleSignInStatusCodes.SIGN_IN_FAILED) {
+            return R.string.auth_google_sign_in_failed;
+        }
+        return R.string.auth_google_failed;
     }
 
     private void routeAuthenticatedUser(FirebaseUser user, String fallbackDisplayName, String provider) {
@@ -241,16 +287,28 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void showAuthError(Exception e) {
+        showAuthError(e, false);
+    }
+
+    private void showAuthError(Exception e, boolean fromGoogleSignIn) {
         if (e instanceof FirebaseAuthException) {
             String code = ((FirebaseAuthException) e).getErrorCode();
+            if (fromGoogleSignIn && "ERROR_OPERATION_NOT_ALLOWED".equals(code)) {
+                Toast.makeText(this, R.string.auth_google_provider_not_enabled, Toast.LENGTH_LONG).show();
+                return;
+            }
             if ("ERROR_INVALID_EMAIL".equals(code)) {
-                Toast.makeText(this, R.string.auth_invalid_email, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,
+                        fromGoogleSignIn ? R.string.auth_google_failed : R.string.auth_invalid_email,
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
             if ("ERROR_INVALID_CREDENTIAL".equals(code)
                     || "ERROR_WRONG_PASSWORD".equals(code)
                     || "ERROR_USER_NOT_FOUND".equals(code)) {
-                Toast.makeText(this, R.string.auth_invalid_credentials, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,
+                        fromGoogleSignIn ? R.string.auth_google_invalid_credential : R.string.auth_invalid_credentials,
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
             if ("ERROR_TOO_MANY_REQUESTS".equals(code)) {

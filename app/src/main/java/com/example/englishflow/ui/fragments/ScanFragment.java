@@ -46,13 +46,15 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.appcompat.app.AlertDialog;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppRepository;
 import com.example.englishflow.data.AppSettingsStore;
 import com.example.englishflow.data.DictionaryResult;
 import com.example.englishflow.data.FreeDictionaryService;
-import com.example.englishflow.data.GeminiVisionService;
+import com.example.englishflow.data.GroqVisionService;
 import com.example.englishflow.data.NetworkClientProvider;
 import com.example.englishflow.data.ScanAnalyzer;
 import com.example.englishflow.data.ScanResult;
@@ -110,7 +112,7 @@ public class ScanFragment extends Fragment {
 
     private AppRepository repository;
     private AppSettingsStore settingsStore;
-    private GeminiVisionService geminiService;
+    private GroqVisionService groqService;
     private FreeDictionaryService freeDictionaryService;
     private TextRecognizer magicLensTextRecognizer;
     private TextToSpeech textToSpeech;
@@ -119,6 +121,8 @@ public class ScanFragment extends Fragment {
 
     private ImageCapture imageCapture;
     private ImageAnalysis imageAnalysis;
+    @Nullable
+    private ProcessCameraProvider cameraProvider;
     private ActivityResultLauncher<String> pickImageLauncher;
 
     private PreviewView cameraPreview;
@@ -181,7 +185,7 @@ public class ScanFragment extends Fragment {
 
         android.util.Log.d("ScanFragment", "Initializing Groq Vision service...");
         try {
-            geminiService = new GeminiVisionService();
+            groqService = new GroqVisionService();
             android.util.Log.d("ScanFragment", "Groq Vision service initialized successfully");
         } catch (IllegalStateException e) {
             android.util.Log.e("ScanFragment", "Groq Vision init failed: " + e.getMessage(), e);
@@ -206,13 +210,6 @@ public class ScanFragment extends Fragment {
         warmMagicLensVocabularyCaches();
         updateMagicLensUi();
         // startPreviewHintLoop(); // Removed to support user's wish for a cleaner preview without real-time overrides
-
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED) {
-            startCamera();
-        } else {
-            requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
-        }
 
         // ══ Window Insets Handling (Responsive Status Bar Clearance) ══
         View headerContent = view.findViewById(R.id.scanHeaderContent);
@@ -315,19 +312,72 @@ public class ScanFragment extends Fragment {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CAMERA_PERMISSION && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            startCamera();
+            if (isResumed()) {
+                startCamera();
+            }
         } else if (isAdded()) {
             Toast.makeText(requireContext(), "Camera permission needed", Toast.LENGTH_LONG).show();
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        ensureCameraAccess();
+    }
+
+    @Override
+    public void onPause() {
+        stopCamera();
+        super.onPause();
+    }
+
+    private boolean isViewReadyForCamera() {
+        if (!isAdded() || getView() == null) {
+            return false;
+        }
+        LifecycleOwner owner = getViewLifecycleOwnerLiveData().getValue();
+        return owner != null && owner.getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED);
+    }
+
+    private void ensureCameraAccess() {
+        if (!isAdded()) {
+            return;
+        }
+
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            startCamera();
+        } else {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+        }
+    }
+
     private void startCamera() {
+        if (!isViewReadyForCamera() || cameraPreview == null) {
+            return;
+        }
+
+        if (cameraExecutor == null || cameraExecutor.isShutdown() || cameraExecutor.isTerminated()) {
+            cameraExecutor = Executors.newSingleThreadExecutor();
+        }
+
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
                 ProcessCameraProvider.getInstance(requireContext());
 
         cameraProviderFuture.addListener(() -> {
             try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                if (!isViewReadyForCamera() || cameraPreview == null) {
+                    return;
+                }
+
+                LifecycleOwner owner = getViewLifecycleOwnerLiveData().getValue();
+                if (owner == null || !owner.getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)) {
+                    return;
+                }
+
+                ProcessCameraProvider provider = cameraProviderFuture.get();
+                cameraProvider = provider;
 
                 Preview preview = new Preview.Builder().build();
                 preview.setSurfaceProvider(cameraPreview.getSurfaceProvider());
@@ -345,14 +395,52 @@ public class ScanFragment extends Fragment {
                         .requireLensFacing(lensFacing)
                         .build();
 
-                cameraProvider.unbindAll();
-                camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalysis);
+                if (!provider.hasCamera(cameraSelector)) {
+                    int fallbackLens = lensFacing == CameraSelector.LENS_FACING_BACK
+                            ? CameraSelector.LENS_FACING_FRONT
+                            : CameraSelector.LENS_FACING_BACK;
+                    CameraSelector fallbackSelector = new CameraSelector.Builder()
+                            .requireLensFacing(fallbackLens)
+                            .build();
+                    if (provider.hasCamera(fallbackSelector)) {
+                        lensFacing = fallbackLens;
+                        cameraSelector = fallbackSelector;
+                    } else {
+                        if (isAdded()) {
+                            Toast.makeText(requireContext(), "Thiết bị giả lập không có camera khả dụng", Toast.LENGTH_SHORT).show();
+                        }
+                        return;
+                    }
+                }
+
+                try {
+                    provider.unbindAll();
+                } catch (Exception ignored) {
+                }
+                camera = provider.bindToLifecycle(owner, cameraSelector, preview, imageCapture, imageAnalysis);
             } catch (Exception e) {
                 if (isAdded()) {
                     Toast.makeText(requireContext(), "Camera failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
         }, ContextCompat.getMainExecutor(requireContext()));
+    }
+
+    private void stopCamera() {
+        try {
+            if (cameraProvider != null) {
+                cameraProvider.unbindAll();
+            }
+        } catch (Exception e) {
+            android.util.Log.w("ScanFragment", "stopCamera unbindAll failed: " + e.getMessage());
+        }
+        cameraProvider = null;
+        camera = null;
+        imageCapture = null;
+        imageAnalysis = null;
+        if (magicLensOverlay != null) {
+            magicLensOverlay.clearOverlays();
+        }
     }
 
     private void toggleCamera() {
@@ -367,7 +455,11 @@ public class ScanFragment extends Fragment {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
                 if (camera == null) return true;
-                float currentZoomRatio = camera.getCameraInfo().getZoomState().getValue().getZoomRatio();
+                androidx.camera.core.ZoomState zoomState = camera.getCameraInfo().getZoomState().getValue();
+                if (zoomState == null) {
+                    return true;
+                }
+                float currentZoomRatio = zoomState.getZoomRatio();
                 float delta = detector.getScaleFactor();
                 camera.getCameraControl().setZoomRatio(currentZoomRatio * delta);
                 return true;
@@ -436,7 +528,7 @@ public class ScanFragment extends Fragment {
     }
 
     private void analyzeMagicLensFrame(@NonNull ImageProxy imageProxy) {
-        if (!isMagicLensEnabled || magicLensTextRecognizer == null || !isAdded()) {
+        if (!isMagicLensEnabled || magicLensTextRecognizer == null || !isAdded() || getView() == null) {
             imageProxy.close();
             return;
         }
@@ -464,15 +556,21 @@ public class ScanFragment extends Fragment {
         InputImage inputImage = InputImage.fromMediaImage(mediaImage, rotation);
 
         lastMagicLensAnalysisAt = now;
-        magicLensTextRecognizer.process(inputImage)
-                .addOnSuccessListener(visionText -> processMagicLensResult(visionText, sourceWidth, sourceHeight))
-                .addOnFailureListener(error -> {
-                        // magicLensStatusDot remains active state color
-                })
-                .addOnCompleteListener(task -> {
-                    magicLensAnalysisRunning.set(false);
-                    imageProxy.close();
-                });
+        try {
+            magicLensTextRecognizer.process(inputImage)
+                    .addOnSuccessListener(visionText -> processMagicLensResult(visionText, sourceWidth, sourceHeight))
+                    .addOnFailureListener(error -> {
+                            // magicLensStatusDot remains active state color
+                    })
+                    .addOnCompleteListener(task -> {
+                        magicLensAnalysisRunning.set(false);
+                        imageProxy.close();
+                    });
+        } catch (Exception e) {
+            magicLensAnalysisRunning.set(false);
+            imageProxy.close();
+            android.util.Log.w("ScanFragment", "MagicLens frame analyze failed: " + e.getMessage());
+        }
     }
 
     private void processMagicLensResult(@NonNull Text visionText, int sourceWidth, int sourceHeight) {
@@ -638,56 +736,66 @@ public class ScanFragment extends Fragment {
             return;
         }
 
-        imageExecutor.execute(() -> {
-            boolean dictionaryRequested = false;
-            try {
-                CustomVocabularyEntity custom = repository.findCustomVocabulary(word);
-                if (custom != null) {
-                    cacheMagicLensWordInfo(
-                            word,
-                            nonNull(custom.ipa),
-                            nonNull(custom.meaning),
-                            "custom",
-                            0.94f
-                    );
-                }
+        if (imageExecutor == null || imageExecutor.isShutdown() || imageExecutor.isTerminated()) {
+            pendingMagicLensLookups.remove(word);
+            return;
+        }
 
-                repository.fetchVietnameseSuggestion(word, suggestion -> {
-                    if (!TextUtils.isEmpty(suggestion)) {
-                        cacheMagicLensWordInfo(word, null, suggestion, "translate", 0.66f);
+        try {
+            imageExecutor.execute(() -> {
+                boolean dictionaryRequested = false;
+                try {
+                    CustomVocabularyEntity custom = repository.findCustomVocabulary(word);
+                    if (custom != null) {
+                        cacheMagicLensWordInfo(
+                                word,
+                                nonNull(custom.ipa),
+                                nonNull(custom.meaning),
+                                "custom",
+                                0.94f
+                        );
                     }
-                });
 
-                LensWordInfo existing = magicLensWordCache.get(word);
-                boolean needIpa = existing == null || existing.ipa.isEmpty() || "-".equals(existing.ipa);
-                if (needIpa && freeDictionaryService != null) {
-                    dictionaryRequested = true;
-                    freeDictionaryService.lookupWord(word, new FreeDictionaryService.LookupCallback() {
-                        @Override
-                        public void onSuccess(DictionaryResult result) {
-                            String ipa = result != null ? nonNull(result.getIpa()) : "";
-                            cacheMagicLensWordInfo(word, ipa, null, "dictionary", 0.83f);
-                            pendingMagicLensLookups.remove(word);
-                        }
-
-                        @Override
-                        public void onNotFound() {
-                            pendingMagicLensLookups.remove(word);
-                        }
-
-                        @Override
-                        public void onError(Exception exception) {
-                            pendingMagicLensLookups.remove(word);
+                    repository.fetchVietnameseSuggestion(word, suggestion -> {
+                        if (!TextUtils.isEmpty(suggestion)) {
+                            cacheMagicLensWordInfo(word, null, suggestion, "translate", 0.66f);
                         }
                     });
+
+                    LensWordInfo existing = magicLensWordCache.get(word);
+                    boolean needIpa = existing == null || existing.ipa.isEmpty() || "-".equals(existing.ipa);
+                    if (needIpa && freeDictionaryService != null) {
+                        dictionaryRequested = true;
+                        freeDictionaryService.lookupWord(word, new FreeDictionaryService.LookupCallback() {
+                            @Override
+                            public void onSuccess(DictionaryResult result) {
+                                String ipa = result != null ? nonNull(result.getIpa()) : "";
+                                cacheMagicLensWordInfo(word, ipa, null, "dictionary", 0.83f);
+                                pendingMagicLensLookups.remove(word);
+                            }
+
+                            @Override
+                            public void onNotFound() {
+                                pendingMagicLensLookups.remove(word);
+                            }
+
+                            @Override
+                            public void onError(Exception exception) {
+                                pendingMagicLensLookups.remove(word);
+                            }
+                        });
+                    }
+                } catch (Exception ignored) {
+                } finally {
+                    if (!dictionaryRequested) {
+                        pendingMagicLensLookups.remove(word);
+                    }
                 }
-            } catch (Exception ignored) {
-            } finally {
-                if (!dictionaryRequested) {
-                    pendingMagicLensLookups.remove(word);
-                }
-            }
-        });
+            });
+        } catch (Exception e) {
+            pendingMagicLensLookups.remove(word);
+            android.util.Log.w("ScanFragment", "Skip enrichment task: " + e.getMessage());
+        }
     }
 
     private void cacheMagicLensWordInfo(@NonNull String word,
@@ -723,6 +831,10 @@ public class ScanFragment extends Fragment {
     }
 
     private void warmMagicLensVocabularyCaches() {
+        if (imageExecutor == null || imageExecutor.isShutdown() || imageExecutor.isTerminated()) {
+            return;
+        }
+
         imageExecutor.execute(() -> {
             try {
                 List<WordEntry> savedWords = repository.getSavedWords();
@@ -909,6 +1021,12 @@ public class ScanFragment extends Fragment {
         scanViewModel.startAnalysis(true);
         isProcessing = true;
 
+        if (imageExecutor == null || imageExecutor.isShutdown() || imageExecutor.isTerminated()) {
+            scanViewModel.failAnalysis("Analyzer is not ready. Please reopen Scan tab.");
+            isProcessing = false;
+            return;
+        }
+
         imageExecutor.execute(() -> {
             try {
                 Bitmap bitmap = loadBitmapFromUri(imageUri);
@@ -918,7 +1036,7 @@ public class ScanFragment extends Fragment {
                     isProcessing = false;
                     return;
                 }
-                analyzeImageWithGemini(bitmap);
+                analyzeImageWithGroq(bitmap);
             } catch (Exception e) {
                 scanViewModel.failAnalysis("Error: " + e.getMessage());
                 isProcessing = false;
@@ -971,7 +1089,7 @@ public class ScanFragment extends Fragment {
                         return;
                     }
 
-                    analyzeImageWithGemini(bitmap);
+                    analyzeImageWithGroq(bitmap);
                 } catch (Exception e) {
                     image.close();
                     scanViewModel.failAnalysis("Error: " + e.getMessage());
@@ -987,10 +1105,10 @@ public class ScanFragment extends Fragment {
         });
     }
 
-    private void analyzeImageWithGemini(@NonNull Bitmap bitmap) {
+    private void analyzeImageWithGroq(@NonNull Bitmap bitmap) {
         try {
             android.util.Log.d("ScanFragment", "Starting Groq full image analysis...");
-            ScanResult result = geminiService.analyzeImageFull(bitmap);
+            ScanResult result = groqService.analyzeImageFull(bitmap);
             android.util.Log.d("ScanFragment", "Groq returned full result for: " + result.getWord());
             
             new Handler(Looper.getMainLooper()).post(() -> {
@@ -1304,7 +1422,11 @@ public class ScanFragment extends Fragment {
     }
 
     private void tryRunRealtimePreviewSuggestion() {
-        if (!isAdded() || isProcessing || isPreviewAnalyzing || geminiService == null || cameraPreview == null) {
+        if (!isAdded() || isProcessing || isPreviewAnalyzing || groqService == null || cameraPreview == null) {
+            return;
+        }
+
+        if (imageExecutor == null || imageExecutor.isShutdown() || imageExecutor.isTerminated()) {
             return;
         }
 
@@ -1322,7 +1444,7 @@ public class ScanFragment extends Fragment {
         isPreviewAnalyzing = true;
         imageExecutor.execute(() -> {
             try {
-                GeminiVisionService.VisionResult preview = geminiService.analyzePreviewVietnamese(previewBitmap);
+                GroqVisionService.VisionResult preview = groqService.analyzePreviewVietnamese(previewBitmap);
                 int percent = Math.round(preview.getConfidence() * 100f);
                 String source = preview.isFromCache() ? " - cache" : "";
                 String suggestion = "Goi y realtime: " + preview.getPrimaryLabel() + " (" + percent + "%)" + source;
@@ -1422,8 +1544,10 @@ public class ScanFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        stopPreviewHintLoop();
         isMagicLensEnabled = false;
+        magicLensAnalysisRunning.set(false);
+        stopCamera();
+        stopPreviewHintLoop();
         if (magicLensOverlay != null) {
             magicLensOverlay.clearOverlays();
         }
@@ -1444,6 +1568,11 @@ public class ScanFragment extends Fragment {
         if (cameraExecutor != null) {
             cameraExecutor.shutdown();
         }
+        cameraPreview = null;
+        magicLensOverlay = null;
+        magicLensStatusDot = null;
+        previewHintText = null;
+        scanLoading = null;
         super.onDestroyView();
     }
 }
