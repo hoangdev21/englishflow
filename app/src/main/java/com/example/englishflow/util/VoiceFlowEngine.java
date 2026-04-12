@@ -9,12 +9,15 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import com.example.englishflow.data.AppSettingsStore;
 
@@ -34,6 +37,9 @@ public class VoiceFlowEngine {
     private static final int SPEAK_READY_RETRY_MAX = 12;
     private static final float VOICE_RATE_BASE = 0.85f; // Standard learning multiplier
     private static final int CHUNK_GAP_MS = 200; // Natural pause between sentences
+    private static final long STT_MIN_INPUT_MS = 700L;
+    private static final long STT_MAX_LISTENING_MS = 10000L;
+    private static final float STT_RMS_ACTIVITY_THRESHOLD_DB = 5.5f;
     private static final String ERROR_TTS_UNAVAILABLE = "Thiết bị chưa hỗ trợ giọng đọc (TTS).";
     private static final String ERROR_STT_UNAVAILABLE = "Thiết bị chưa hỗ trợ nhận diện giọng nói.";
 
@@ -52,6 +58,14 @@ public class VoiceFlowEngine {
     private boolean autoRelisten = false;
     private final AppSettingsStore settingsStore;
     private float speechRateOverride = -1f;
+    private int sttSessionToken = 0;
+    private Runnable sttSessionTimeoutRunnable;
+    private Runnable sttEndOfSpeechTimeoutRunnable;
+    private Runnable sttSilenceWatchdogRunnable;
+    private long sttLastSpeechActivityAtMs = 0L;
+    private long sttCompleteSilenceMs = AppSettingsStore.VOICE_SILENCE_TIMEOUT_NORMAL_MS;
+    private long sttPossiblyCompleteSilenceMs = 1800L;
+    private long sttEndOfSpeechGraceMs = 800L;
     
     private final Locale localeEn = Locale.US;
     // Fix Deprecated constructor: use Locale.forLanguageTag()
@@ -73,6 +87,7 @@ public class VoiceFlowEngine {
         this.context = context.getApplicationContext();
         this.callback = callback;
         this.settingsStore = new AppSettingsStore(this.context);
+        applyVoiceSilenceTimeoutProfile();
         initTts();
         initStt();
     }
@@ -267,34 +282,49 @@ public class VoiceFlowEngine {
         }
 
         speechRecognizer.setRecognitionListener(new RecognitionListener() {
-            @Override public void onReadyForSpeech(Bundle params) { setState(State.LISTENING); }
+            @Override public void onReadyForSpeech(Bundle params) {
+                setState(State.LISTENING);
+                scheduleSttSessionTimeout(sttSessionToken);
+                markSpeechActivity(sttSessionToken);
+            }
             @Override public void onPartialResults(Bundle partial) {
                 ArrayList<String> matches = partial.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (matches != null && !matches.isEmpty()) {
+                    markSpeechActivity(sttSessionToken);
                     String partialText = matches.get(0);
                     mainHandler.post(() -> callback.onPartialTranscript(partialText));
                 }
             }
             @Override public void onResults(Bundle results) {
+                cancelSttTimeouts();
                 ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (matches != null && !matches.isEmpty()) {
                     String transcript = matches.get(0);
                     setState(State.PROCESSING);
-                    mainHandler.post(() -> callback.onTranscript(transcript));
+                    dispatchTranscriptRespectingSilenceThreshold(transcript, sttSessionToken);
                 } else {
                     setState(State.IDLE);
                 }
             }
             @Override public void onError(int error) {
+                cancelSttTimeouts();
                 setState(State.IDLE);
                 notifyError(resolveSpeechError(error));
             }
-            @Override public void onBeginningOfSpeech() {}
+            @Override public void onBeginningOfSpeech() {
+                markSpeechActivity(sttSessionToken);
+            }
             @Override public void onRmsChanged(float rmsdB) {
+                if (rmsdB >= STT_RMS_ACTIVITY_THRESHOLD_DB) {
+                    markSpeechActivity(sttSessionToken);
+                }
                 mainHandler.post(() -> callback.onRmsChanged(rmsdB));
             }
             @Override public void onBufferReceived(byte[] buffer) {}
-            @Override public void onEndOfSpeech() {}
+            @Override public void onEndOfSpeech() {
+                setState(State.PROCESSING);
+                scheduleEndOfSpeechForceStop(sttSessionToken);
+            }
             @Override public void onEvent(int eventType, Bundle params) {}
         });
     }
@@ -305,17 +335,25 @@ public class VoiceFlowEngine {
             return;
         }
         if (currentState == State.LISTENING) return;
+        cancelSttTimeouts();
+        final int sessionToken = ++sttSessionToken;
+        applyVoiceSilenceTimeoutProfile();
         stopSpeaking();
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, lang);
         intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, sttCompleteSilenceMs);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, sttPossiblyCompleteSilenceMs);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, STT_MIN_INPUT_MS);
         mainHandler.post(() -> {
             if (isShutdown || speechRecognizer == null) {
                 return;
             }
             try {
                 speechRecognizer.startListening(intent);
+                scheduleSttSessionTimeout(sessionToken);
             } catch (RuntimeException e) {
                 Log.e(TAG, "Failed to start listening", e);
                 setState(State.IDLE);
@@ -336,9 +374,13 @@ public class VoiceFlowEngine {
     }
 
     public void stopListening() {
+        cancelSttTimeouts();
         if (speechRecognizer != null) {
             try {
                 speechRecognizer.stopListening();
+                if (currentState == State.LISTENING) {
+                    setState(State.PROCESSING);
+                }
             } catch (RuntimeException e) {
                 Log.w(TAG, "Failed to stop listening", e);
             }
@@ -368,6 +410,18 @@ public class VoiceFlowEngine {
         float finalRate = rawRate * VOICE_RATE_BASE;
         Log.d(TAG, "Speech rate resolved: raw=" + rawRate + ", final=" + finalRate);
         return finalRate;
+    }
+
+    private void applyVoiceSilenceTimeoutProfile() {
+        if (settingsStore == null) {
+            return;
+        }
+        sttCompleteSilenceMs = settingsStore.getVoiceSilenceTimeoutMs();
+        sttPossiblyCompleteSilenceMs = settingsStore.getVoicePossiblyCompleteSilenceTimeoutMs();
+        sttEndOfSpeechGraceMs = settingsStore.getVoiceEndOfSpeechGraceMs();
+        Log.d(TAG, "STT silence config complete=" + sttCompleteSilenceMs
+                + "ms, possible=" + sttPossiblyCompleteSilenceMs
+                + "ms, grace=" + sttEndOfSpeechGraceMs + "ms");
     }
 
     public State getState() { return currentState; }
@@ -402,6 +456,126 @@ public class VoiceFlowEngine {
             return;
         }
         mainHandler.post(() -> callback.onError(message));
+    }
+
+    private void cancelSttTimeouts() {
+        if (sttSessionTimeoutRunnable != null) {
+            mainHandler.removeCallbacks(sttSessionTimeoutRunnable);
+            sttSessionTimeoutRunnable = null;
+        }
+        if (sttEndOfSpeechTimeoutRunnable != null) {
+            mainHandler.removeCallbacks(sttEndOfSpeechTimeoutRunnable);
+            sttEndOfSpeechTimeoutRunnable = null;
+        }
+        if (sttSilenceWatchdogRunnable != null) {
+            mainHandler.removeCallbacks(sttSilenceWatchdogRunnable);
+            sttSilenceWatchdogRunnable = null;
+        }
+    }
+
+    private void refreshSilenceWatchdog(final int sessionToken) {
+        if (isShutdown || speechRecognizer == null || sessionToken != sttSessionToken) {
+            return;
+        }
+        if (sttSilenceWatchdogRunnable != null) {
+            mainHandler.removeCallbacks(sttSilenceWatchdogRunnable);
+        }
+        sttSilenceWatchdogRunnable = () -> {
+            if (isShutdown
+                    || speechRecognizer == null
+                    || sessionToken != sttSessionToken
+                    || currentState != State.LISTENING) {
+                return;
+            }
+            Log.d(TAG, "Silence watchdog reached " + sttCompleteSilenceMs + "ms, forcing stopListening");
+            try {
+                speechRecognizer.stopListening();
+                setState(State.PROCESSING);
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Failed to force stopListening from silence watchdog", e);
+                setState(State.IDLE);
+            }
+        };
+        mainHandler.postDelayed(sttSilenceWatchdogRunnable, sttCompleteSilenceMs);
+    }
+
+    private void markSpeechActivity(final int sessionToken) {
+        if (sessionToken != sttSessionToken) {
+            return;
+        }
+        sttLastSpeechActivityAtMs = SystemClock.elapsedRealtime();
+        refreshSilenceWatchdog(sessionToken);
+    }
+
+    private void dispatchTranscriptRespectingSilenceThreshold(@NonNull String transcript, final int sessionToken) {
+        long now = SystemClock.elapsedRealtime();
+        long elapsedSilenceMs = sttLastSpeechActivityAtMs > 0L
+                ? Math.max(0L, now - sttLastSpeechActivityAtMs)
+                : sttCompleteSilenceMs;
+        long extraDelayMs = Math.max(0L, sttCompleteSilenceMs - elapsedSilenceMs);
+
+        Runnable publishTranscript = () -> {
+            if (isShutdown || sessionToken != sttSessionToken || currentState != State.PROCESSING) {
+                return;
+            }
+            callback.onTranscript(transcript);
+        };
+
+        if (extraDelayMs > 0L) {
+            Log.d(TAG, "Delay transcript by " + extraDelayMs + "ms to honor silence threshold");
+            mainHandler.postDelayed(publishTranscript, extraDelayMs);
+        } else {
+            mainHandler.post(publishTranscript);
+        }
+    }
+
+    private void scheduleSttSessionTimeout(final int sessionToken) {
+        if (isShutdown) {
+            return;
+        }
+        if (sttSessionTimeoutRunnable != null) {
+            mainHandler.removeCallbacks(sttSessionTimeoutRunnable);
+        }
+        sttSessionTimeoutRunnable = () -> {
+            if (isShutdown || speechRecognizer == null || sessionToken != sttSessionToken || currentState != State.LISTENING) {
+                return;
+            }
+            Log.w(TAG, "STT session timed out, forcing stopListening");
+            try {
+                speechRecognizer.stopListening();
+                setState(State.PROCESSING);
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Failed to force stopListening after timeout", e);
+                setState(State.IDLE);
+            }
+        };
+        mainHandler.postDelayed(sttSessionTimeoutRunnable, STT_MAX_LISTENING_MS);
+    }
+
+    private void scheduleEndOfSpeechForceStop(final int sessionToken) {
+        if (isShutdown) {
+            return;
+        }
+        if (sttEndOfSpeechTimeoutRunnable != null) {
+            mainHandler.removeCallbacks(sttEndOfSpeechTimeoutRunnable);
+        }
+        sttEndOfSpeechTimeoutRunnable = () -> {
+            if (isShutdown || speechRecognizer == null || sessionToken != sttSessionToken
+                    || (currentState != State.LISTENING && currentState != State.PROCESSING)) {
+                return;
+            }
+            Log.d(TAG, "No final STT result after end-of-speech, forcing stopListening");
+            try {
+                speechRecognizer.stopListening();
+                if (currentState == State.LISTENING) {
+                    setState(State.PROCESSING);
+                }
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Failed to force stopListening after end-of-speech", e);
+                setState(State.IDLE);
+            }
+        };
+        mainHandler.postDelayed(sttEndOfSpeechTimeoutRunnable, sttEndOfSpeechGraceMs);
     }
 
     private String resolveSpeechError(int errorCode) {

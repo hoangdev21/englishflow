@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.view.ScaleGestureDetector;
 import android.view.MotionEvent;
+import android.view.GestureDetector;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import androidx.camera.core.Camera;
@@ -96,6 +97,7 @@ public class ScanFragment extends Fragment {
     private static final float TTS_PITCH = 1.0f;
     private static final int MAX_GALLERY_IMAGE_DIMENSION = 1280;
     private static final long PREVIEW_HINT_INTERVAL_MS = 4500L;
+        private static final float DOUBLE_TAP_ZOOM_IN_RATIO = 2.0f;
         private static final long MAGIC_LENS_ANALYSIS_INTERVAL_MS = 260L;
         private static final int MAGIC_LENS_MAX_OVERLAYS = 18;
 
@@ -156,6 +158,7 @@ public class ScanFragment extends Fragment {
     private Runnable previewHintRunnable;
     private Camera camera;
     private ScaleGestureDetector scaleGestureDetector;
+    private GestureDetector tapGestureDetector;
 
     private MagicLensOverlayView.LabelMode magicLensLabelMode = MagicLensOverlayView.LabelMode.TRANSLATION;
     private long lastMagicLensAnalysisAt = 0L;
@@ -454,22 +457,84 @@ public class ScanFragment extends Fragment {
         scaleGestureDetector = new ScaleGestureDetector(requireContext(), new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
-                if (camera == null) return true;
+                if (camera == null) return false;
                 androidx.camera.core.ZoomState zoomState = camera.getCameraInfo().getZoomState().getValue();
                 if (zoomState == null) {
-                    return true;
+                    return false;
                 }
                 float currentZoomRatio = zoomState.getZoomRatio();
                 float delta = detector.getScaleFactor();
-                camera.getCameraControl().setZoomRatio(currentZoomRatio * delta);
+                float nextZoomRatio = currentZoomRatio * delta;
+                float clampedZoomRatio = clamp(nextZoomRatio, zoomState.getMinZoomRatio(), zoomState.getMaxZoomRatio());
+                camera.getCameraControl().setZoomRatio(clampedZoomRatio);
                 return true;
             }
         });
 
-        cameraPreview.setOnTouchListener((v, event) -> {
-            scaleGestureDetector.onTouchEvent(event);
-            return true;
+        tapGestureDetector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDoubleTap(@NonNull MotionEvent e) {
+                return toggleDoubleTapZoom();
+            }
         });
+
+        if (cameraPreview != null) {
+            cameraPreview.setOnTouchListener((v, event) -> {
+                if (scaleGestureDetector != null) {
+                    scaleGestureDetector.onTouchEvent(event);
+                }
+                if (tapGestureDetector != null) {
+                    tapGestureDetector.onTouchEvent(event);
+                }
+                // Keep the touch stream on PreviewView so pinch gestures are not dropped.
+                return true;
+            });
+        }
+        if (magicLensOverlay != null) {
+            magicLensOverlay.setOnTouchListener((v, event) -> {
+                if (scaleGestureDetector != null) {
+                    scaleGestureDetector.onTouchEvent(event);
+                }
+                boolean doubleTapHandled = tapGestureDetector != null && tapGestureDetector.onTouchEvent(event);
+                if (doubleTapHandled) {
+                    return true;
+                }
+                // Let two-finger gestures stay with the zoom detector.
+                if (event.getPointerCount() > 1 || (scaleGestureDetector != null && scaleGestureDetector.isInProgress())) {
+                    return true;
+                }
+                // For single finger, defer to overlay tap logic (word selection).
+                return false;
+            });
+        }
+    }
+
+    private boolean toggleDoubleTapZoom() {
+        if (camera == null) {
+            return false;
+        }
+        androidx.camera.core.ZoomState zoomState = camera.getCameraInfo().getZoomState().getValue();
+        if (zoomState == null) {
+            return false;
+        }
+
+        float minZoomRatio = zoomState.getMinZoomRatio();
+        float maxZoomRatio = zoomState.getMaxZoomRatio();
+        if (maxZoomRatio <= minZoomRatio + 0.01f) {
+            return false;
+        }
+
+        float currentZoomRatio = zoomState.getZoomRatio();
+        float zoomInRatio = clamp(DOUBLE_TAP_ZOOM_IN_RATIO, minZoomRatio, maxZoomRatio);
+        float targetZoomRatio = currentZoomRatio < (zoomInRatio - 0.05f)
+                ? zoomInRatio
+                : minZoomRatio;
+        camera.getCameraControl().setZoomRatio(targetZoomRatio);
+        return true;
+    }
+
+    private float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private void toggleMagicLens() {
@@ -1567,6 +1632,12 @@ public class ScanFragment extends Fragment {
         }
         if (cameraExecutor != null) {
             cameraExecutor.shutdown();
+        }
+        if (cameraPreview != null) {
+            cameraPreview.setOnTouchListener(null);
+        }
+        if (magicLensOverlay != null) {
+            magicLensOverlay.setOnTouchListener(null);
         }
         cameraPreview = null;
         magicLensOverlay = null;

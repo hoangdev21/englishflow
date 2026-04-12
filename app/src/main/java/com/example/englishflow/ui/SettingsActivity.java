@@ -70,8 +70,10 @@ public class SettingsActivity extends AppCompatActivity {
     private EditText inputProfileEmail;
     private Slider sliderDailyGoal;
     private Slider sliderVoiceSpeed;
+    private Slider sliderVoiceSilenceTimeout;
     private TextView textDailyGoalValue;
     private TextView textVoiceSpeedValue;
+    private TextView textVoiceSilenceTimeoutValue;
     private SwitchMaterial switchAdminNotifications;
     private SwitchMaterial switchDarkMode;
     private boolean isBindingThemeMode;
@@ -100,8 +102,10 @@ public class SettingsActivity extends AppCompatActivity {
         inputProfileEmail = findViewById(R.id.inputProfileEmail);
         sliderDailyGoal = findViewById(R.id.sliderDailyGoal);
         sliderVoiceSpeed = findViewById(R.id.sliderVoiceSpeed);
+        sliderVoiceSilenceTimeout = findViewById(R.id.sliderVoiceSilenceTimeout);
         textDailyGoalValue = findViewById(R.id.tvDailyGoalValue);
         textVoiceSpeedValue = findViewById(R.id.tvVoiceSpeedValue);
+        textVoiceSilenceTimeoutValue = findViewById(R.id.tvVoiceSilenceTimeoutValue);
         switchAdminNotifications = findViewById(R.id.switchAdminNotifications);
         switchDarkMode = findViewById(R.id.switchDarkMode);
     }
@@ -165,6 +169,12 @@ public class SettingsActivity extends AppCompatActivity {
         }
         updateVoiceSpeedPreview(voiceRate);
 
+        long silenceTimeoutMs = settingsStore.getVoiceSilenceTimeoutMs();
+        if (sliderVoiceSilenceTimeout != null) {
+            sliderVoiceSilenceTimeout.setValue(silenceTimeoutMs / 1000f);
+        }
+        updateVoiceSilenceTimeoutPreview(silenceTimeoutMs);
+
         if (switchAdminNotifications != null) {
             switchAdminNotifications.setChecked(settingsStore.isAdminNotificationsEnabled());
         }
@@ -205,6 +215,17 @@ public class SettingsActivity extends AppCompatActivity {
                 }
                 settingsStore.setVoiceSpeechRate(value);
                 updateVoiceSpeedPreview(settingsStore.getVoiceSpeechRate());
+            });
+        }
+
+        if (sliderVoiceSilenceTimeout != null) {
+            sliderVoiceSilenceTimeout.addOnChangeListener((slider, value, fromUser) -> {
+                if (!fromUser) {
+                    return;
+                }
+                long timeoutMs = Math.round(value * 1000f);
+                settingsStore.setVoiceSilenceTimeoutMs(timeoutMs);
+                updateVoiceSilenceTimeoutPreview(settingsStore.getVoiceSilenceTimeoutMs());
             });
         }
 
@@ -262,6 +283,16 @@ public class SettingsActivity extends AppCompatActivity {
 
         String detail = String.format(Locale.US, "%.1fx - %s", rate, modeLabel);
         textVoiceSpeedValue.setText(detail);
+    }
+
+    private void updateVoiceSilenceTimeoutPreview(long timeoutMs) {
+        if (textVoiceSilenceTimeoutValue == null) {
+            return;
+        }
+        float timeoutSeconds = timeoutMs / 1000f;
+        textVoiceSilenceTimeoutValue.setText(
+                getString(R.string.settings_voice_timeout_value_format, timeoutSeconds)
+        );
     }
 
     private void bindThemeModeSelection(@NonNull String themeMode) {
