@@ -79,6 +79,7 @@ public class HomeFragment extends Fragment {
     private static final String DEFAULT_DICT_HINT = "Nhập từ tiếng Anh hoặc tiếng Việt để tra IPA, nghĩa, ví dụ và từ đồng nghĩa.";
     private static final String DEFAULT_DICT_EXAMPLE = "Bạn có thể bấm vào từ đồng nghĩa trong kết quả để tra tiếp ngay lập tức.";
     private static final long UI_REFRESH_MIN_INTERVAL_MS = 1500L;
+    private static final long DASHBOARD_REALTIME_REFRESH_MS = 10000L;
         private static final int USER_NOTIFICATION_LIMIT = 60;
         private static final SimpleDateFormat NOTIFICATION_TIME_FORMAT =
             new SimpleDateFormat("dd/MM HH:mm", Locale.getDefault());
@@ -99,6 +100,16 @@ public class HomeFragment extends Fragment {
 
     private TextToSpeech textToSpeech;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Runnable realtimeDashboardRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!isAdded() || getView() == null || repository == null) {
+                return;
+            }
+            refreshData(false);
+            mainHandler.postDelayed(this, DASHBOARD_REALTIME_REFRESH_MS);
+        }
+    };
     private static final float TTS_SPEECH_RATE = 0.9f;
     private static final float TTS_PITCH = 1.0f;
     @Nullable
@@ -172,6 +183,7 @@ public class HomeFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        stopRealtimeDashboardUpdates();
         stopUserNotificationObserver();
         if (activeNotificationDialog != null) {
             activeNotificationDialog.dismiss();
@@ -192,7 +204,23 @@ public class HomeFragment extends Fragment {
         if (getView() != null && repository != null) {
             refreshData(false);
         }
+        startRealtimeDashboardUpdates();
         startUserNotificationObserver();
+    }
+
+    @Override
+    public void onPause() {
+        stopRealtimeDashboardUpdates();
+        super.onPause();
+    }
+
+    private void startRealtimeDashboardUpdates() {
+        mainHandler.removeCallbacks(realtimeDashboardRunnable);
+        mainHandler.postDelayed(realtimeDashboardRunnable, DASHBOARD_REALTIME_REFRESH_MS);
+    }
+
+    private void stopRealtimeDashboardUpdates() {
+        mainHandler.removeCallbacks(realtimeDashboardRunnable);
     }
 
     private void observeUserStats() {

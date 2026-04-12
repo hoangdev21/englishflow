@@ -172,12 +172,13 @@
     <string name="ipa_practice_word_ladder_status_placeholder">Mở khóa 1/10 từ</string>
     <string name="ipa_practice_word_ladder_status_format">Mở khóa %1$d/%2$d từ · Điều kiện mở từ mới: Đọc đúng %5$d lần (mỗi lần đạt Tổng %3$d+ và Âm IPA %4$d+)</string>
     <string name="ipa_practice_listen_sample">Nghe mẫu</string>
-    <string name="ipa_practice_compare_ab">Nghe đối chiếu A/B (mẫu -> giọng bạn)</string>
     <string name="ipa_practice_play_symbol">Nghe mẫu âm IPA</string>
     <string name="ipa_practice_play_word_format">Nghe mẫu từ %1$s</string>
     <string name="ipa_practice_start_record">Bắt đầu nói</string>
     <string name="ipa_practice_stop_record">Dừng</string>
     <string name="ipa_practice_listening">Đang nghe bạn đọc...</string>
+    <string name="ipa_practice_dictionary_loading">Đang tải từ điển phát âm...</string>
+    <string name="ipa_practice_dictionary_fallback_basic">Đang dùng từ điển cơ bản.</string>
     <string name="ipa_practice_result_title">Chấm phát âm theo âm IPA</string>
     <string name="ipa_practice_recognized_placeholder">Nhấn Bắt đầu nói, đọc từ đang luyện và nhận phản hồi chi tiết.</string>
     <string name="ipa_practice_recognized_format">Bạn đọc: %1$s</string>
@@ -219,12 +220,6 @@
     <string name="ipa_practice_issue_confusion_pair">Bạn có xu hướng nhầm cặp âm /%1$s/ và /%2$s/.</string>
     <string name="ipa_practice_exercise_confusion_drill">Drill 20-30 giây: đọc luân phiên /%1$s/ - /%2$s/ (5 vòng), rồi đọc lại từ "%3$s".</string>
     <string name="ipa_practice_exercise_confusion_route">Lộ trình cá nhân hóa: cặp /%1$s/ - /%2$s/ đã nhầm %3$d lần. Làm 3 vòng: tách âm -> cặp tối thiểu -> từ hoàn chỉnh.</string>
-    <string name="ipa_practice_ab_compare_missing">Chưa có bản ghi giọng của bạn cho từ hiện tại. Hãy đọc 1 lượt trước rồi nghe đối chiếu A/B.</string>
-    <string name="ipa_practice_ab_compare_playing">Đang phát đối chiếu A/B: mẫu trước, giọng bạn sau.</string>
-    <string name="ipa_practice_ab_compare_playing_take_format">Đang phát A/B take %1$d/%2$d (lặp %3$d vòng).</string>
-    <string name="ipa_practice_ab_compare_week_best_playing">Đang so với take tốt nhất trong 7 ngày gần đây.</string>
-    <string name="ipa_practice_ab_recording_prompt">Đang thu giọng B trong 2-3 giây. Hãy đọc rõ từ "%1$s".</string>
-    <string name="ipa_practice_ab_compare_play_failed">Không thể phát bản ghi gần nhất của bạn. Hãy đọc lại một lượt mới.</string>
     <string name="ipa_practice_history_title">Lịch sử 5 lượt gần nhất</string>
     <string name="ipa_practice_history_placeholder">Chưa có lượt đọc nào.</string>
     <string name="ipa_practice_history_line_format">%1$d) %2$s -> "%3$s" | Tổng %4$d | Âm %5$d | %6$s</string>

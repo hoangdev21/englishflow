@@ -1,5 +1,6 @@
 package com.example.englishflow.data;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -16,11 +17,19 @@ public class UserPresenceTracker implements DefaultLifecycleObserver {
 
     private static final String TAG = "UserPresenceTracker";
     private static final long HEARTBEAT_INTERVAL_MS = 90_000L;
+    private static final long ACCESS_FLUSH_INTERVAL_MS = 60_000L;
 
+    private final Context appContext;
     private FirebaseUserStore userStore;
+    private AppRepository repository;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable heartbeatRunnable = this::pushOnlineHeartbeat;
     private boolean isStarted;
+    private long activeSessionStartMs;
+
+    public UserPresenceTracker(@NonNull Context context) {
+        this.appContext = context.getApplicationContext();
+    }
 
     public void start() {
         if (isStarted) {
@@ -32,6 +41,8 @@ public class UserPresenceTracker implements DefaultLifecycleObserver {
 
     @Override
     public void onStart(@NonNull LifecycleOwner owner) {
+        activeSessionStartMs = System.currentTimeMillis();
+        getRepository().markAppForegroundStarted(activeSessionStartMs);
         updateCurrentUserPresence(true);
         scheduleHeartbeat();
     }
@@ -39,6 +50,8 @@ public class UserPresenceTracker implements DefaultLifecycleObserver {
     @Override
     public void onStop(@NonNull LifecycleOwner owner) {
         handler.removeCallbacks(heartbeatRunnable);
+        flushActiveSession(true);
+        getRepository().markAppForegroundStopped();
         updateCurrentUserPresence(false);
     }
 
@@ -49,9 +62,31 @@ public class UserPresenceTracker implements DefaultLifecycleObserver {
 
     private void pushOnlineHeartbeat() {
         updateCurrentUserPresence(true);
+        flushActiveSession(false);
         if (ProcessLifecycleOwner.get().getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) {
             scheduleHeartbeat();
         }
+    }
+
+    private void flushActiveSession(boolean force) {
+        long now = System.currentTimeMillis();
+        long start = activeSessionStartMs;
+        if (start <= 0L || now <= start) {
+            return;
+        }
+
+        long elapsed = now - start;
+        if (!force && elapsed < ACCESS_FLUSH_INTERVAL_MS) {
+            return;
+        }
+
+        try {
+            getRepository().recordAppAccessSession(start, now);
+        } catch (Exception e) {
+            Log.w(TAG, "Unable to record app access session", e);
+        }
+        activeSessionStartMs = now;
+        getRepository().markAppForegroundStarted(activeSessionStartMs);
     }
 
     private void updateCurrentUserPresence(boolean isOnline) {
@@ -72,5 +107,12 @@ public class UserPresenceTracker implements DefaultLifecycleObserver {
             userStore = new FirebaseUserStore();
         }
         return userStore;
+    }
+
+    private AppRepository getRepository() {
+        if (repository == null) {
+            repository = AppRepository.getInstance(appContext);
+        }
+        return repository;
     }
 }

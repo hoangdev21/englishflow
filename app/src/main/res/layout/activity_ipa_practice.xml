@@ -235,22 +235,6 @@
                     app:iconGravity="textStart" />
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCompareAb"
-                style="@style/Widget.Material3.Button"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="8dp"
-                android:text="@string/ipa_practice_compare_ab"
-                android:textAllCaps="false"
-                android:textColor="@color/ef_primary_dark"
-                android:textStyle="bold"
-                app:backgroundTint="@color/ef_primary_container"
-                app:cornerRadius="12dp"
-                app:icon="@drawable/ic_replace"
-                app:iconGravity="textStart"
-                app:iconTint="@color/ef_primary" />
-
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

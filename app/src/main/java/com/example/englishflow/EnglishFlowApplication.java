@@ -40,7 +40,7 @@ public class EnglishFlowApplication extends Application {
             Log.w(TAG, "Unable to apply Firestore cache settings", e);
         }
 
-        presenceTracker = new UserPresenceTracker();
+        presenceTracker = new UserPresenceTracker(this);
         presenceTracker.start();
     }
 }

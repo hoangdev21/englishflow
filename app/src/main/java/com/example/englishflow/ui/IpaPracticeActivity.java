@@ -7,9 +7,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.media.MediaRecorder;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -20,6 +17,7 @@ import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,13 +38,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishflow.R;
 import com.example.englishflow.data.AppSettingsStore;
+import com.example.englishflow.data.CMUDictionary;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -54,6 +52,7 @@ import java.util.Map;
 
 public class IpaPracticeActivity extends AppCompatActivity {
 
+    private static final String TAG = "IpaPracticeActivity";
     private static final String EXTRA_SYMBOL = "extra_symbol";
     private static final String EXTRA_SEED_WORD = "extra_seed_word";
 
@@ -65,6 +64,8 @@ public class IpaPracticeActivity extends AppCompatActivity {
     private static final int WORD_LADDER_SIZE = 10;
     private static final int PASS_SCORE_OVERALL = 80;
     private static final int PASS_SCORE_SOUND = 75;
+    private static final int MIN_PASS_OVERALL = 75;
+    private static final int MIN_PASS_SOUND = 70;
     private static final int REQUIRED_CORRECT_READS = 3;
     private static final float MIN_ASR_CONFIDENCE_FOR_HARD_BLOCK = 0.18f;
     private static final float MIN_ASR_CONFIDENCE_FOR_SCORING = 0.45f;
@@ -79,19 +80,10 @@ public class IpaPracticeActivity extends AppCompatActivity {
     private static final long AUTO_ADVANCE_BLINK_TOTAL_MS = 300L;
     private static final long AUTO_ADVANCE_SCROLL_DELAY_MS = 180L;
     private static final int ATTEMPT_HISTORY_LIMIT = 5;
-    private static final long MIN_RECORDED_AUDIO_BYTES = 1600L;
-    private static final int AB_COMPARE_MAX_TAKES_PER_WORD = 3;
-    private static final int AB_COMPARE_LOOP_ROUNDS = 2;
-    private static final long AB_COMPARE_RECORD_DURATION_MS = 2600L;
-    private static final float AB_COMPARE_PLAYBACK_SPEED = 0.75f;
-    private static final float AB_COMPARE_TTS_SAMPLE_RATE = 0.75f;
-    private static final long WEEK_WINDOW_MS = 7L * 24L * 60L * 60L * 1000L;
     private static final float AUDIO_GATE_LOW_RMS_PEAK_DB = 4.2f;
+    private static final float AUDIO_GATE_MEDIUM_RMS_PEAK_DB = 6.4f;
     private static final float AUDIO_GATE_NOISY_RMS_AVG_DB = 9.0f;
     private static final float AUDIO_GATE_SPEECH_TRIGGER_RMS_DB = 1.8f;
-    private static final String UTTERANCE_ID_AB_COMPARE_SAMPLE = "ipa_ab_compare_sample";
-    private static final int AUDIO_ACTION_ASSESSMENT = 1;
-    private static final int AUDIO_ACTION_COMPARE_RECORDING = 2;
     private static final String IPA_PROGRESS_PREFS = "ipa_practice_progress";
     private static final String IPA_PROGRESS_UNLOCK_PREFIX = "ipa_unlock_";
     private static final String IPA_PROGRESS_CORRECT_PREFIX = "ipa_correct_";
@@ -104,20 +96,13 @@ public class IpaPracticeActivity extends AppCompatActivity {
     private static final int AUDIO_QUALITY_GATE_NOISY = 2;
     private static final int ASR_ERRORS_BEFORE_SYSTEM_FALLBACK = 2;
 
-    private int pendingAudioAction = AUDIO_ACTION_ASSESSMENT;
-
     private final ActivityResultLauncher<String> audioPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
                 if (granted) {
-                    if (pendingAudioAction == AUDIO_ACTION_COMPARE_RECORDING) {
-                        startAbCompareRecording();
-                    } else {
-                        startListeningForAssessment();
-                    }
+                    startListeningForAssessment();
                 } else {
                     Toast.makeText(this, R.string.ipa_practice_permission_denied, Toast.LENGTH_SHORT).show();
                 }
-                pendingAudioAction = AUDIO_ACTION_ASSESSMENT;
             });
 
     private final ActivityResultLauncher<Intent> systemRecognizerLauncher =
@@ -125,6 +110,7 @@ public class IpaPracticeActivity extends AppCompatActivity {
                     result -> handleSystemRecognizerActivityResult(result.getResultCode(), result.getData()));
 
     private AppSettingsStore settingsStore;
+    private CMUDictionary cmuDictionary;
 
     private TextToSpeech tts;
     private boolean ttsReady = false;
@@ -140,25 +126,8 @@ public class IpaPracticeActivity extends AppCompatActivity {
     private final Map<String, Integer> correctReadCountByWord = new HashMap<>();
     private final List<AttemptHistoryEntry> attemptHistory = new ArrayList<>();
     private final Map<String, Integer> confusionCountBySymbol = new HashMap<>();
-    private final Map<String, List<String>> abTakePathsByWord = new HashMap<>();
-    private final Map<String, Integer> abTakeCursorByWord = new HashMap<>();
-    private final Map<String, Long> abTakeCapturedAtByPath = new HashMap<>();
-    private final Map<String, Integer> abTakeQualityByPath = new HashMap<>();
-    private final Map<String, String> bestWeekTakePathByWord = new HashMap<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private String currentWord = "";
-    private String inFlightRecordingPath;
-    private String latestUserRecordingPath;
-    private String latestUserRecordingWord = "";
-    private String abCompareRecordingWord = "";
-    private boolean abPlaybackQueued;
-    private boolean isRecordingForAbCompare;
-    private String pendingAbPlaybackPath;
-    private String pendingAbPlaybackWord = "";
-    private int pendingAbPlaybackLoops;
-    private String pendingAbWeekBestPath;
-    private boolean pendingAbPlayWeekBest;
-    private final Runnable abCompareRecordingTimeoutRunnable = () -> finishAbCompareRecording(true);
     private int adaptivePassOverall = PASS_SCORE_OVERALL;
     private int adaptivePassSound = PASS_SCORE_SOUND;
     private float listeningRmsPeakDb;
@@ -166,6 +135,10 @@ public class IpaPracticeActivity extends AppCompatActivity {
     private int listeningRmsSamples;
     private boolean listeningSpeechDetected;
     private int consecutiveAsrErrors;
+    private boolean dictionaryLoading = true;
+    private boolean dictionaryFallbackMode;
+    private int ipaSourceCmuHits;
+    private int ipaSourceFallbackHits;
 
     private TextView tvPracticeTitle;
     private TextView tvFocusLine;
@@ -185,13 +158,10 @@ public class IpaPracticeActivity extends AppCompatActivity {
     private ImageButton btnPlaySymbol;
     private MaterialButton btnListenSample;
     private MaterialButton btnStartPronounce;
-    private MaterialButton btnCompareAb;
     private RecyclerView rvPracticeWords;
     private WordAdapter wordAdapter;
     private int unlockedWordCount = 1;
     private long lastInlineAudioTapUptimeMs;
-    private MediaRecorder mediaRecorder;
-    private MediaPlayer comparePlayer;
 
     public static Intent createIntent(@NonNull Context context,
                                       @Nullable String symbol,
@@ -209,6 +179,7 @@ public class IpaPracticeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_ipa_practice);
 
         settingsStore = new AppSettingsStore(this);
+        cmuDictionary = CMUDictionary.getInstance(getApplicationContext());
 
         String symbol = sanitizeSymbol(getIntent().getStringExtra(EXTRA_SYMBOL));
         String seedWord = sanitizeWord(getIntent().getStringExtra(EXTRA_SEED_WORD));
@@ -233,6 +204,7 @@ public class IpaPracticeActivity extends AppCompatActivity {
         setupSpeechRecognizer();
         renderProfileInfo();
         renderEmptyAssessmentState();
+        setupDictionaryLoadingState();
     }
 
     private void bindViews() {
@@ -254,7 +226,6 @@ public class IpaPracticeActivity extends AppCompatActivity {
         btnPlaySymbol = findViewById(R.id.btnPlaySymbol);
         btnListenSample = findViewById(R.id.btnListenSample);
         btnStartPronounce = findViewById(R.id.btnStartPronounce);
-        btnCompareAb = findViewById(R.id.btnCompareAb);
     }
 
     private void setupHeader() {
@@ -373,14 +344,50 @@ public class IpaPracticeActivity extends AppCompatActivity {
                 }
             });
         }
+    }
 
-        if (btnCompareAb != null) {
-            btnCompareAb.setOnClickListener(v -> playAbCompare());
-            btnCompareAb.setOnLongClickListener(v -> {
-                requestAbCompareRecording();
-                return true;
-            });
+    private void setupDictionaryLoadingState() {
+        setDictionaryLoadingState(true, false);
+        if (cmuDictionary == null) {
+            setDictionaryLoadingState(false, true);
+            return;
         }
+
+        cmuDictionary.preloadAsync(
+                () -> runOnUiThread(() -> setDictionaryLoadingState(false, false)),
+                () -> runOnUiThread(() -> setDictionaryLoadingState(false, true))
+        );
+    }
+
+    private void setDictionaryLoadingState(boolean loading, boolean fallbackMode) {
+        dictionaryLoading = loading;
+        dictionaryFallbackMode = !loading && fallbackMode;
+        updateStartPronounceAvailability();
+
+        if (tvRecognized == null || isListening) {
+            return;
+        }
+
+        if (dictionaryLoading) {
+            tvRecognized.setText(R.string.ipa_practice_dictionary_loading);
+            return;
+        }
+
+        if (dictionaryFallbackMode) {
+            tvRecognized.setText(R.string.ipa_practice_dictionary_fallback_basic);
+            return;
+        }
+
+        tvRecognized.setText(R.string.ipa_practice_recognized_placeholder);
+    }
+
+    private void updateStartPronounceAvailability() {
+        if (btnStartPronounce == null) {
+            return;
+        }
+        boolean enabled = !dictionaryLoading;
+        btnStartPronounce.setEnabled(enabled);
+        btnStartPronounce.setAlpha(enabled ? 1f : 0.60f);
     }
 
     private void setupTts() {
@@ -400,16 +407,10 @@ public class IpaPracticeActivity extends AppCompatActivity {
 
             @Override
             public void onDone(String utteranceId) {
-                if (!UTTERANCE_ID_AB_COMPARE_SAMPLE.equals(utteranceId) || !abPlaybackQueued) {
-                    return;
-                }
-                abPlaybackQueued = false;
-                mainHandler.post(IpaPracticeActivity.this::playPendingAbTake);
             }
 
             @Override
             public void onError(String utteranceId) {
-                stopComparePlayback();
             }
         });
     }
@@ -545,7 +546,13 @@ public class IpaPracticeActivity extends AppCompatActivity {
 
     private void renderEmptyAssessmentState() {
         if (tvRecognized != null) {
-            tvRecognized.setText(R.string.ipa_practice_recognized_placeholder);
+            if (dictionaryLoading) {
+                tvRecognized.setText(R.string.ipa_practice_dictionary_loading);
+            } else if (dictionaryFallbackMode) {
+                tvRecognized.setText(R.string.ipa_practice_dictionary_fallback_basic);
+            } else {
+                tvRecognized.setText(R.string.ipa_practice_recognized_placeholder);
+            }
         }
         if (tvOverallScore != null) {
             tvOverallScore.setText(getString(R.string.ipa_practice_score_overall_format, 0));
@@ -723,10 +730,6 @@ public class IpaPracticeActivity extends AppCompatActivity {
         if (!ensureTtsReady()) {
             return;
         }
-        if (isRecordingForAbCompare) {
-            Toast.makeText(this, getString(R.string.ipa_practice_ab_recording_prompt, currentWord), Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         String symbolSpeak = toSpeakableSymbol(profile.symbol);
         String wordSpeak = currentWord;
@@ -768,321 +771,6 @@ public class IpaPracticeActivity extends AppCompatActivity {
         );
     }
 
-    private void playAbCompare() {
-        if (!ensureTtsReady()) {
-            return;
-        }
-        if (isRecordingForAbCompare) {
-            Toast.makeText(this, getString(R.string.ipa_practice_ab_recording_prompt, currentWord), Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String wordKey = normalizeWord(currentWord);
-        List<String> takePaths = getValidAbTakesForWord(wordKey);
-        if (takePaths.isEmpty()) {
-            requestAbCompareRecording();
-            return;
-        }
-
-        int selectedTakeIndex = selectNextAbTakeIndex(wordKey, takePaths.size());
-        String selectedTakePath = takePaths.get(selectedTakeIndex);
-        String bestWeekTakePath = getBestWeekTakePath(wordKey, takePaths);
-        if (TextUtils.equals(bestWeekTakePath, selectedTakePath)) {
-            bestWeekTakePath = null;
-        }
-        int loopRounds = takePaths.size() > 1 ? AB_COMPARE_LOOP_ROUNDS : 1;
-        startAbCompareSequence(currentWord, selectedTakePath, loopRounds, bestWeekTakePath);
-        Toast.makeText(
-                this,
-                getString(
-                        R.string.ipa_practice_ab_compare_playing_take_format,
-                        selectedTakeIndex + 1,
-                        takePaths.size(),
-                        loopRounds
-                ),
-                Toast.LENGTH_SHORT
-        ).show();
-    }
-
-    private void requestAbCompareRecording() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED) {
-            startAbCompareRecording();
-            return;
-        }
-        pendingAudioAction = AUDIO_ACTION_COMPARE_RECORDING;
-        audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
-    }
-
-    private void startAbCompareRecording() {
-        if (isRecordingForAbCompare) {
-            return;
-        }
-
-        if (isListening) {
-            stopListeningIfNeeded();
-        }
-
-        abCompareRecordingWord = currentWord;
-        stopComparePlayback();
-        startAttemptAudioCapture();
-        if (mediaRecorder == null || TextUtils.isEmpty(inFlightRecordingPath)) {
-            abCompareRecordingWord = "";
-            Toast.makeText(this, R.string.ipa_practice_ab_compare_play_failed, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        isRecordingForAbCompare = true;
-        mainHandler.removeCallbacks(abCompareRecordingTimeoutRunnable);
-        mainHandler.postDelayed(abCompareRecordingTimeoutRunnable, AB_COMPARE_RECORD_DURATION_MS);
-        Toast.makeText(this, getString(R.string.ipa_practice_ab_recording_prompt, abCompareRecordingWord), Toast.LENGTH_SHORT).show();
-    }
-
-    private void finishAbCompareRecording(boolean autoPlay) {
-        if (!isRecordingForAbCompare) {
-            return;
-        }
-
-        isRecordingForAbCompare = false;
-        mainHandler.removeCallbacks(abCompareRecordingTimeoutRunnable);
-        String recordedPath = stopAttemptAudioCapture(true);
-        String recordedWord = abCompareRecordingWord;
-        abCompareRecordingWord = "";
-        if (TextUtils.isEmpty(recordedPath)) {
-            Toast.makeText(this, R.string.ipa_practice_ab_compare_play_failed, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        updateLatestUserRecording(recordedPath, recordedWord);
-        if (autoPlay && normalizeWord(currentWord).equals(normalizeWord(recordedWord))) {
-            playAbCompare();
-        }
-    }
-
-    private void cancelAbCompareRecording() {
-        if (!isRecordingForAbCompare) {
-            return;
-        }
-        isRecordingForAbCompare = false;
-        abCompareRecordingWord = "";
-        mainHandler.removeCallbacks(abCompareRecordingTimeoutRunnable);
-        stopAttemptAudioCapture(false);
-    }
-
-    private void startAbCompareSequence(@NonNull String word,
-                                        @NonNull String takePath,
-                                        int loopRounds,
-                                        @Nullable String bestWeekTakePath) {
-        stopComparePlayback();
-        pendingAbPlaybackWord = word;
-        pendingAbPlaybackPath = takePath;
-        pendingAbPlaybackLoops = Math.max(1, loopRounds);
-        pendingAbWeekBestPath = bestWeekTakePath;
-        pendingAbPlayWeekBest = !TextUtils.isEmpty(bestWeekTakePath);
-        abPlaybackQueued = true;
-        configureAbCompareTts();
-        tts.stop();
-        tts.speak(word, TextToSpeech.QUEUE_FLUSH, createTtsAudioParams(), UTTERANCE_ID_AB_COMPARE_SAMPLE);
-    }
-
-    private void playPendingAbTake() {
-        if (TextUtils.isEmpty(pendingAbPlaybackPath) || !isValidRecordingFile(pendingAbPlaybackPath)) {
-            Toast.makeText(this, R.string.ipa_practice_ab_compare_play_failed, Toast.LENGTH_SHORT).show();
-            stopComparePlayback();
-            return;
-        }
-
-        playRecordingPath(pendingAbPlaybackPath);
-    }
-
-    private void playRecordingPath(@NonNull String recordingPath) {
-        releaseComparePlayerOnly();
-        MediaPlayer player = new MediaPlayer();
-        try {
-            player.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            player.setDataSource(recordingPath);
-            player.setOnPreparedListener(mp -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    try {
-                        mp.setPlaybackParams(mp.getPlaybackParams().setSpeed(AB_COMPARE_PLAYBACK_SPEED));
-                    } catch (IllegalStateException ignored) {
-                    }
-                }
-                mp.start();
-            });
-            player.setOnCompletionListener(mp -> onAbPlaybackRoundCompleted());
-            player.setOnErrorListener((mp, what, extra) -> {
-                stopComparePlayback();
-                Toast.makeText(IpaPracticeActivity.this, R.string.ipa_practice_ab_compare_play_failed, Toast.LENGTH_SHORT).show();
-                return true;
-            });
-            player.prepareAsync();
-            comparePlayer = player;
-        } catch (IOException | IllegalStateException e) {
-            player.release();
-            comparePlayer = null;
-            stopComparePlayback();
-            Toast.makeText(this, R.string.ipa_practice_ab_compare_play_failed, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void onAbPlaybackRoundCompleted() {
-        if (pendingAbPlaybackLoops > 1
-                && !TextUtils.isEmpty(pendingAbPlaybackWord)
-                && !TextUtils.isEmpty(pendingAbPlaybackPath)
-                && isValidRecordingFile(pendingAbPlaybackPath)) {
-            pendingAbPlaybackLoops -= 1;
-            abPlaybackQueued = true;
-            configureAbCompareTts();
-            tts.stop();
-            tts.speak(pendingAbPlaybackWord, TextToSpeech.QUEUE_FLUSH, createTtsAudioParams(), UTTERANCE_ID_AB_COMPARE_SAMPLE);
-            return;
-        }
-
-        if (pendingAbPlayWeekBest
-                && !TextUtils.isEmpty(pendingAbWeekBestPath)
-                && !TextUtils.isEmpty(pendingAbPlaybackWord)
-                && isValidRecordingFile(pendingAbWeekBestPath)) {
-            pendingAbPlayWeekBest = false;
-            pendingAbPlaybackPath = pendingAbWeekBestPath;
-            pendingAbPlaybackLoops = 1;
-            abPlaybackQueued = true;
-            configureAbCompareTts();
-            tts.stop();
-            tts.speak(pendingAbPlaybackWord, TextToSpeech.QUEUE_FLUSH, createTtsAudioParams(), UTTERANCE_ID_AB_COMPARE_SAMPLE);
-            Toast.makeText(this, R.string.ipa_practice_ab_compare_week_best_playing, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        stopComparePlayback();
-    }
-
-    private void stopComparePlayback() {
-        abPlaybackQueued = false;
-        pendingAbPlaybackLoops = 0;
-        pendingAbPlaybackPath = null;
-        pendingAbPlaybackWord = "";
-        pendingAbWeekBestPath = null;
-        pendingAbPlayWeekBest = false;
-        releaseComparePlayerOnly();
-    }
-
-    private void releaseComparePlayerOnly() {
-        if (comparePlayer == null) {
-            return;
-        }
-
-        try {
-            if (comparePlayer.isPlaying()) {
-                comparePlayer.stop();
-            }
-        } catch (IllegalStateException ignored) {
-            // Ignore player state race when user taps quickly.
-        }
-
-        comparePlayer.release();
-        comparePlayer = null;
-    }
-
-    private boolean isValidRecordingFile(@Nullable String recordingPath) {
-        if (TextUtils.isEmpty(recordingPath)) {
-            return false;
-        }
-        File file = new File(recordingPath);
-        return file.exists() && file.length() >= MIN_RECORDED_AUDIO_BYTES;
-    }
-
-    @NonNull
-    private List<String> getValidAbTakesForWord(@NonNull String normalizedWord) {
-        List<String> takePaths = abTakePathsByWord.get(normalizedWord);
-        if (takePaths == null || takePaths.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        List<String> validPaths = new ArrayList<>();
-        for (String path : takePaths) {
-            if (isValidRecordingFile(path)) {
-                validPaths.add(path);
-            } else {
-                deleteRecordingFile(path);
-                abTakeCapturedAtByPath.remove(path);
-                abTakeQualityByPath.remove(path);
-            }
-        }
-
-        if (validPaths.size() != takePaths.size()) {
-            abTakePathsByWord.put(normalizedWord, validPaths);
-            int cursor = abTakeCursorByWord.getOrDefault(normalizedWord, 0);
-            if (validPaths.isEmpty()) {
-                abTakeCursorByWord.remove(normalizedWord);
-            } else {
-                abTakeCursorByWord.put(normalizedWord, cursor % validPaths.size());
-            }
-        }
-
-        return new ArrayList<>(validPaths);
-    }
-
-    private int selectNextAbTakeIndex(@NonNull String wordKey, int takeCount) {
-        if (takeCount <= 0) {
-            return 0;
-        }
-        int currentIndex = abTakeCursorByWord.getOrDefault(wordKey, 0);
-        if (currentIndex < 0 || currentIndex >= takeCount) {
-            currentIndex = 0;
-        }
-        abTakeCursorByWord.put(wordKey, (currentIndex + 1) % takeCount);
-        return currentIndex;
-    }
-
-    @Nullable
-    private String getBestWeekTakePath(@NonNull String normalizedWord,
-                                       @NonNull List<String> validPaths) {
-        if (validPaths.isEmpty()) {
-            bestWeekTakePathByWord.remove(normalizedWord);
-            return null;
-        }
-
-        long now = System.currentTimeMillis();
-        String bestPath = null;
-        int bestQuality = Integer.MIN_VALUE;
-        long bestCapturedAt = Long.MIN_VALUE;
-
-        for (String path : validPaths) {
-            long capturedAt = abTakeCapturedAtByPath.getOrDefault(path, now);
-            if (now - capturedAt > WEEK_WINDOW_MS) {
-                continue;
-            }
-
-            int quality = abTakeQualityByPath.getOrDefault(path, estimateTakeQuality(path));
-            if (quality > bestQuality || (quality == bestQuality && capturedAt > bestCapturedAt)) {
-                bestQuality = quality;
-                bestCapturedAt = capturedAt;
-                bestPath = path;
-            }
-        }
-
-        if (TextUtils.isEmpty(bestPath)) {
-            bestPath = validPaths.get(0);
-        }
-        bestWeekTakePathByWord.put(normalizedWord, bestPath);
-        return bestPath;
-    }
-
-    private int estimateTakeQuality(@Nullable String path) {
-        if (TextUtils.isEmpty(path)) {
-            return 0;
-        }
-        File file = new File(path);
-        if (!file.exists()) {
-            return 0;
-        }
-
-        long bytes = file.length();
-        float normalized = (float) (bytes - MIN_RECORDED_AUDIO_BYTES) / 12000f;
-        return clampScore(Math.round(normalized * 100f));
-    }
-
     private boolean ensureTtsReady() {
         if (tts == null || !ttsReady) {
             Toast.makeText(this, R.string.ipa_practice_tts_unavailable, Toast.LENGTH_SHORT).show();
@@ -1093,11 +781,6 @@ public class IpaPracticeActivity extends AppCompatActivity {
 
     private void configurePracticeTts() {
         tts.setSpeechRate(resolvePracticeRate());
-        tts.setPitch(1.0f);
-    }
-
-    private void configureAbCompareTts() {
-        tts.setSpeechRate(AB_COMPARE_TTS_SAMPLE_RATE);
         tts.setPitch(1.0f);
     }
 
@@ -1146,9 +829,13 @@ public class IpaPracticeActivity extends AppCompatActivity {
             return;
         }
 
+        if (dictionaryLoading) {
+            Toast.makeText(this, R.string.ipa_practice_dictionary_loading, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
-            pendingAudioAction = AUDIO_ACTION_ASSESSMENT;
             audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
             return;
         }
@@ -1170,10 +857,6 @@ public class IpaPracticeActivity extends AppCompatActivity {
             }
             return;
         }
-
-        cancelAbCompareRecording();
-        abPlaybackQueued = false;
-        stopComparePlayback();
         resetListeningAudioStats();
         setListeningState(true);
         if (tvRecognized != null) {
@@ -1206,145 +889,6 @@ public class IpaPracticeActivity extends AppCompatActivity {
         setListeningState(false);
     }
 
-    private void startAttemptAudioCapture() {
-        stopAttemptAudioCapture(false);
-
-        File outputFile = createAttemptAudioFile();
-        if (outputFile == null) {
-            return;
-        }
-
-        String outputPath = outputFile.getAbsolutePath();
-        MediaRecorder recorder = new MediaRecorder();
-        try {
-            recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-            recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-            recorder.setAudioSamplingRate(44100);
-            recorder.setAudioEncodingBitRate(96000);
-            recorder.setOutputFile(outputPath);
-            recorder.prepare();
-            recorder.start();
-            mediaRecorder = recorder;
-            inFlightRecordingPath = outputPath;
-        } catch (IOException | RuntimeException ex) {
-            try {
-                recorder.release();
-            } catch (Exception ignored) {
-            }
-            deleteRecordingFile(outputPath);
-            mediaRecorder = null;
-            inFlightRecordingPath = null;
-        }
-    }
-
-    @Nullable
-    private String stopAttemptAudioCapture(boolean keepRecording) {
-        String capturedPath = inFlightRecordingPath;
-        inFlightRecordingPath = null;
-
-        if (mediaRecorder != null) {
-            try {
-                mediaRecorder.stop();
-            } catch (RuntimeException ex) {
-                keepRecording = false;
-            }
-            try {
-                mediaRecorder.reset();
-            } catch (Exception ignored) {
-            }
-            mediaRecorder.release();
-            mediaRecorder = null;
-        }
-
-        if (!keepRecording || TextUtils.isEmpty(capturedPath)) {
-            deleteRecordingFile(capturedPath);
-            return null;
-        }
-
-        File capturedFile = new File(capturedPath);
-        if (!capturedFile.exists() || capturedFile.length() < MIN_RECORDED_AUDIO_BYTES) {
-            deleteRecordingFile(capturedPath);
-            return null;
-        }
-        return capturedPath;
-    }
-
-    @Nullable
-    private File createAttemptAudioFile() {
-        File cacheDir = new File(getCacheDir(), "ipa_attempt_audio");
-        if (!cacheDir.exists() && !cacheDir.mkdirs()) {
-            return null;
-        }
-        return new File(cacheDir, "attempt_" + System.currentTimeMillis() + ".m4a");
-    }
-
-    private void updateLatestUserRecording(@Nullable String recordingPath, @Nullable String word) {
-        if (TextUtils.isEmpty(recordingPath)) {
-            return;
-        }
-
-        String normalizedWord = normalizeWord(word);
-        if (normalizedWord.isEmpty()) {
-            normalizedWord = normalizeWord(currentWord);
-        }
-
-        List<String> takePaths = abTakePathsByWord.get(normalizedWord);
-        if (takePaths == null) {
-            takePaths = new ArrayList<>();
-            abTakePathsByWord.put(normalizedWord, takePaths);
-        }
-
-        if (takePaths.contains(recordingPath)) {
-            takePaths.remove(recordingPath);
-        }
-        takePaths.add(0, recordingPath);
-
-        abTakeCapturedAtByPath.put(recordingPath, System.currentTimeMillis());
-        abTakeQualityByPath.put(recordingPath, estimateTakeQuality(recordingPath));
-
-        while (takePaths.size() > AB_COMPARE_MAX_TAKES_PER_WORD) {
-            String removedPath = takePaths.remove(takePaths.size() - 1);
-            if (!TextUtils.equals(removedPath, latestUserRecordingPath)) {
-                deleteRecordingFile(removedPath);
-            }
-            abTakeCapturedAtByPath.remove(removedPath);
-            abTakeQualityByPath.remove(removedPath);
-        }
-
-        abTakeCursorByWord.put(normalizedWord, 0);
-        bestWeekTakePathByWord.put(normalizedWord, getBestWeekTakePath(normalizedWord, new ArrayList<>(takePaths)));
-        latestUserRecordingPath = recordingPath;
-        latestUserRecordingWord = normalizedWord;
-    }
-
-    private void clearLatestUserRecording() {
-        for (List<String> takePaths : abTakePathsByWord.values()) {
-            for (String takePath : takePaths) {
-                deleteRecordingFile(takePath);
-            }
-        }
-        abTakePathsByWord.clear();
-        abTakeCursorByWord.clear();
-        abTakeCapturedAtByPath.clear();
-        abTakeQualityByPath.clear();
-        bestWeekTakePathByWord.clear();
-        deleteRecordingFile(latestUserRecordingPath);
-        latestUserRecordingPath = null;
-        latestUserRecordingWord = "";
-    }
-
-    private void deleteRecordingFile(@Nullable String path) {
-        if (TextUtils.isEmpty(path)) {
-            return;
-        }
-        File file = new File(path);
-        if (file.exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            file.delete();
-        }
-    }
-
     private void loadAdaptivePassThresholds(@NonNull String symbol) {
         SharedPreferences preferences = getSharedPreferences(IPA_PROGRESS_PREFS, Context.MODE_PRIVATE);
         int count = Math.max(0, preferences.getInt(baselineCountKey(symbol), 0));
@@ -1356,14 +900,16 @@ public class IpaPracticeActivity extends AppCompatActivity {
                 sumOverall,
                 PASS_SCORE_OVERALL,
                 MIN_PASS_SCORE_OVERALL,
-                MAX_PASS_SCORE_OVERALL
+            MAX_PASS_SCORE_OVERALL,
+            MIN_PASS_OVERALL
         );
         adaptivePassSound = computeAdaptivePassThreshold(
                 count,
                 sumSound,
                 PASS_SCORE_SOUND,
                 MIN_PASS_SCORE_SOUND,
-                MAX_PASS_SCORE_SOUND
+            MAX_PASS_SCORE_SOUND,
+            MIN_PASS_SOUND
         );
 
         if (wordAdapter != null) {
@@ -1396,13 +942,23 @@ public class IpaPracticeActivity extends AppCompatActivity {
                                              int scoreSum,
                                              int fallbackThreshold,
                                              int minThreshold,
-                                             int maxThreshold) {
+                                             int maxThreshold,
+                                             int minFloor) {
+        int safeFloor = Math.max(0, minFloor);
         if (count < BASELINE_ATTEMPTS_FOR_ADAPT || scoreSum <= 0) {
-            return fallbackThreshold;
+            int fallback = Math.max(fallbackThreshold, safeFloor);
+            if (fallback < minThreshold) {
+                return minThreshold;
+            }
+            if (fallback > maxThreshold) {
+                return maxThreshold;
+            }
+            return fallback;
         }
 
         float averageScore = (float) scoreSum / (float) count;
         int threshold = Math.round(averageScore * ADAPTIVE_PASS_FACTOR);
+        threshold = Math.max(threshold, safeFloor);
         if (threshold < minThreshold) {
             return minThreshold;
         }
@@ -1618,6 +1174,7 @@ public class IpaPracticeActivity extends AppCompatActivity {
                     ? R.string.ipa_practice_stop_record
                     : R.string.ipa_practice_start_record);
         }
+        updateStartPronounceAvailability();
     }
 
     private void pushAttemptHistory(@NonNull String targetWord,
@@ -1731,6 +1288,15 @@ public class IpaPracticeActivity extends AppCompatActivity {
         }
 
         if (candidate.hasConfidence() && candidate.confidence < MIN_ASR_CONFIDENCE_FOR_HARD_BLOCK) {
+            renderConfidenceBlockedState(recognized);
+            pushAttemptHistory(currentWord, recognized, 0, 0, R.string.ipa_practice_history_status_blocked);
+            Toast.makeText(this, R.string.ipa_practice_confidence_low, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (candidate.hasConfidence()
+                && candidate.confidence < MIN_ASR_CONFIDENCE_FOR_SCORING
+                && listeningRmsPeakDb < AUDIO_GATE_MEDIUM_RMS_PEAK_DB) {
             renderConfidenceBlockedState(recognized);
             pushAttemptHistory(currentWord, recognized, 0, 0, R.string.ipa_practice_history_status_blocked);
             Toast.makeText(this, R.string.ipa_practice_confidence_low, Toast.LENGTH_SHORT).show();
@@ -2431,13 +1997,27 @@ public class IpaPracticeActivity extends AppCompatActivity {
                                          @NonNull String seedWord,
                                          @NonNull List<String> expectedPatterns) {
         List<String> ladder = new ArrayList<>();
-        mergeUniqueWordsForTargetSound(ladder, baseWords, symbol, expectedPatterns);
-        mergeUniqueWordsForTargetSound(ladder, ladderBonusWords(symbol), symbol, expectedPatterns);
-        mergeUniqueWordsForTargetSound(ladder, words(seedWord), symbol, expectedPatterns);
+        List<String> bonusWords = ladderBonusWords(symbol);
+        List<String> seedWords = words(seedWord);
+        List<String> lexiconWords = new ArrayList<>(practiceIpaLexicon.keySet());
+        Collections.sort(lexiconWords);
 
-        if (ladder.isEmpty()) {
+        mergeUniqueWordsForTargetSound(ladder, baseWords, symbol, expectedPatterns);
+        mergeUniqueWordsForTargetSound(ladder, bonusWords, symbol, expectedPatterns);
+        mergeUniqueWordsForTargetSound(ladder, seedWords, symbol, expectedPatterns);
+
+        if (ladder.size() < WORD_LADDER_SIZE) {
+            mergeUniqueWordsForTargetSound(ladder, lexiconWords, symbol, expectedPatterns);
+        }
+
+        if (ladder.size() < WORD_LADDER_SIZE) {
             mergeUniqueWords(ladder, baseWords);
-            mergeUniqueWords(ladder, ladderBonusWords(symbol));
+            mergeUniqueWords(ladder, bonusWords);
+            mergeUniqueWords(ladder, seedWords);
+        }
+
+        if (ladder.size() < WORD_LADDER_SIZE) {
+            mergeUniqueWords(ladder, lexiconWords);
         }
 
         if (ladder.size() > WORD_LADDER_SIZE) {
@@ -2472,12 +2052,36 @@ public class IpaPracticeActivity extends AppCompatActivity {
         String normalized = normalizeWord(word);
         String ipa = practiceIpaLexicon.get(normalized);
         if (!TextUtils.isEmpty(ipa)) {
+            ipaSourceFallbackHits += 1;
             return ipa;
         }
+
+        String ipaFromCmu = cmuDictionary != null ? cmuDictionary.getIPA(normalized) : null;
+        if (!TextUtils.isEmpty(ipaFromCmu)) {
+            ipaSourceCmuHits += 1;
+            return ipaFromCmu;
+        }
+
         if (!allowSymbolFallback) {
             return "";
         }
+        ipaSourceFallbackHits += 1;
         return "/" + symbol + "/";
+    }
+
+    private void logIpaSourceStats() {
+        int total = ipaSourceCmuHits + ipaSourceFallbackHits;
+        float coverage = total > 0 ? ((ipaSourceCmuHits * 100f) / total) : 0f;
+        Log.i(
+                TAG,
+                String.format(
+                        Locale.US,
+                        "IPA source stats: CMU=%d Fallback=%d Coverage=%.1f%%",
+                        ipaSourceCmuHits,
+                        ipaSourceFallbackHits,
+                        coverage
+                )
+        );
     }
 
     @NonNull
@@ -2740,19 +2344,25 @@ public class IpaPracticeActivity extends AppCompatActivity {
             return false;
         }
 
-        List<String> filterPatterns = new ArrayList<>();
+        List<String> normalizedPatterns = new ArrayList<>();
         for (String pattern : expectedPatterns) {
             String normalizedPattern = normalizeWord(pattern);
-            if (normalizedPattern.length() >= 2) {
-                filterPatterns.add(normalizedPattern);
+            if (!normalizedPattern.isEmpty() && !normalizedPatterns.contains(normalizedPattern)) {
+                normalizedPatterns.add(normalizedPattern);
             }
         }
 
-        if (filterPatterns.isEmpty()) {
-            for (String pattern : expectedPatterns) {
-                String normalizedPattern = normalizeWord(pattern);
-                if (!normalizedPattern.isEmpty()) {
-                    filterPatterns.add(normalizedPattern);
+        List<String> filterPatterns = new ArrayList<>();
+        for (String pattern : normalizedPatterns) {
+            if (pattern.length() >= 2) {
+                filterPatterns.add(pattern);
+            }
+        }
+
+        if (filterPatterns.size() < 2) {
+            for (String pattern : normalizedPatterns) {
+                if (pattern.length() == 1 && !filterPatterns.contains(pattern)) {
+                    filterPatterns.add(pattern);
                 }
             }
         }
@@ -2985,7 +2595,7 @@ public class IpaPracticeActivity extends AppCompatActivity {
             default:
                 return new IpaProfile(symbol,
                         words(seedWord, "practice", "repeat", "speak"),
-                        patterns(seedWord),
+                        patterns(toSpeakableSymbol(symbol), seedWord),
                         "Giữ khẩu hình ổn định và đọc chậm rõ từng âm.",
                         "Đọc theo nhịp chậm 5 lần rồi tăng dần tốc độ.");
         }
@@ -3017,12 +2627,8 @@ public class IpaPracticeActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        logIpaSourceStats();
         stopListeningIfNeeded();
-        abPlaybackQueued = false;
-        cancelAbCompareRecording();
-        stopAttemptAudioCapture(false);
-        stopComparePlayback();
-        clearLatestUserRecording();
         mainHandler.removeCallbacksAndMessages(null);
 
         if (speechRecognizer != null) {

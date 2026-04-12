@@ -90,6 +90,9 @@ public class AppRepository {
     private static final long DASHBOARD_CACHE_TTL_MS = 10000L;
     private static final long DOMAINS_CACHE_TTL_MS = 30000L;
     private static final long CLOUD_SYNC_MIN_INTERVAL_MS = 15000L;
+    private static final long MIN_APP_ACCESS_SESSION_MS = 5000L;
+    private static final String APP_ACCESS_DOMAIN = "__app_access__";
+    private static final String APP_ACCESS_TOPIC = "__app_access__";
     private static final String COLLECTION_USERS = "users";
     private static final String COLLECTION_LEARNED_WORDS = "learned_words";
     private static final String COLLECTION_STUDY_SESSIONS = "study_sessions";
@@ -144,6 +147,7 @@ public class AppRepository {
     private DashboardSnapshot cachedDashboardSnapshot;
     private String cachedDashboardEmail = "";
     private long cachedDashboardAt = 0L;
+    private volatile long activeAppAccessStartMs = 0L;
     private boolean cloudSyncRunning = false;
     private long lastCloudSyncAt = 0L;
 
@@ -1394,61 +1398,21 @@ public class AppRepository {
 
     private List<Integer> buildWeeklyStudyMinutes(String email) {
         List<Integer> weeklyMinutes = new ArrayList<>();
-        List<StudySession> cloudSessions = getRealtimeStudySessionsCopyIfReady();
-
-        if (cloudSessions != null) {
-            try {
-                Calendar now = Calendar.getInstance();
-                int currentDayOfWeek = now.get(Calendar.DAY_OF_WEEK);
-                int daysSinceMonday = (currentDayOfWeek + 5) % 7;
-
-                Calendar monday = (Calendar) now.clone();
-                monday.add(Calendar.DAY_OF_MONTH, -daysSinceMonday);
-
-                for (int i = 0; i < 7; i++) {
-                    if (i > daysSinceMonday) {
-                        weeklyMinutes.add(0);
-                        continue;
-                    }
-
-                    Calendar cal = (Calendar) monday.clone();
-                    cal.add(Calendar.DAY_OF_MONTH, i);
-
-                    long startOfDay = getStartOfDay(cal.getTimeInMillis());
-                    long endOfDay = getEndOfDay(cal.getTimeInMillis());
-                    long durationMs = 0L;
-                    for (StudySession session : cloudSessions) {
-                        long start = session.getStartTime();
-                        long end = session.getEndTime();
-                        if (end <= 0L) {
-                            end = start;
-                        }
-                        if (start >= startOfDay && end <= endOfDay) {
-                            durationMs += Math.max(0L, end - start);
-                        }
-                    }
-
-                    int minutes = durationMs > 0L ? (int) Math.max(1, durationMs / 60000L) : 0;
-                    weeklyMinutes.add(minutes);
-                }
-                return weeklyMinutes;
-            } catch (Exception ignored) {
-                weeklyMinutes.clear();
-            }
-        }
 
         try {
             Calendar now = Calendar.getInstance();
             int currentDayOfWeek = now.get(Calendar.DAY_OF_WEEK);
-            // Convert to 0-indexed where Monday is 0, Sunday is 6
-            int daysSinceMonday = (currentDayOfWeek + 5) % 7; 
-            
-            // Go back to Monday of this week
+            int daysSinceMonday = (currentDayOfWeek + 5) % 7;
+
             Calendar monday = (Calendar) now.clone();
             monday.add(Calendar.DAY_OF_MONTH, -daysSinceMonday);
-            
+
+            List<StudySession> cloudSessions = getRealtimeStudySessionsCopyIfReady();
+            List<StudySessionEntity> localSessions = cloudSessions == null
+                    ? database.studySessionDao().getAllSessions(email)
+                    : null;
+
             for (int i = 0; i < 7; i++) {
-                // If the queried day is in the future relative to today, just return 0
                 if (i > daysSinceMonday) {
                     weeklyMinutes.add(0);
                     continue;
@@ -1456,26 +1420,29 @@ public class AppRepository {
 
                 Calendar cal = (Calendar) monday.clone();
                 cal.add(Calendar.DAY_OF_MONTH, i);
-                
+
                 long startOfDay = getStartOfDay(cal.getTimeInMillis());
-                long endOfDay = getEndOfDay(cal.getTimeInMillis());
-                
-                try {
-                    Long ms = database.studySessionDao().getStudyDurationMsForPeriod(email, startOfDay, endOfDay);
-                    // Ensure a day with activity has at least 1 minute to trigger the streak fire icon
-                    int minutes = (ms != null && ms > 0) ? (int) Math.max(1, ms / 60000) : 0;
-                    weeklyMinutes.add(minutes);
-                } catch (Exception e) {
-                    weeklyMinutes.add(0);
+                long startOfNextDay = getStartOfNextDay(cal.getTimeInMillis());
+
+                long durationMs;
+                if (cloudSessions != null) {
+                    durationMs = resolveTrackedDurationMsForCloudSessions(cloudSessions, startOfDay, startOfNextDay);
+                } else {
+                    durationMs = resolveTrackedDurationMsForLocalSessions(localSessions, startOfDay, startOfNextDay);
                 }
+                durationMs += getActiveAppAccessOverlapMs(startOfDay, startOfNextDay);
+
+                int minutes = durationMs > 0L ? (int) Math.max(1L, durationMs / 60000L) : 0;
+                weeklyMinutes.add(minutes);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // Return 7 zeros if logic fails
+            weeklyMinutes.clear();
             for (int i = 0; i < 7; i++) {
                 weeklyMinutes.add(0);
             }
         }
+
         return weeklyMinutes;
     }
 
@@ -1487,24 +1454,148 @@ public class AppRepository {
         try {
             List<StudySession> cloudSessions = getRealtimeStudySessionsCopyIfReady();
             if (cloudSessions != null) {
-                long total = 0L;
-                for (StudySession session : cloudSessions) {
-                    long start = session.getStartTime();
-                    long end = session.getEndTime();
-                    if (end <= 0L) {
-                        end = start;
-                    }
-                    total += Math.max(0L, end - start);
-                }
+                long total = resolveTrackedDurationMsForCloudSessions(cloudSessions, -1L, -1L)
+                        + getActiveAppAccessOverlapMs(-1L, -1L);
                 return (int) (total / 60000L);
             }
 
-            Long ms = database.studySessionDao().getTotalStudyDurationMs(getCurrentEmail());
-            return ms != null ? (int) (ms / 60000) : 0;
+            List<StudySessionEntity> localSessions = database.studySessionDao().getAllSessions(getCurrentEmail());
+            long total = resolveTrackedDurationMsForLocalSessions(localSessions, -1L, -1L)
+                    + getActiveAppAccessOverlapMs(-1L, -1L);
+            return (int) (total / 60000L);
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
         }
+    }
+
+    private long resolveTrackedDurationMsForCloudSessions(List<StudySession> sessions,
+                                                          long rangeStartInclusive,
+                                                          long rangeEndExclusive) {
+        long accessDurationMs = 0L;
+        long legacyDurationMs = 0L;
+        if (sessions == null) {
+            return 0L;
+        }
+
+        for (StudySession session : sessions) {
+            if (session == null) {
+                continue;
+            }
+            long sessionDuration = resolveSessionDurationMs(
+                    session.getStartTime(),
+                    session.getEndTime(),
+                    rangeStartInclusive,
+                    rangeEndExclusive
+            );
+            if (sessionDuration <= 0L) {
+                continue;
+            }
+
+            if (isAppAccessSession(session)) {
+                accessDurationMs += sessionDuration;
+            } else {
+                legacyDurationMs += sessionDuration;
+            }
+        }
+
+        return Math.max(accessDurationMs, legacyDurationMs);
+    }
+
+    private long resolveTrackedDurationMsForLocalSessions(List<StudySessionEntity> sessions,
+                                                          long rangeStartInclusive,
+                                                          long rangeEndExclusive) {
+        long accessDurationMs = 0L;
+        long legacyDurationMs = 0L;
+        if (sessions == null) {
+            return 0L;
+        }
+
+        for (StudySessionEntity session : sessions) {
+            if (session == null) {
+                continue;
+            }
+            long sessionDuration = resolveSessionDurationMs(
+                    session.startTime,
+                    session.endTime,
+                    rangeStartInclusive,
+                    rangeEndExclusive
+            );
+            if (sessionDuration <= 0L) {
+                continue;
+            }
+
+            if (isAppAccessSession(session)) {
+                accessDurationMs += sessionDuration;
+            } else {
+                legacyDurationMs += sessionDuration;
+            }
+        }
+
+        return Math.max(accessDurationMs, legacyDurationMs);
+    }
+
+    private long resolveSessionDurationMs(long rawStart,
+                                          long rawEnd,
+                                          long rangeStartInclusive,
+                                          long rangeEndExclusive) {
+        long start = Math.max(0L, rawStart);
+        long end = rawEnd > 0L ? rawEnd : rawStart;
+        if (end <= start) {
+            return 0L;
+        }
+
+        if (rangeStartInclusive >= 0L && rangeEndExclusive > rangeStartInclusive) {
+            return overlapDurationMs(start, end, rangeStartInclusive, rangeEndExclusive);
+        }
+
+        return end - start;
+    }
+
+    private long overlapDurationMs(long firstStart,
+                                   long firstEnd,
+                                   long secondStart,
+                                   long secondEnd) {
+        long overlapStart = Math.max(firstStart, secondStart);
+        long overlapEnd = Math.min(firstEnd, secondEnd);
+        return Math.max(0L, overlapEnd - overlapStart);
+    }
+
+    private long getActiveAppAccessOverlapMs(long rangeStartInclusive,
+                                             long rangeEndExclusive) {
+        long start = activeAppAccessStartMs;
+        if (start <= 0L) {
+            return 0L;
+        }
+
+        long end = System.currentTimeMillis();
+        if (end <= start) {
+            return 0L;
+        }
+
+        if (rangeStartInclusive >= 0L && rangeEndExclusive > rangeStartInclusive) {
+            return overlapDurationMs(start, end, rangeStartInclusive, rangeEndExclusive);
+        }
+
+        return end - start;
+    }
+
+    private boolean isAppAccessSession(StudySession session) {
+        if (session == null) {
+            return false;
+        }
+        String domain = safeString(session.getDomainName());
+        String topic = safeString(session.getTopicName());
+        return APP_ACCESS_DOMAIN.equalsIgnoreCase(domain) || APP_ACCESS_TOPIC.equalsIgnoreCase(topic);
+    }
+
+    private boolean isAppAccessSession(StudySessionEntity session) {
+        if (session == null) {
+            return false;
+        }
+        String domain = safeString(session.domain);
+        String topic = safeString(session.topic);
+        return APP_ACCESS_DOMAIN.equalsIgnoreCase(domain) || APP_ACCESS_TOPIC.equalsIgnoreCase(topic);
     }
 
     public List<AchievementItem> getAchievements() {
@@ -3549,6 +3640,73 @@ public class AppRepository {
         });
     }
 
+    public void recordAppAccessSession(long startTimeMs, long endTimeMs) {
+        long safeStart = Math.max(0L, startTimeMs);
+        long safeEnd = Math.max(safeStart, endTimeMs);
+        long durationMs = safeEnd - safeStart;
+
+        if (safeStart <= 0L || durationMs < MIN_APP_ACCESS_SESSION_MS) {
+            return;
+        }
+
+        executorService.execute(() -> {
+            try {
+                String uid = getCurrentUid();
+                if (uid.isEmpty()) {
+                    return;
+                }
+
+                String email = getCurrentEmail();
+
+                StudySessionEntity entity = new StudySessionEntity(
+                        safeStart,
+                        safeEnd,
+                        0,
+                        APP_ACCESS_DOMAIN,
+                        APP_ACCESS_TOPIC,
+                        0
+                );
+                entity.userEmail = email;
+                database.studySessionDao().insert(entity);
+
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("startTime", safeStart);
+                payload.put("endTime", safeEnd);
+                payload.put("wordsLearned", 0);
+                payload.put("domain", APP_ACCESS_DOMAIN);
+                payload.put("topic", APP_ACCESS_TOPIC);
+                payload.put("xpEarned", 0);
+                payload.put("updatedAt", System.currentTimeMillis());
+
+                firestore.collection(COLLECTION_USERS)
+                        .document(uid)
+                        .collection(COLLECTION_STUDY_SESSIONS)
+                        .add(payload);
+
+                invalidateDashboardCache();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public void markAppForegroundStarted(long startedAtMs) {
+        long safeStart = Math.max(0L, startedAtMs);
+        if (safeStart <= 0L) {
+            return;
+        }
+        activeAppAccessStartMs = safeStart;
+        invalidateDashboardCache();
+    }
+
+    public void markAppForegroundStopped() {
+        if (activeAppAccessStartMs == 0L) {
+            return;
+        }
+        activeAppAccessStartMs = 0L;
+        invalidateDashboardCache();
+    }
+
     public String getCefrLevel() {
         return getCefrLevelForLearned(getLearnedWords());
     }
@@ -3637,6 +3795,13 @@ public class AppRepository {
         cal.set(Calendar.MINUTE, 59);
         cal.set(Calendar.SECOND, 59);
         cal.set(Calendar.MILLISECOND, 999);
+        return cal.getTimeInMillis();
+    }
+
+    private long getStartOfNextDay(long time) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(getStartOfDay(time));
+        cal.add(Calendar.DAY_OF_MONTH, 1);
         return cal.getTimeInMillis();
     }
 
@@ -3797,16 +3962,8 @@ public class AppRepository {
                 int totalStudyMinutes = stats != null ? stats.totalStudyMinutes : 0;
                 long localLastStudyAtMs = stats != null ? stats.lastStudyDate : 0L;
                 if (cloudSessions != null) {
-                    long totalMs = 0L;
-                    for (StudySession session : cloudSessions) {
-                        long start = session.getStartTime();
-                        long end = session.getEndTime();
-                        if (end <= 0L) {
-                            end = start;
-                        }
-                        totalMs += Math.max(0L, end - start);
-                    }
-                    totalStudyMinutes = (int) (totalMs / 60000L);
+                    long totalMs = resolveTrackedDurationMsForCloudSessions(cloudSessions, -1L, -1L);
+                    totalStudyMinutes = (int) ((totalMs + getActiveAppAccessOverlapMs(-1L, -1L)) / 60000L);
                 }
 
                 firebaseUserStore.syncUserProgress(
